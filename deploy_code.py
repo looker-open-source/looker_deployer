@@ -2,11 +2,11 @@ import requests
 import argparse
 import oyaml as yaml
 from requests import ConnectionError
-import deploy_logging
-import parse_ini
+from utils import deploy_logging
+from utils import parse_ini
 
 logger = deploy_logging.get_logger(__name__)
-webhooks = parse_ini.read_ini()["Webhooks"]
+webhooks = parse_ini.read_ini("./looker.ini")["Webhooks"]
 
 
 def get_secret(target):
@@ -81,7 +81,7 @@ if __name__ == "__main__":
     parser.add_argument("--hub-exclude", nargs="+", help="which projects should be ignored from hub deployment")
     args = parser.parse_args()
 
-    with open("./config.yaml") as f:
+    with open("./code_config.yaml") as f:
         config = yaml.safe_load(f)
 
     if args.hub:
