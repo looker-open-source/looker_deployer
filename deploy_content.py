@@ -61,6 +61,14 @@ def build_directory_graph(root_dir):
     return dg
 
 
+def parse_root(content, root="Shared"):
+    a, b, c = content.partition(root)
+    root_dir = "".join([a, b])
+    logger.debug("Parsed root", extra={"content": content, "root_arg": root, "parsed_root": root_dir})
+
+    return root_dir
+
+
 def parse_content_path(path):
     path = path.rstrip(os.path.sep)
     first, sep, content_file = path.rpartition(os.path.sep)
@@ -106,6 +114,7 @@ def deploy_content(content_type, content_list, dg, root_dir, sdk, host):
         parsed = parse_content_path(c)
         host_space = parsed["content_space"]
         spaces_to_process = nx.shortest_path(dg, root_dir, host_space)
+        logger.debug("Shortest path found", extra={"spaces_to_process": spaces_to_process})
 
         for space in spaces_to_process:
             space_id = deploy_space(space, dg, sdk)
@@ -150,7 +159,6 @@ def main(root_dir, sdk, host, spaces=None, dashboards=None, looks=None):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--root", help="Path to the root Shared directory")
     parser.add_argument("--env", help="What environment to deploy to")
     parser.add_argument("--host", help="gzr host to use")
     group = parser.add_mutually_exclusive_group()
@@ -160,5 +168,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     sdk = get_client("looker.ini", args.env)
+    root_finder = (args.spaces or args.dashboards or args.looks)[0]
+    root = parse_root(root_finder)
 
-    main(args.root, sdk, args.host, args.spaces, args.dashboards, args.looks)
+    main(root, sdk, args.host, args.spaces, args.dashboards, args.looks)
