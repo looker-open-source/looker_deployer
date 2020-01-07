@@ -11,6 +11,7 @@ pytest = "*"
 looker-sdk = "*"
 oyaml = "*"
 python-json-logger = "*"
+networkx = "*"
 
 [requires]
 python_version = "3.7"
