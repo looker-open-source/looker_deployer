@@ -37,9 +37,9 @@ def parse_spoke_config(spoke_name, config):
 
 def parse_hub_excludes(config, arg=None):
     if arg and type(config.get("hub_deploy_exclude")) == list:
-        config["hub_deploy_exclude"].append(args.hub_exclude)
-    elif args.hub_exclude:
-        config["hub_deploy_exclude"] = args.hub_exclude
+        config["hub_deploy_exclude"] += arg
+    elif arg:
+        config["hub_deploy_exclude"] = arg
 
 
 def deploy_code(project, endpoint, header):
