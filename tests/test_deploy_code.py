@@ -75,7 +75,7 @@ def test_parse_hub_excludes_with_exclude():
 
 
 def test_deploy_code(mocker):
-    mocker.patch.object(requests, "get")
+    mocker.patch("requests.get")
     mocker.patch("requests.Response.json")
     requests.get.return_value = GOOD_RESPONSE
     requests.Response.json.return_value = RESP_JSON

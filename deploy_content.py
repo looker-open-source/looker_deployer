@@ -54,7 +54,16 @@ def build_directory_graph(root_dir):
         look_files = [i for i in f if re.search("^Look", i)]
         dash_files = [i for i in f if re.search("^Dashboard", i)]
 
+        logger.debug("graph elements", extra={
+            "endpoint": endpoint,
+            "dirs": d,
+            "space_file": space_file,
+            "look_files": look_files,
+            "dash_files": dash_files
+        })
+
         edge_tups = [(endpoint, i) for i in d]
+        logger.debug("edge tuples", extra={"edge_tups": edge_tups})
         dg.add_edges_from(edge_tups)
         dg.add_node(endpoint, space=space_file, looks=look_files, dashboards=dash_files, path=p)
 
