@@ -97,5 +97,5 @@ def test_deploy_content(mocker):
     deploy_content.parse_content_path.return_value = {"content_space": "foo"}
     deploy_content.deploy_space.return_value = 42
     networkx.shortest_path.return_value = ["taco", "foo"]
-    deploy_content.deploy_content("dashboard", ["spam"], "dg", "root_dir", "sdk", "host")
-    deploy_content.import_content.assert_called_with("dashboard", "spam", 42, "host")
+    deploy_content.deploy_content("dashboard", ["spam"], "dg", "root_dir", "sdk", "env", "ini")
+    deploy_content.import_content.assert_called_with("dashboard", "spam", 42, "env", "ini")
