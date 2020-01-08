@@ -3,8 +3,16 @@ import deploy_content
 import os
 import networkx
 from looker_sdk import models
+from utils import parse_ini
 
 WALK_TUPLE = [("foo", ["bar", "baz"], ["Space1", "Look1", "Dashboard1", "Dinosaur"])]
+INI = {
+    "taco": {
+        "base_url": "https://foobarbaz.com:1234",
+        "client_id": "abc",
+        "client_secret": "xyz"
+    }
+}
 
 
 class MockSDK:
@@ -99,3 +107,10 @@ def test_deploy_content(mocker):
     networkx.shortest_path.return_value = ["taco", "foo"]
     deploy_content.deploy_content("dashboard", ["spam"], "dg", "root_dir", "sdk", "env", "ini")
     deploy_content.import_content.assert_called_with("dashboard", "spam", 42, "env", "ini")
+
+
+def test_get_gzr_creds(mocker):
+    mocker.patch("utils.parse_ini.read_ini")
+    parse_ini.read_ini.return_value = INI
+    tup = deploy_content.get_gzr_creds("foo", "taco")
+    assert tup == ("foobarbaz.com", "abc", "xyz")
