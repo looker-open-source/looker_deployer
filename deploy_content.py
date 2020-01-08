@@ -4,6 +4,7 @@ import re
 import subprocess
 import argparse
 from utils import deploy_logging
+from utils import parse_ini
 from looker_sdk import client, models
 
 
@@ -91,20 +92,30 @@ def parse_content_path(path):
     return ref
 
 
-def import_content(content_type, content_json, space_id, host):
+def import_content(content_type, content_json, space_id, env, ini):
     logger.info("Deploying content", extra={"type": content_type, "source_file": content_json, "space_id": space_id})
 
     assert content_type in ["dashboard", "look"], "Unsupported Content Type"
 
+    ini = parse_ini.read_ini(ini)
+    env_record = ini[env]
+    host = env_record["base_url"].lstrip("https://").split(":")[0]
+    client_id = env_record["client_id"]
+    client_secret = env_record["client_secret"]
+
     subprocess.call([
-            "gzr",
-            content_type,
-            "import",
-            content_json,
-            space_id,
-            "--host",
-            host,
-            "--force"
+        "gzr",
+        content_type,
+        "import",
+        content_json,
+        space_id,
+        "--host",
+        host,
+        "--client_id",
+        client_id,
+        "--client-secret",
+        client_secret,
+        "--force"
     ])
 
 
@@ -118,7 +129,7 @@ def deploy_space(space, dg, sdk):
     return space_id
 
 
-def deploy_content(content_type, content_list, dg, root_dir, sdk, host):
+def deploy_content(content_type, content_list, dg, root_dir, sdk, env, ini):
     for c in content_list:
         parsed = parse_content_path(c)
         host_space = parsed["content_space"]
@@ -130,10 +141,10 @@ def deploy_content(content_type, content_list, dg, root_dir, sdk, host):
 
             if space == host_space:
                 # deploy the content
-                import_content(content_type, c, space_id, host)
+                import_content(content_type, c, space_id, env, ini)
 
 
-def main(root_dir, sdk, host, spaces=None, dashboards=None, looks=None):
+def main(root_dir, sdk, env, ini, spaces=None, dashboards=None, looks=None):
     dg = build_directory_graph(root_dir)
     root = parse_content_path(root_dir)["content_file"]
     logger.debug("Parsed root", extra={"root": root})
@@ -154,30 +165,34 @@ def main(root_dir, sdk, host, spaces=None, dashboards=None, looks=None):
                     # deploy looks
                     for look in dg.nodes[parsed_space]["looks"]:
                         look_path = os.path.join(path, look)
-                        import_content("look", look_path, space_id, host)
+                        import_content("look", look_path, space_id, env, ini)
                     # deploy dashboards
                     for dash in dg.nodes[parsed_space]["dashboards"]:
                         dash_path = os.path.join(path, dash)
-                        import_content("dashboard", dash_path, space_id, host)
+                        import_content("dashboard", dash_path, space_id, env, ini)
 
     if dashboards:
-        deploy_content("dashboard", dashboards, dg, root, sdk, host)
+        deploy_content("dashboard", dashboards, dg, root, sdk, env, ini)
     if looks:
-        deploy_content("look", looks, dg, root, sdk, host)
+        deploy_content("look", looks, dg, root, sdk, env, ini)
 
 
 if __name__ == "__main__":
+    loc = os.path.join(os.path.dirname(os.path.realpath(__file__)), "looker.ini")
+    logger.debug("file path", extra={"path": loc})
+
     parser = argparse.ArgumentParser()
     parser.add_argument("--env", help="What environment to deploy to")
-    parser.add_argument("--host", help="gzr host to use")
+    parser.add_argument("--ini", default=loc, help="ini file to parse for credentials")
     group = parser.add_mutually_exclusive_group()
     group.add_argument("--spaces", nargs="+", help="Spaces to fully deploy")
     group.add_argument("--dashboards", nargs="+", help="Dashboards to deploy")
     group.add_argument("--looks", nargs="+", help="Looks to deploy")
     args = parser.parse_args()
 
-    sdk = get_client("looker.ini", args.env)
+    logger.debug("ini file", extra={"ini": args.ini})
+    sdk = get_client(args.ini, args.env)
     root_finder = (args.spaces or args.dashboards or args.looks)[0]
     root = parse_root(root_finder)
 
-    main(root, sdk, args.host, args.spaces, args.dashboards, args.looks)
+    main(root, sdk, args.env, args.ini, args.spaces, args.dashboards, args.looks)
