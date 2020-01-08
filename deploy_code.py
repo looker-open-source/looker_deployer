@@ -6,10 +6,10 @@ from utils import deploy_logging
 from utils import parse_ini
 
 logger = deploy_logging.get_logger(__name__)
-webhooks = parse_ini.read_ini("./looker.ini")["Webhooks"]
 
 
 def get_secret(target):
+    webhooks = parse_ini.read_ini("./looker.ini")["Webhooks"]
     logger.info("Fetching secret", extra={"target": target})
     secret = webhooks[f"looker_{target.lower()}_deploy_secret"]
     return {"X-Looker-Deploy-Secret": secret}
