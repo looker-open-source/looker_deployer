@@ -27,4 +27,5 @@ work on the scripts you will probably want to invoke `pipenv install --dev` to i
 In order for these scripts to correctly work a few assumptions/requirements are needed for your Looker environments:
 
 >**Webhooks:** The webhook deploy secret for each hub project across all instances must be the same
+
 >**Space Names:** All space names must be unique
