@@ -1,6 +1,7 @@
 import requests
 import argparse
 import oyaml as yaml
+import logging
 from requests import ConnectionError
 from utils import deploy_logging
 from utils import parse_ini
@@ -79,7 +80,11 @@ if __name__ == "__main__":
     parser.add_argument("--hub", action="store_true", help="flag to deploy hub project")
     parser.add_argument("--spoke", nargs='+', help="which spoke(s) to deploy")
     parser.add_argument("--hub-exclude", nargs="+", help="which projects should be ignored from hub deployment")
+    parser.add_argument("--debug", action="store_true", help="set logger to debug for more verbosity")
     args = parser.parse_args()
+
+    if args.debug:
+        logger.setLevel(logging.DEBUG)
 
     with open("./code_config.yaml") as f:
         config = yaml.safe_load(f)

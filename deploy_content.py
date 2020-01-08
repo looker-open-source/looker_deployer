@@ -3,6 +3,7 @@ import os
 import re
 import subprocess
 import argparse
+import logging
 from utils import deploy_logging
 from utils import parse_ini
 from looker_sdk import client, models
@@ -178,17 +179,21 @@ def main(root_dir, sdk, env, ini, spaces=None, dashboards=None, looks=None):
 
 
 if __name__ == "__main__":
+
     loc = os.path.join(os.path.dirname(os.path.realpath(__file__)), "looker.ini")
-    logger.debug("file path", extra={"path": loc})
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--env", help="What environment to deploy to")
     parser.add_argument("--ini", default=loc, help="ini file to parse for credentials")
+    parser.add_argument("--debug", action="store_true", help="set logger to debug for more verbosity")
     group = parser.add_mutually_exclusive_group()
     group.add_argument("--spaces", nargs="+", help="Spaces to fully deploy")
     group.add_argument("--dashboards", nargs="+", help="Dashboards to deploy")
     group.add_argument("--looks", nargs="+", help="Looks to deploy")
     args = parser.parse_args()
+
+    if args.debug:
+        logger.setLevel(logging.DEBUG)
 
     logger.debug("ini file", extra={"ini": args.ini})
     sdk = get_client(args.ini, args.env)
