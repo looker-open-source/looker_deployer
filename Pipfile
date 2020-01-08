@@ -6,6 +6,7 @@ verify_ssl = true
 [dev-packages]
 ipython = "*"
 pytest = "*"
+pytest-mock = "*"
 
 [packages]
 looker-sdk = "*"
