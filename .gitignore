@@ -1,3 +1,4 @@
 demo/
 looker.ini
+code_config.yaml
 .env
