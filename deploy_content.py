@@ -148,7 +148,8 @@ def deploy_space(space, dg, sdk):
     if space == "Shared":
         space_id = 1
     else:
-        space_parent = get_space_ids_from_name(list(dg.predecessors(space))[0], sdk)
+        space_parent = get_space_ids_from_name(list(dg.predecessors(space))[0], sdk)[0]
+        logger.debug("data for space creation", extra={"space": space, "space_parent": space_parent})
         space_id = create_or_return_space(space, space_parent, sdk)
 
     return space_id
