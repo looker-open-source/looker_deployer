@@ -25,6 +25,12 @@ class MockSDK:
         return space
 
 
+class MockGraph:
+
+    def predecessors(self, space):
+        return ("foo")
+
+
 def test_get_space_ids_from_name_shared():
     sdk = MockSDK()
     id_list = deploy_content.get_space_ids_from_name("Shared", sdk)
@@ -94,6 +100,34 @@ def test_parse_content_path():
     path = "foo/bar/Shared/spam/eggs.json"
     ref = deploy_content.parse_content_path(path)
     assert ref == {"content_space": "spam", "content_file": "eggs.json"}
+
+
+def test_deploy_space_shared():
+    space = deploy_content.deploy_space("Shared", "foo", "bar")
+    assert space == "1"
+
+
+def test_deploy_space_not_shared_create_or_return_space_call(mocker):
+    mocker.patch("deploy_content.get_space_ids_from_name")
+    mocker.patch("deploy_content.create_or_return_space")
+
+    dg = MockGraph()
+
+    deploy_content.get_space_ids_from_name.return_value = [42]
+    deploy_content.deploy_space("foo", dg, "baz")
+    deploy_content.create_or_return_space.assert_called_with("foo", 42, "baz")
+
+
+def test_deploy_space_not_shared(mocker):
+    mocker.patch("deploy_content.get_space_ids_from_name")
+    mocker.patch("deploy_content.create_or_return_space")
+
+    dg = MockGraph()
+
+    deploy_content.get_space_ids_from_name.return_value = [42]
+    deploy_content.create_or_return_space.return_value = "42"
+    dep_space = deploy_content.deploy_space("foo", dg, "baz")
+    assert dep_space == "42"
 
 
 def test_deploy_content(mocker):
