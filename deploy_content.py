@@ -123,11 +123,20 @@ def export_spaces(env, ini, path):
 
 
 def import_content(content_type, content_json, space_id, env, ini):
-    logger.info("Deploying content", extra={"type": content_type, "source_file": content_json, "space_id": space_id})
-
     assert content_type in ["dashboard", "look"], "Unsupported Content Type"
-
     host, client_id, client_secret = get_gzr_creds(ini, env)
+
+    logger.info(
+        "Deploying content",
+        extra={
+            "content_type": content_type,
+            "source_file": content_json,
+            "space_id": space_id,
+            "host": host,
+            "client_id": client_id
+        }
+    )
+
     subprocess.call([
         "gzr",
         content_type,
@@ -146,7 +155,7 @@ def import_content(content_type, content_json, space_id, env, ini):
 
 def deploy_space(space, dg, sdk):
     if space == "Shared":
-        space_id = 1
+        space_id = "1"
     else:
         space_parent = get_space_ids_from_name(list(dg.predecessors(space))[0], sdk)[0]
         logger.debug("data for space creation", extra={"space": space, "space_parent": space_parent})
