@@ -18,8 +18,8 @@ An overview (click to embiggen):
 This project makes use of `pipenv` to manage dependencies. Follow the [installation
 instructions](https://pipenv-fork.readthedocs.io/en/latest/index.html). It is recommended to use [pyenv](https://github.com/pyenv/pyenv#installation) to manage installing python versions.
 
-Once `pipenv` has been installed, simply clone the repo and `pipenv install`. Note that if you want to do development
-work on the scripts you will probably want to invoke `pipenv install --dev` to install testing packages.
+Once `pipenv` has been installed, simply clone the repo and `pipenv install --ignore-pipfile`. Note that if you want to do development
+work on the scripts you will probably want to invoke `pipenv install --ignore-pipfile --dev` to install testing packages.
 
 ## Looker Environment Requirements
 
@@ -107,6 +107,39 @@ in the target instance. The script accepts the following arguments:
   ~/foo/bar/Shared/Restricted/Dashboard_2.json` <- deploys `Dashboard1` and `Dashboard2` to their respective spaces in
   the Prod instance
 
+## Board Deployment Script
+
+This script allows for the deployment of boards/homepages across instances. It attempts to resolve differences in
+dashboard/look ids across instances and confirms that the content is present before building the new board. Boards are
+matched by title - updating an existing board will result in the rebuilding of the relevant sections and items to
+prevent issues with attempting to match via title. If needing to update a board title, make use of the `title-change`
+parameter to allow the script to find the old title. The script accepts the following arguments:
+
+```
+usage: deploy_boards.py [-h] --source SOURCE --target TARGET [TARGET ...]
+                        --board BOARD [--ini INI]
+                        [--title-change TITLE_CHANGE] [--debug]
+
+optional arguments:
+  -h, --help            show this help message and exit
+  --source SOURCE       which environment to source the board from
+  --target TARGET [TARGET ...]
+                        which target environment(s) to deploy to
+  --board BOARD         which board to deploy
+  --ini INI             ini file to parse for credentials
+  --title-change TITLE_CHANGE
+                        if updating title, the old title to replace in target
+                        environments
+  --debug               set logger to debug for more verbosity
+```
+
+### Examples:
+
+- `python deploy_board.py --source dev --target prod --board 'My Cool Board'` <- deploys the board 'My Cool Board' from
+  dev to prod
+- `python deploy_board.py --source dev --target prod_1 prod_2 --board 'My Updated Title Board' --title-change 'My Cool
+  Board'` <- This deploys a board whose title has been changed from 'My Cool Board' to 'My Updated Title Board' from dev
+  to two instances: prod_1 and prod_2
 
 ## Development
 
