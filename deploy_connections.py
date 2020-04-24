@@ -2,7 +2,7 @@ import os
 import argparse
 import logging
 import re
-from looker_sdk import client
+from looker_sdk import client, error
 from utils import deploy_logging
 from utils import parse_ini
 
@@ -40,15 +40,18 @@ def get_filtered_connections(source_sdk, pattern=None):
 
 def write_connections(connections, target_sdk, db_config=None):
     for conn in connections:
-        search_res = target_sdk.search_connections(name=conn.name)
-        assert len(search_res) < 2, "More than one existing connection found! Check for duplicates."
+        conn_exists = True
+        try:
+            target_sdk.connection(conn.name)
+        except error.SDKError:
+            conn_exists = False
 
         if db_config:
             logger.debug("Attempting password update", extra={"connection": conn.name})
             db_pass = db_config[conn.name]
             conn.password = db_pass
 
-        if len(search_res) < 1:
+        if not conn_exists:
             logger.debug("No existing connection found. Creating...")
             logger.info("Deploying connection", extra={"connection": conn.name})
             target_sdk.create_connection(conn)
