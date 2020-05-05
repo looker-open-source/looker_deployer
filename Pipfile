@@ -8,9 +8,10 @@ ipython = "*"
 pytest = "*"
 pytest-mock = "*"
 flake8 = "*"
+pytest-cov = "*"
 
 [packages]
-looker-sdk = "*"
+looker-sdk = "==0.1.3b5"
 oyaml = "*"
 python-json-logger = "*"
 networkx = "*"
