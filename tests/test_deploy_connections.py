@@ -52,7 +52,7 @@ def test_write_connections_existing(mocker):
     sdk.update_connection.assert_called_once_with("Taco", conn_list[0])
 
 
-def test_write_connection_update_pw(mocker):
+def test_write_connections_update_pw_existing(mocker):
     conn_list = [models.DBConnection(name="Taco")]
     conf = {"Taco": "Cat"}
 
@@ -63,3 +63,14 @@ def test_write_connection_update_pw(mocker):
 
     deploy_connections.write_connections(conn_list, sdk, conf)
     sdk.update_connection.assert_called_once_with("Taco", models.DBConnection(name="Taco", password="Cat"))
+
+
+def test_write_connections_update_pw_new(mocker):
+    conn_list = [models.DBConnection(name="Taco")]
+    conf = {"Taco": "Cat"}
+
+    mocker.patch.object(sdk, "connection", side_effect=error.SDKError("mocked error"))
+    mocker.patch.object(sdk, "create_connection")
+
+    deploy_connections.write_connections(conn_list, sdk, conf)
+    sdk.create_connection.assert_called_once_with(models.DBConnection(name="Taco", password="Cat"))
