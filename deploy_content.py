@@ -140,7 +140,7 @@ def deploy_space(spaces, sdk, env, ini, recursive):
 
         # grab the relevant files for deployment
         space_files = [f for f in os.listdir(s) if os.path.isfile(os.path.join(s, f))]
-        space_children = [os.path.join(s, d) + "/" for d in os.listdir(s) if os.path.isdir(os.path.join(s, d))]
+        space_children = [os.path.join(s, d) + os.sep for d in os.listdir(s) if os.path.isdir(os.path.join(s, d))]
         look_files = [os.path.join(s, i) for i in space_files if re.search("^Look", i)]
         dash_files = [os.path.join(s, i) for i in space_files if re.search("^Dashboard", i)]
         logger.debug("files to process", extra={"looks": look_files, "dashboards": dash_files})
@@ -148,11 +148,11 @@ def deploy_space(spaces, sdk, env, ini, recursive):
         # cut down directory to looker-specific paths
         a, b, c = s.partition("Shared")  # Hard coded to Shared for now TODO: Change this!
         logger.debug("space components", extra={"a": a, "b": b, "c": c})
-        c = c.rpartition(os.path.sep)[0]
+        c = c.rpartition(os.sep)[0]
         logger.debug("new c value", extra={"c": c})
 
         # turn into a list of spaces to process
-        spaces_to_process = "".join([b, c]).split(os.path.sep)
+        spaces_to_process = "".join([b, c]).split(os.sep)
         logger.debug("spaces to process", extra={"spaces": spaces_to_process})
 
         space_id = build_spaces(spaces_to_process)
@@ -178,14 +178,14 @@ def deploy_content(content_type, content_list, sdk, env, ini):
     for c in content_list:
 
         # extract directory path
-        dirs = c.rpartition(os.path.sep)[0]
+        dirs = c.rpartition(os.sep)[0]
 
         # cut down directory to looker-specific paths
         a, b, c = dirs.partition("Shared")  # Hard coded to Shared for now TODO: Change this!
-        c = c.rpartition(os.path.sep)[0]  # strip trailing slash
+        c = c.rpartition(os.sep)[0]  # strip trailing slash
 
         # turn into a list of spaces to process
-        spaces_to_process = "".join([b, c]).split(os.path.sep)
+        spaces_to_process = "".join([b, c]).split(os.sep)
 
         space_id = build_spaces(spaces_to_process)
 
