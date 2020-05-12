@@ -1,6 +1,7 @@
 import pytest
 import deploy_content
 import os
+import subprocess
 from looker_sdk import methods, models
 from utils import parse_ini
 
@@ -57,6 +58,50 @@ def test_get_gzr_creds(mocker):
     parse_ini.read_ini.return_value = INI
     tup = deploy_content.get_gzr_creds("foo", "taco")
     assert tup == ("foobarbaz.com", "abc", "xyz")
+
+
+def test_export_space(mocker):
+    mocker.patch("deploy_content.get_gzr_creds")
+    deploy_content.get_gzr_creds.return_value = ("foobar.com", "abc", "xyz")
+
+    mocker.patch("subprocess.call")
+    deploy_content.export_spaces("env", "ini", "foo/bar")
+    subprocess.call.assert_called_with([
+        "gzr",
+        "space",
+        "export",
+        "1",
+        "--dir",
+        "foo/bar",
+        "--host",
+        "foobar.com",
+        "--client-id",
+        "abc",
+        "--client-secret",
+        "xyz"
+    ])
+
+
+def test_import_content(mocker):
+    mocker.patch("deploy_content.get_gzr_creds")
+    deploy_content.get_gzr_creds.return_value = ("foobar.com", "abc", "xyz")
+
+    mocker.patch("subprocess.call")
+    deploy_content.import_content("dashboard", "tacocat.json", "42", "env", "ini")
+    subprocess.call.assert_called_with([
+        "gzr",
+        "dashboard",
+        "import",
+        "tacocat.json",
+        "42",
+        "--host",
+        "foobar.com",
+        "--client-id",
+        "abc",
+        "--client-secret",
+        "xyz",
+        "--force"
+    ])
 
 
 def test_build_spaces(mocker):

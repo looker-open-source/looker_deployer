@@ -5,6 +5,9 @@ import argparse
 import logging
 import tempfile
 import shutil
+import threading
+from concurrent.futures import ThreadPoolExecutor
+from itertools import repeat
 from utils import deploy_logging
 from utils import parse_ini
 from looker_sdk import client, models
@@ -69,9 +72,9 @@ def export_spaces(env, ini, path):
         path,
         "--host",
         host,
-        "--client_id",
+        "--client-id",
         client_id,
-        "--client_secret",
+        "--client-secret",
         client_secret
     ])
 
@@ -87,7 +90,7 @@ def import_content(content_type, content_json, space_id, env, ini):
             "source_file": content_json,
             "space_id": space_id,
             "host": host,
-            "client_id": client_id
+            "active_thread": threading.get_ident()
         }
     )
 
@@ -99,7 +102,7 @@ def import_content(content_type, content_json, space_id, env, ini):
         space_id,
         "--host",
         host,
-        "--client_id",
+        "--client-id",
         client_id,
         "--client-secret",
         client_secret,
@@ -153,19 +156,21 @@ def deploy_space(s, sdk, env, ini, recursive):
     logger.debug("target space id", extra={"space_id": space_id})
 
     # deploy looks
-    for look in look_files:
-        import_content("look", look, space_id, env, ini)
+    logger.debug("running looks", extra={"looks": look_files})
+    with ThreadPoolExecutor(max_workers=3) as pool:
+        pool.map(import_content, repeat("look"), look_files, repeat(space_id), repeat(env), repeat(ini))
     # deploy dashboards
-    for dash in dash_files:
-        import_content("dashboard", dash, space_id, env, ini)
+    logger.debug("running dashboards", extra={"dashboards": dash_files})
+    with ThreadPoolExecutor(max_workers=3) as pool:
+        pool.map(import_content, repeat("dashboard"), dash_files, repeat(space_id), repeat(env), repeat(ini))
 
     # go for recursion
     if recursive and space_children:
-        logger.debug("Attemting Recursion of children spaces", extra={"children_spaces": space_children})
+        logger.info("Attemting Recursion of children spaces", extra={"children_spaces": space_children})
         for child in space_children:
             deploy_space(child, sdk, env, ini, recursive)
     else:
-        logger.debug("No Recursion specified or empty child list", extra={"children_spaces": space_children})
+        logger.info("No Recursion specified or empty child list", extra={"children_spaces": space_children})
 
 
 def deploy_content(content_type, content, sdk, env, ini):
