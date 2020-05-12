@@ -184,7 +184,7 @@ def test_create_board_section_create_homepage_section_call(mocker):
 def test_create_board_item_dashboard(mocker):
     test_board_item = models.HomepageItem(title="taco", description="burrito", dashboard_id="42")
     test_board_item_resp = MockHomepageItem()
-    mocker.patch("deploy_boards.match_dashboard_id")
+    mocker.patch("looker_deployer.commands.deploy_boards.match_dashboard_id")
     mocker.patch.object(sdk, "create_homepage_item")
     deploy_boards.match_dashboard_id.return_value = "1"
     sdk.create_homepage_item.return_value = test_board_item_resp
@@ -195,7 +195,7 @@ def test_create_board_item_dashboard(mocker):
 def test_create_board_item_look(mocker):
     test_board_item = models.HomepageItem(title="taco", description="burrito", look_id="42")
     test_board_item_resp = MockHomepageItem()
-    mocker.patch("deploy_boards.match_look_id")
+    mocker.patch("looker_deployer.commands.deploy_boards.match_look_id")
     mocker.patch.object(sdk, "create_homepage_item")
     deploy_boards.match_look_id.return_value = "1"
     sdk.create_homepage_item.return_value = test_board_item_resp
@@ -205,7 +205,7 @@ def test_create_board_item_look(mocker):
 
 def test_create_board_item_dashboard_match_call(mocker):
     test_board_item = models.HomepageItem(title="taco", description="burrito", dashboard_id="42")
-    mocker.patch("deploy_boards.match_dashboard_id")
+    mocker.patch("looker_deployer.commands.deploy_boards.match_dashboard_id")
     mocker.patch.object(sdk, "create_homepage_item")
     deploy_boards.create_board_item(test_board_item, 1, sdk, sdk)
     deploy_boards.match_dashboard_id.assert_called_with("42", sdk, sdk)
@@ -213,7 +213,7 @@ def test_create_board_item_dashboard_match_call(mocker):
 
 def test_create_board_item_look_match_call(mocker):
     test_board_item = models.HomepageItem(title="taco", description="burrito", look_id="42")
-    mocker.patch("deploy_boards.match_look_id")
+    mocker.patch("looker_deployer.commands.deploy_boards.match_look_id")
     mocker.patch.object(sdk, "create_homepage_item")
     deploy_boards.create_board_item(test_board_item, 1, sdk, sdk)
     deploy_boards.match_look_id.assert_called_with("42", sdk, sdk)
@@ -221,7 +221,7 @@ def test_create_board_item_look_match_call(mocker):
 
 def test_create_board_item_dashboard_item_call(mocker):
     test_board_item = models.HomepageItem(title="taco", description="burrito", dashboard_id="42")
-    mocker.patch("deploy_boards.match_dashboard_id")
+    mocker.patch("looker_deployer.commands.deploy_boards.match_dashboard_id")
     mocker.patch.object(sdk, "create_homepage_item")
     deploy_boards.match_dashboard_id.return_value = "1"
     deploy_boards.create_board_item(test_board_item, 10, sdk, sdk)
@@ -238,7 +238,7 @@ def test_create_board_item_dashboard_item_call(mocker):
 
 def test_create_board_item_look_item_call(mocker):
     test_board_item = models.HomepageItem(title="taco", description="burrito", look_id="42")
-    mocker.patch("deploy_boards.match_look_id")
+    mocker.patch("looker_deployer.commands.deploy_boards.match_look_id")
     mocker.patch.object(sdk, "create_homepage_item")
     deploy_boards.match_look_id.return_value = "1"
     deploy_boards.create_board_item(test_board_item, 10, sdk, sdk)
