@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "cf6d4aeeeb2389cfb403d9ec0ebe7222e020568066b19b7a0d9242ff1ecb505e"
+            "sha256": "f62c4c259d595db42423c626b30681346e05a22262bc2bf52916f4092e420e2e"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -53,11 +53,11 @@
         },
         "looker-sdk": {
             "hashes": [
-                "sha256:ed428eaa85c4c209e3efad19f22271f110b7829da030d337da6b50b6d1c8ef65",
-                "sha256:fd0bfd0e08148156ad7d8473df04fe7eadf1ad54fac6666054e3355560a05312"
+                "sha256:40c83901b3fc54a8dd0a091be150354922efb0ed73597d71d7770d919495cd8c",
+                "sha256:ccebfbbdaeb9723da8dfe222542ff52e0b8cbc5cd0b0aef36e2761b1129e663e"
             ],
             "index": "pypi",
-            "version": "==0.1.3b5"
+            "version": "==0.1.3b7"
         },
         "oyaml": {
             "hashes": [
@@ -96,6 +96,14 @@
                 "sha256:b3f43d496c6daba4493e7c431722aeb7dbc6288f52a6e04e7b6023b0247817e6"
             ],
             "version": "==2.23.0"
+        },
+        "typing-extensions": {
+            "hashes": [
+                "sha256:6e95524d8a547a91e08f404ae485bbb71962de46967e1b71a0cb89af24e761c5",
+                "sha256:79ee589a3caca649a9bfd2a8de4709837400dfa00b6cc81962a1e6a1815969ae",
+                "sha256:f8d2bd89d25bc39dabe7d23df520442fa1d8969b82544370e03d88b5a591c392"
+            ],
+            "version": "==3.7.4.2"
         },
         "urllib3": {
             "hashes": [
