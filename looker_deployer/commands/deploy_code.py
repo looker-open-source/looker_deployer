@@ -3,8 +3,8 @@ import argparse
 import oyaml as yaml
 import logging
 from requests import ConnectionError
-from utils import deploy_logging
-from utils import parse_ini
+from looker_deployer.utils import deploy_logging
+from looker_deployer.utils import parse_ini
 
 logger = deploy_logging.get_logger(__name__)
 

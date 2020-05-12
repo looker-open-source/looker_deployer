@@ -1,5 +1,5 @@
 import pytest
-import deploy_boards
+from looker_deployer.commands import deploy_boards
 from looker_sdk import methods, models
 
 sdk = methods.LookerSDK("foo", "bar", "baz", "bosh")

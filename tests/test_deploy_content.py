@@ -1,9 +1,9 @@
 import pytest
-import deploy_content
 import os
 import subprocess
 from looker_sdk import methods, models
-from utils import parse_ini
+from looker_deployer.commands import deploy_content
+from looker_deployer.utils import parse_ini
 
 sdk = methods.LookerSDK("foo", "bar", "baz", "bosh")
 

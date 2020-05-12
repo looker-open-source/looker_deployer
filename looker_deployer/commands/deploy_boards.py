@@ -2,7 +2,7 @@ import os
 import argparse
 import logging
 from looker_sdk import client, models
-from utils import deploy_logging
+from looker_deployer.utils import deploy_logging
 
 
 logger = deploy_logging.get_logger(__name__)

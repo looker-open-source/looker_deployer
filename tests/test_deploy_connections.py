@@ -1,4 +1,4 @@
-import deploy_connections
+from looker_deployer.commands import deploy_connections
 from looker_sdk import methods, models, error
 
 sdk = methods.LookerSDK("foo", "bar", "baz", "bosh")

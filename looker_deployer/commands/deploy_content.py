@@ -8,8 +8,8 @@ import shutil
 import threading
 from concurrent.futures import ThreadPoolExecutor
 from itertools import repeat
-from utils import deploy_logging
-from utils import parse_ini
+from looker_deployer.utils import deploy_logging
+from looker_deployer.utils import parse_ini
 from looker_sdk import client, models
 
 

@@ -3,8 +3,8 @@ import argparse
 import logging
 import re
 from looker_sdk import client, error
-from utils import deploy_logging
-from utils import parse_ini
+from looker_deployer.utils import deploy_logging
+from looker_deployer.utils import parse_ini
 
 logger = deploy_logging.get_logger(__name__)
 
