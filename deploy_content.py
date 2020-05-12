@@ -47,14 +47,6 @@ def create_or_return_space(space_name, parent_id, sdk):
     return target_id[0]
 
 
-def parse_root(content, root="Shared"):
-    a, b, c = content.partition(root)
-    root_dir = "".join([a, b])
-    logger.debug("Parsed root", extra={"content": content, "root_arg": root, "parsed_root": root_dir})
-
-    return root_dir
-
-
 def get_gzr_creds(ini, env):
     ini = parse_ini.read_ini(ini)
     env_record = ini[env]
@@ -115,7 +107,7 @@ def import_content(content_type, content_json, space_id, env, ini):
     ])
 
 
-def build_spaces(spaces):
+def build_spaces(spaces, sdk):
     # seeding initial value of parent id to Shared
     # We use a list to aid in debugging should values not drain properly"
     id_tracker = ["0"]
@@ -157,7 +149,7 @@ def deploy_space(s, sdk, env, ini, recursive):
     logger.debug("spaces to process", extra={"spaces": spaces_to_process})
 
     # The final value of id_tracker in build_spaces must be the targeted space id
-    space_id = build_spaces(spaces_to_process)
+    space_id = build_spaces(spaces_to_process, sdk)
     logger.debug("target space id", extra={"space_id": space_id})
 
     # deploy looks
@@ -176,9 +168,9 @@ def deploy_space(s, sdk, env, ini, recursive):
         logger.debug("No Recursion specified or empty child list", extra={"children_spaces": space_children})
 
 
-def deploy_content(content_type, c, sdk, env, ini):
+def deploy_content(content_type, content, sdk, env, ini):
     # extract directory path
-    dirs = c.rpartition(os.sep)[0]
+    dirs = content.rpartition(os.sep)[0] + os.sep
 
     # cut down directory to looker-specific paths
     a, b, c = dirs.partition("Shared")  # Hard coded to Shared for now TODO: Change this!
@@ -188,9 +180,9 @@ def deploy_content(content_type, c, sdk, env, ini):
     spaces_to_process = "".join([b, c]).split(os.sep)
 
     # The final value of id_tracker in build_spaces must be the targeted space id
-    space_id = build_spaces(spaces_to_process)
+    space_id = build_spaces(spaces_to_process, sdk)
 
-    import_content(content_type, c, space_id, env, ini)
+    import_content(content_type, content, space_id, env, ini)
 
 
 def main(sdk, env, ini, target_space=None, spaces=None, dashboards=None, looks=None, recursive=False):
