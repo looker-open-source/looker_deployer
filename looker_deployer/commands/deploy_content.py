@@ -1,7 +1,6 @@
 import os
 import re
 import subprocess
-import argparse
 import logging
 import tempfile
 import shutil
@@ -190,7 +189,7 @@ def deploy_content(content_type, content, sdk, env, ini):
     import_content(content_type, content, space_id, env, ini)
 
 
-def main(sdk, env, ini, target_space=None, spaces=None, dashboards=None, looks=None, recursive=False):
+def send_content(sdk, env, ini, target_space=None, spaces=None, dashboards=None, looks=None, recursive=False):
 
     if spaces:
         logger.debug("Deploying spaces", extra={"spaces": spaces})
@@ -251,22 +250,7 @@ def main(sdk, env, ini, target_space=None, spaces=None, dashboards=None, looks=N
                 deploy_content("look", look, sdk, env, ini)
 
 
-if __name__ == "__main__":
-
-    loc = os.path.join(os.path.dirname(os.path.realpath(__file__)), "looker.ini")
-
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--env", required=True, help="What environment to deploy to")
-    parser.add_argument("--ini", default=loc, help="ini file to parse for credentials")
-    parser.add_argument("--debug", action="store_true", help="set logger to debug for more verbosity")
-    parser.add_argument("--recursive", action="store_true", help="Should spaces deploy recursively")
-    parser.add_argument("--target-space", help="override the default target space with a custom path")
-    group = parser.add_mutually_exclusive_group(required=True)
-    group.add_argument("--spaces", nargs="+", help="Spaces to fully deploy")
-    group.add_argument("--dashboards", nargs="+", help="Dashboards to deploy")
-    group.add_argument("--looks", nargs="+", help="Looks to deploy")
-    group.add_argument("--export", help="pull content from dev")
-    args = parser.parse_args()
+def main(args):
 
     if args.debug:
         logger.setLevel(logging.DEBUG)
@@ -285,4 +269,6 @@ if __name__ == "__main__":
         export_spaces(args.env, args.ini, args.export)
     else:
         sdk = get_client(args.ini, args.env)
-        main(sdk, args.env, args.ini, args.target_space, args.spaces, args.dashboards, args.looks, args.recursive)
+        send_content(
+            sdk, args.env, args.ini, args.target_space, args.spaces, args.dashboards, args.looks, args.recursive
+        )

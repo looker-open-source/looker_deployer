@@ -1,5 +1,3 @@
-import os
-import argparse
 import logging
 from looker_sdk import client, models
 from looker_deployer.utils import deploy_logging
@@ -173,7 +171,7 @@ def audit_board_content(board_object, source_sdk, target_sdk):
         match_look_id(look, source_sdk, target_sdk)
 
 
-def main(board_name, source_sdk, target_sdk, title_override=None):
+def send_boards(board_name, source_sdk, target_sdk, title_override=None):
     source_board = return_board(board_name, source_sdk)
     audit_board_content(source_board, source_sdk, target_sdk)
     target_board_id = create_or_update_board(source_board, target_sdk, title_override)
@@ -185,18 +183,7 @@ def main(board_name, source_sdk, target_sdk, title_override=None):
             create_board_item(item, target_section_id, source_sdk, target_sdk)
 
 
-if __name__ == "__main__":
-
-    loc = os.path.join(os.path.dirname(os.path.realpath(__file__)), "looker.ini")
-
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--source", required=True, help="which environment to source the board from")
-    parser.add_argument("--target", required=True, nargs="+", help="which target environment(s) to deploy to")
-    parser.add_argument("--board", required=True, help="which board to deploy")
-    parser.add_argument("--ini", default=loc, help="ini file to parse for credentials")
-    parser.add_argument("--title-change", help="if updating title, the old title to replace in target environments")
-    parser.add_argument("--debug", action="store_true", help="set logger to debug for more verbosity")
-    args = parser.parse_args()
+def main(args):
 
     if args.debug:
         logger.setLevel(logging.DEBUG)
@@ -206,4 +193,4 @@ if __name__ == "__main__":
     for t in args.target:
         target_sdk = get_client(args.ini, t)
 
-        main(args.board, source_sdk, target_sdk, args.title_change)
+        send_boards(args.board, source_sdk, target_sdk, args.title_change)
