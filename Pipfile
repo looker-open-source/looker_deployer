@@ -11,10 +11,11 @@ flake8 = "*"
 pytest-cov = "*"
 
 [packages]
-looker-sdk = "==0.1.3b5"
+looker-sdk = "==0.1.3b7"
 oyaml = "*"
 python-json-logger = "*"
-networkx = "*"
+e1839a8 = {editable = true,path = "."}
+looker-deployer = {editable = true,path = "."}
 
 [requires]
 python_version = "3.7"

@@ -1,9 +1,9 @@
 import pytest
-import deploy_content
 import os
 import subprocess
 from looker_sdk import methods, models
-from utils import parse_ini
+from looker_deployer.commands import deploy_content
+from looker_deployer.utils import parse_ini
 
 sdk = methods.LookerSDK("foo", "bar", "baz", "bosh")
 
@@ -30,14 +30,14 @@ def test_get_space_ids_from_name_not_shared(mocker):
 
 
 def test_create_or_return_space_one_found(mocker):
-    mocker.patch("deploy_content.get_space_ids_from_name")
+    mocker.patch("looker_deployer.commands.deploy_content.get_space_ids_from_name")
     deploy_content.get_space_ids_from_name.return_value = ["42"]
     target_id = deploy_content.create_or_return_space("foo", "bar", "baz")
     assert target_id == "42"
 
 
 def test_create_or_return_space_multi_found(mocker):
-    mocker.patch("deploy_content.get_space_ids_from_name")
+    mocker.patch("looker_deployer.commands.deploy_content.get_space_ids_from_name")
     deploy_content.get_space_ids_from_name.return_value = ["42", "13"]
     with pytest.raises(AssertionError):
         deploy_content.create_or_return_space("foo", "bar", "baz")
@@ -45,7 +45,7 @@ def test_create_or_return_space_multi_found(mocker):
 
 def test_create_or_return_space_none_found(mocker):
     mocker.patch.object(sdk, "create_space")
-    mocker.patch("deploy_content.get_space_ids_from_name")
+    mocker.patch("looker_deployer.commands.deploy_content.get_space_ids_from_name")
     sdk.create_space.return_value = models.Space(name="Foo", parent_id="1", id="42")
     deploy_content.get_space_ids_from_name.return_value = []
 
@@ -54,14 +54,14 @@ def test_create_or_return_space_none_found(mocker):
 
 
 def test_get_gzr_creds(mocker):
-    mocker.patch("utils.parse_ini.read_ini")
+    mocker.patch("looker_deployer.utils.parse_ini.read_ini")
     parse_ini.read_ini.return_value = INI
     tup = deploy_content.get_gzr_creds("foo", "taco")
     assert tup == ("foobarbaz.com", "abc", "xyz")
 
 
 def test_export_space(mocker):
-    mocker.patch("deploy_content.get_gzr_creds")
+    mocker.patch("looker_deployer.commands.deploy_content.get_gzr_creds")
     deploy_content.get_gzr_creds.return_value = ("foobar.com", "abc", "xyz")
 
     mocker.patch("subprocess.call")
@@ -83,7 +83,7 @@ def test_export_space(mocker):
 
 
 def test_import_content(mocker):
-    mocker.patch("deploy_content.get_gzr_creds")
+    mocker.patch("looker_deployer.commands.deploy_content.get_gzr_creds")
     deploy_content.get_gzr_creds.return_value = ("foobar.com", "abc", "xyz")
 
     mocker.patch("subprocess.call")
@@ -105,7 +105,7 @@ def test_import_content(mocker):
 
 
 def test_build_spaces(mocker):
-    mocker.patch("deploy_content.create_or_return_space")
+    mocker.patch("looker_deployer.commands.deploy_content.create_or_return_space")
     deploy_content.create_or_return_space.return_value = "42"
     space_id = deploy_content.build_spaces(["taco"], sdk)
     assert space_id == "42"
@@ -121,8 +121,8 @@ def test_deploy_space_build_call(mocker):
     os.path.isfile.return_value = True
     os.path.isdir.return_value = True
 
-    mocker.patch("deploy_content.build_spaces")
-    mocker.patch("deploy_content.import_content")
+    mocker.patch("looker_deployer.commands.deploy_content.build_spaces")
+    mocker.patch("looker_deployer.commands.deploy_content.import_content")
     deploy_content.deploy_space("Foo/Shared/Bar/", "sdk", "env", "ini", False)
     deploy_content.build_spaces.assert_called_with(["Shared", "Bar"], "sdk")
 
@@ -137,10 +137,10 @@ def test_deploy_space_look_call(mocker):
     os.path.isfile.return_value = True
     os.path.isdir.return_value = True
 
-    mocker.patch("deploy_content.build_spaces")
+    mocker.patch("looker_deployer.commands.deploy_content.build_spaces")
     deploy_content.build_spaces.return_value = "42"
 
-    mocker.patch("deploy_content.import_content")
+    mocker.patch("looker_deployer.commands.deploy_content.import_content")
     deploy_content.deploy_space("Foo/Shared/Bar", "sdk", "env", "ini", False)
     deploy_content.import_content.assert_called_once_with("look", "Foo/Shared/Bar/Look_test", "42", "env", "ini")
 
@@ -155,10 +155,10 @@ def test_deploy_space_dashboard_call(mocker):
     os.path.isfile.return_value = True
     os.path.isdir.return_value = True
 
-    mocker.patch("deploy_content.build_spaces")
+    mocker.patch("looker_deployer.commands.deploy_content.build_spaces")
     deploy_content.build_spaces.return_value = "42"
 
-    mocker.patch("deploy_content.import_content")
+    mocker.patch("looker_deployer.commands.deploy_content.import_content")
     deploy_content.deploy_space("Foo/Shared/Bar", "sdk", "env", "ini", False)
     deploy_content.import_content.assert_called_once_with(
         "dashboard",
@@ -171,16 +171,16 @@ def test_deploy_space_dashboard_call(mocker):
 
 def test_deploy_content_build_call(mocker):
 
-    mocker.patch("deploy_content.build_spaces")
-    mocker.patch("deploy_content.import_content")
+    mocker.patch("looker_deployer.commands.deploy_content.build_spaces")
+    mocker.patch("looker_deployer.commands.deploy_content.import_content")
     deploy_content.deploy_content("look", "Foo/Shared/Bar/Baz/Dashboard_test.json", "sdk", "env", "ini")
     deploy_content.build_spaces.assert_called_with(["Shared", "Bar", "Baz"], "sdk")
 
 
 def test_deploy_content_import_content_call(mocker):
-    mocker.patch("deploy_content.build_spaces")
+    mocker.patch("looker_deployer.commands.deploy_content.build_spaces")
     deploy_content.build_spaces.return_value = "42"
 
-    mocker.patch("deploy_content.import_content")
+    mocker.patch("looker_deployer.commands.deploy_content.import_content")
     deploy_content.deploy_content("look", "Foo/Shared/Bar/Look_test.json", "sdk", "env", "ini")
     deploy_content.import_content.assert_called_with("look", "Foo/Shared/Bar/Look_test.json", "42", "env", "ini")

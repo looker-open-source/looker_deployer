@@ -1,15 +1,14 @@
 import os
 import re
 import subprocess
-import argparse
 import logging
 import tempfile
 import shutil
 import threading
 from concurrent.futures import ThreadPoolExecutor
 from itertools import repeat
-from utils import deploy_logging
-from utils import parse_ini
+from looker_deployer.utils import deploy_logging
+from looker_deployer.utils import parse_ini
 from looker_sdk import client, models
 
 
@@ -41,7 +40,7 @@ def create_or_return_space(space_name, parent_id, sdk):
             logger.error("More than one Space found with that parent/name", extra={"space_ids": target_id})
             raise e
         else:
-            logger.warning("No spaces found. Creating space now")
+            logger.warning("No folders found. Creating folder now")
             new_space = models.Space(name=space_name, parent_id=parent_id)
             res = sdk.create_space(new_space)
             return res.id
@@ -88,7 +87,7 @@ def import_content(content_type, content_json, space_id, env, ini):
         extra={
             "content_type": content_type,
             "source_file": content_json,
-            "space_id": space_id,
+            "folder_id": space_id,
             "host": host,
             "active_thread": threading.get_ident()
         }
@@ -120,7 +119,7 @@ def build_spaces(spaces, sdk):
         # Pull last value from id_tracker
         space_parent = id_tracker.pop()
 
-        logger.debug("data for space creation", extra={"space": space, "space_parent": space_parent})
+        logger.debug("data for folder creation", extra={"folder": space, "folder_parent": space_parent})
         space_id = create_or_return_space(space, space_parent, sdk)
 
         # Add new id to id_tracker
@@ -133,7 +132,7 @@ def build_spaces(spaces, sdk):
 
 def deploy_space(s, sdk, env, ini, recursive):
 
-    logger.debug("working space", extra={"working_space": s})
+    logger.debug("working folder", extra={"working_folder": s})
 
     # grab the relevant files for deployment
     space_files = [f for f in os.listdir(s) if os.path.isfile(os.path.join(s, f))]
@@ -149,11 +148,11 @@ def deploy_space(s, sdk, env, ini, recursive):
 
     # turn into a list of spaces to process
     spaces_to_process = "".join([b, c]).split(os.sep)
-    logger.debug("spaces to process", extra={"spaces": spaces_to_process})
+    logger.debug("folders to process", extra={"folders": spaces_to_process})
 
     # The final value of id_tracker in build_spaces must be the targeted space id
     space_id = build_spaces(spaces_to_process, sdk)
-    logger.debug("target space id", extra={"space_id": space_id})
+    logger.debug("target folder id", extra={"folder_id": space_id})
 
     # deploy looks
     logger.debug("running looks", extra={"looks": look_files})
@@ -166,11 +165,11 @@ def deploy_space(s, sdk, env, ini, recursive):
 
     # go for recursion
     if recursive and space_children:
-        logger.info("Attemting Recursion of children spaces", extra={"children_spaces": space_children})
+        logger.info("Attemting Recursion of children folders", extra={"children_folders": space_children})
         for child in space_children:
             deploy_space(child, sdk, env, ini, recursive)
     else:
-        logger.info("No Recursion specified or empty child list", extra={"children_spaces": space_children})
+        logger.info("No Recursion specified or empty child list", extra={"children_folders": space_children})
 
 
 def deploy_content(content_type, content, sdk, env, ini):
@@ -190,20 +189,20 @@ def deploy_content(content_type, content, sdk, env, ini):
     import_content(content_type, content, space_id, env, ini)
 
 
-def main(sdk, env, ini, target_space=None, spaces=None, dashboards=None, looks=None, recursive=False):
+def send_content(sdk, env, ini, target_folder=None, spaces=None, dashboards=None, looks=None, recursive=False):
 
     if spaces:
-        logger.debug("Deploying spaces", extra={"spaces": spaces})
+        logger.debug("Deploying folders", extra={"folders": spaces})
         # Loop through spaces
         for s in spaces:
-            logger.debug("working space", extra={"working_space": s})
+            logger.debug("working folder", extra={"working_folder": s})
             # Check for a target space override
-            if target_space:
-                logger.info("target space override found", extra={"target_space": target_space})
+            if target_folder:
+                logger.info("target folder override found", extra={"target_folder": target_folder})
                 # In order for recursion to continue to work properly, the actual directory needs to be updated
                 # Create a temporary directory to contain updated space. Context block will auto-clean when done
                 with tempfile.TemporaryDirectory() as d:
-                    updated_space = os.path.join(d, target_space)
+                    updated_space = os.path.join(d, target_folder)
                     # copy the source space directory tree to target space override
                     shutil.copytree(s, updated_space)
                     # kick off the job from the new space
@@ -216,13 +215,13 @@ def main(sdk, env, ini, target_space=None, spaces=None, dashboards=None, looks=N
         for dash in dashboards:
             logger.debug("working dashboard", extra={"dashboard": dash})
             # Check for target space override
-            if target_space:
-                logger.info("target space override found", extra={"target_space": target_space})
+            if target_folder:
+                logger.info("target folder override found", extra={"target_folder": target_folder})
                 # In order for recursion to continue to work properly, the actual directory needs to be updated
                 # Create a temporary directory to contain updated space. Context block will auto-clean when done
                 with tempfile.TemporaryDirectory() as d:
                     # copy the dashboard file to target space override
-                    target_dir = os.path.join(d, target_space)
+                    target_dir = os.path.join(d, target_folder)
                     os.makedirs(target_dir)
                     shutil.copy(dash, target_dir)
                     new_dash_path = [os.path.join(target_dir, f) for f in os.listdir(target_dir)][0]
@@ -235,13 +234,13 @@ def main(sdk, env, ini, target_space=None, spaces=None, dashboards=None, looks=N
         for look in looks:
             logger.debug("working look", extra={"look": look})
             # Check for target space override
-            if target_space:
-                logger.info("target space override found", extra={"target_space": target_space})
+            if target_folder:
+                logger.info("target folder override found", extra={"target_folder": target_folder})
                 # In order for recursion to continue to work properly, the actual directory needs to be updated
                 # Create a temporary directory to contain updated space. Context block will auto-clean when done
                 with tempfile.TemporaryDirectory() as d:
                     # copy the look file to target space override
-                    target_dir = os.path.join(d, target_space)
+                    target_dir = os.path.join(d, target_folder)
                     os.makedirs(target_dir)
                     shutil.copy(look, target_dir)
                     new_look_path = [os.path.join(target_dir, f) for f in os.listdir(target_dir)][0]
@@ -251,38 +250,25 @@ def main(sdk, env, ini, target_space=None, spaces=None, dashboards=None, looks=N
                 deploy_content("look", look, sdk, env, ini)
 
 
-if __name__ == "__main__":
-
-    loc = os.path.join(os.path.dirname(os.path.realpath(__file__)), "looker.ini")
-
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--env", required=True, help="What environment to deploy to")
-    parser.add_argument("--ini", default=loc, help="ini file to parse for credentials")
-    parser.add_argument("--debug", action="store_true", help="set logger to debug for more verbosity")
-    parser.add_argument("--recursive", action="store_true", help="Should spaces deploy recursively")
-    parser.add_argument("--target-space", help="override the default target space with a custom path")
-    group = parser.add_mutually_exclusive_group(required=True)
-    group.add_argument("--spaces", nargs="+", help="Spaces to fully deploy")
-    group.add_argument("--dashboards", nargs="+", help="Dashboards to deploy")
-    group.add_argument("--looks", nargs="+", help="Looks to deploy")
-    group.add_argument("--export", help="pull content from dev")
-    args = parser.parse_args()
+def main(args):
 
     if args.debug:
         logger.setLevel(logging.DEBUG)
 
     logger.debug("ini file", extra={"ini": args.ini})
 
-    if args.target_space:
+    if args.target_folder:
         # Force any target space override to start from Shared
-        assert args.target_space.startswith("Shared"), "Target Space MUST begin with 'Shared'"
+        assert args.target_folder.startswith("Shared"), "Target Space MUST begin with 'Shared'"
         # Make sure trailing sep is in place
-        if not args.target_space.endswith(os.sep):
-            args.target_space += os.sep
+        if not args.target_folder.endswith(os.sep):
+            args.target_folder += os.sep
 
     if args.export:
         logger.info("Pulling content from dev", extra={"env": args.env, "pull_location": args.export})
         export_spaces(args.env, args.ini, args.export)
     else:
         sdk = get_client(args.ini, args.env)
-        main(sdk, args.env, args.ini, args.target_space, args.spaces, args.dashboards, args.looks, args.recursive)
+        send_content(
+            sdk, args.env, args.ini, args.target_folder, args.folders, args.dashboards, args.looks, args.recursive
+        )

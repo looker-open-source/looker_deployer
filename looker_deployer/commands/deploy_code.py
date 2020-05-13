@@ -1,10 +1,9 @@
 import requests
-import argparse
 import oyaml as yaml
 import logging
 from requests import ConnectionError
-from utils import deploy_logging
-from utils import parse_ini
+from looker_deployer.utils import deploy_logging
+from looker_deployer.utils import parse_ini
 
 logger = deploy_logging.get_logger(__name__)
 
@@ -74,14 +73,7 @@ def deploy_code(project, endpoint, header):
     return r.json()
 
 
-if __name__ == "__main__":
-
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--hub", action="store_true", help="flag to deploy hub project")
-    parser.add_argument("--spoke", nargs='+', help="which spoke(s) to deploy")
-    parser.add_argument("--hub-exclude", nargs="+", help="which projects should be ignored from hub deployment")
-    parser.add_argument("--debug", action="store_true", help="set logger to debug for more verbosity")
-    args = parser.parse_args()
+def main(args):
 
     if args.debug:
         logger.setLevel(logging.DEBUG)

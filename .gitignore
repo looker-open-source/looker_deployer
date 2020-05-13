@@ -3,3 +3,4 @@ looker.ini
 code_config.yaml
 .env
 .coverage
+*egg-info/

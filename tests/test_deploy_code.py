@@ -1,5 +1,5 @@
 import pytest
-import deploy_code
+from looker_deployer.commands import deploy_code
 import requests
 
 CONFIG_NO_EXCLUDE = {
