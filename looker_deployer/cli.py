@@ -3,7 +3,7 @@ import os
 from looker_deployer.commands import deploy_boards, deploy_code, deploy_connections, deploy_content
 
 
-loc = os.getcwd()
+loc = "looker.ini"
 
 
 def main():
