@@ -148,23 +148,23 @@ optional arguments:
 
 This command makes use of `gazer` to either pull content from your dev Looker instance to a directory structure on your
 local machine or deploy content from said directory structure to a specified Looker instance. The command can work for
-specific sets of Looks or Dashboards or can work on entire spaces - and will correctly create any space it doesn't find
+specific sets of Looks or Dashboards or can work on entire folders - and will correctly create any folder it doesn't find
 in the target instance. The command accepts the following arguments:
 
 ```
 usage: ldeploy content [-h] --env ENV [--ini INI] [--debug] [--recursive]
-                       [--target-space TARGET_SPACE]
-                       (--spaces SPACES [SPACES ...] | --dashboards DASHBOARDS [DASHBOARDS ...] | --looks LOOKS [LOOKS ...] | --export EXPORT)
+                       [--target-folder TARGET_SPACE]
+                       (--folders SPACES [SPACES ...] | --dashboards DASHBOARDS [DASHBOARDS ...] | --looks LOOKS [LOOKS ...] | --export EXPORT)
 
 optional arguments:
   -h, --help            show this help message and exit
   --env ENV             What environment to deploy to
   --ini INI             ini file to parse for credentials
   --debug               set logger to debug for more verbosity
-  --recursive           Should spaces deploy recursively
-  --target-space TARGET_SPACE
-                        override the default target space with a custom path
-  --spaces SPACES [SPACES ...]
+  --recursive           Should folders deploy recursively
+  --target-folder TARGET_SPACE
+                        override the default target folder with a custom path
+  --folders SPACES [SPACES ...]
                         Spaces to fully deploy
   --dashboards DASHBOARDS [DASHBOARDS ...]
                         Dashboards to deploy
@@ -175,14 +175,14 @@ optional arguments:
 
 ### Examples:
 
-- `python deploy_content.py --env Dev --export ~/foo/bar/` <- exports the Shared space and all sub-spaces to the file
-  location `~/foo/bar/`
-- `python deploy_content.py --env prod --spaces ~/foo/bar/Shared/Public` <- deploys every piece of content in
+- `ldeploy content --env Dev --export ~/foo/bar/` <- exports the Shared folder and all sub-folders to the
+  directory location `~/foo/bar/`
+- `ldeploy content --env prod --folders ~/foo/bar/Shared/Public` <- deploys every piece of content in
   `Shared/Public` to the prod instance
-- `python deploy_content.py --env prod --spaces ~/foo/bar/Shared/Public --recursive --target-space Shared/FromDev/Public` <- deploys every piece of content in
-  `Shared/Public` and all child spaces to the prod instance in the `Shared/FromDev/Public` space.
-- `python deploy_content.py --env Prod --dashboards ~/foo/bar/Shared/Public/Dashboard_1.json
-  ~/foo/bar/Shared/Restricted/Dashboard_2.json` <- deploys `Dashboard1` and `Dashboard2` to their respective spaces in
+- `ldeploy content --env prod --folders ~/foo/bar/Shared/Public --recursive --target-folder Shared/FromDev/Public` <- deploys every piece of content in
+  `Shared/Public` and all child folders to the prod instance in the `Shared/FromDev/Public` folder.
+- `ldeploy content --env Prod --dashboards ~/foo/bar/Shared/Public/Dashboard_1.json
+  ~/foo/bar/Shared/Restricted/Dashboard_2.json` <- deploys `Dashboard1` and `Dashboard2` to their respective folders in
   the Prod instance
 
 
