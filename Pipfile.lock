@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "dbd36be7e479032c2a191a9cf9a5e7738650063c0c0e9ebf174a13b3a6be8491"
+            "sha256": "c3364e1828f77e7ab62c44413ce0b32fb1d5d20e788f4cd07ee1f7af51f7c4cd"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -54,6 +54,10 @@
                 "sha256:a068a21ceac8a4d63dbfd964670474107f541babbd2250d61922f029858365fa"
             ],
             "version": "==2.9"
+        },
+        "looker-deployer": {
+            "editable": true,
+            "path": "."
         },
         "looker-sdk": {
             "hashes": [

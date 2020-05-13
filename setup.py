@@ -12,7 +12,7 @@ setup(
     install_requires=REQUIRES,
     name=NAME,
     packages=["looker_deployer", "looker_deployer/commands", "looker_deployer/utils"],
-    entry_points={"console_scripts": ["looker_deployer=looker_deployer.cli:main"]},
+    entry_points={"console_scripts": ["ldeploy=looker_deployer.cli:main"]},
     python_requires=">=3.7.0, <3.8",
     version=VERSION
 )
