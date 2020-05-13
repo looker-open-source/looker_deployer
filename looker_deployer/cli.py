@@ -1,5 +1,4 @@
 import argparse
-import os
 from looker_deployer.commands import deploy_boards, deploy_code, deploy_connections, deploy_content
 
 
@@ -68,10 +67,10 @@ def setup_content_subparser(subparsers):
     content_subparser.add_argument("--env", required=True, help="What environment to deploy to")
     content_subparser.add_argument("--ini", default=loc, help="ini file to parse for credentials")
     content_subparser.add_argument("--debug", action="store_true", help="set logger to debug for more verbosity")
-    content_subparser.add_argument("--recursive", action="store_true", help="Should spaces deploy recursively")
-    content_subparser.add_argument("--target-space", help="override the default target space with a custom path")
+    content_subparser.add_argument("--recursive", action="store_true", help="Should folders deploy recursively")
+    content_subparser.add_argument("--target-folder", help="override the default target folder with a custom path")
     content_group = content_subparser.add_mutually_exclusive_group(required=True)
-    content_group.add_argument("--spaces", nargs="+", help="Spaces to fully deploy")
+    content_group.add_argument("--folders", nargs="+", help="Folders to fully deploy")
     content_group.add_argument("--dashboards", nargs="+", help="Dashboards to deploy")
     content_group.add_argument("--looks", nargs="+", help="Looks to deploy")
     content_group.add_argument("--export", help="pull content from dev")
