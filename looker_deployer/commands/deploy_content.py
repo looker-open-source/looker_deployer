@@ -194,7 +194,7 @@ def deploy_space(s, sdk, env, ini, no_verify_ssl, recursive):
     if recursive and space_children:
         logger.info("Attemting Recursion of children folders", extra={"children_folders": space_children})
         for child in space_children:
-            deploy_space(child, sdk, env, ini, recursive)
+            deploy_space(child, sdk, env, ini, no_verify_ssl, recursive)
     else:
         logger.info("No Recursion specified or empty child list", extra={"children_folders": space_children})
 
