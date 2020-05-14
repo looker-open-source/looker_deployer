@@ -6,35 +6,64 @@ Looker Deployer
 
 ## Intro
 
-Looker Deployer is a command line tool to help move Looker objects across instances. This includes Content
+Looker Deployer (aka 'ldeploy') is a command line tool to help move Looker objects across instances. This includes Content
 (Looks, Dashboards, entire Spaces, etc.), Boards and Connections.
 
 ## Requirements
 
-In order for these commands to correctly work a few assumptions/requirements are needed for your Looker environments:
+In order for these commands to correctly work a few assumptions/requirements are needed for your environment:
 
 >- **Python** Looker Deployer requires Python 3.7+
 >- **Gazer** The content deployment command makes use of [gzr](https://github.com/looker-open-source/gzr) to automate content deployment, so you will need to have that
->installed and configured properly.
+>installed and configured properly. Gazer requires an up-to-date version of ruby.
+
+### Authentication and Configuration
+
+Looker Deployer makes use of the [Looker SDK](https://github.com/looker-open-source/sdk-codegen/tree/master/python) to
+communicate with your Looker instances. A `looker.ini` file is required to provide authentication. By default the tool
+looks for this file in your working directory but if it is named differently or in a different location you can make use
+of the `--ini` argument to specify its location. Here's an example ini file:
+
+```
+[dev]
+api_version=3.1
+base_url=https://looker-dev.company.com:19999
+client_id=abc
+client_secret=xyz
+verify_ssl=True
+
+[prod]
+api_version=3.1
+base_url=https://looker-test.company.com:19999
+client_id=abc
+client_secret=xyz
+verify_ssl=True
+```
 
 ## Installation
 
 Coming soon to PyPi! - You'll be able to `pip install looker_deployer`. In the meantime, please follow the Development
 Setup instructions [below](#development)
 
-## Authentication and Configuration
+### Dockerfile
 
-Looker Deployer makes use of the [Looker SDK](https://github.com/looker-open-source/sdk-codegen/tree/master/python) to
-communicate with your Looker instances. A `looker.ini` file is required to provide authentication. By default the tool
-looks for this file in your working directory but if it is named differently or in a different location you can make use
-of the `--ini` argument to specify its location.
+This repo includes a Dockerfile that can be used to containerize Deployer. It includes all dependencies, such as Gazer.
+To build, clone this repo, cd into it, and execute a `docker build` command. For example:
 
-In order to use the code deployment tool, a `code_config.yaml` file is required. This file requires a list of instances - one
-for each client production instance. This list must include the name (used to refer to that instance in the commands),
-  the endpoint, and the name of that instances spoke project. In addition, the config file requires an entry for the
-common hub project and can optionally include a list of names to instance names to exclude from hub deployments. An
-example config file is provided in the repo.
+```
+docker build -t looker_deployer .
+```
 
+As noted above, a `looker.ini` file is required for API authentication. You will have to either volume-map the ini file
+when you run the container, or (recommended) build an image from this one that "burns" a relevant ini file into the
+container. Carrying on from the prior example, you could create a directory containing a Dockerfile and a looker.ini file. The Dockerfile would contain:
+
+```
+FROM looker_deployer
+COPY looker.ini /
+```
+
+Build the image and your config will be available from within the container.
 
 ## Usage
 
@@ -89,6 +118,24 @@ secret.
 An overview of the relevant architecture (click to embiggen):
 
 ![diagram](https://www.lucidchart.com/publicSegments/view/d214e83b-6d02-4dd3-a072-31760bd3b3d9/image.png)
+
+In order to use the code deployment tool, a `code_config.yaml` file is required. This file requires a list of instances - one
+for each client production instance. This list must include the name (used to refer to that instance in the commands),
+  the endpoint, and the name of that instances spoke project. In addition, the config file requires an entry for the
+common hub project and can optionally include a list of names to instance names to exclude from hub deployments. Here's
+an example config:
+
+```
+instances:
+  - name: calvin
+    endpoint: https://looker-dev.company.com
+    spoke_project: powered_by_spoke_ck
+  - name: levis
+    endpoint: https://looker-dev.company.com
+    spoke_project: powered_by_spoke_lv
+
+hub_project: powered_by_hub
+```
 
 The command accepts the following arguments:
 
