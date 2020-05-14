@@ -4,3 +4,4 @@ code_config.yaml
 .env
 .coverage
 *egg-info/
+.dockerignore
