@@ -153,8 +153,8 @@ in the target instance. The command accepts the following arguments:
 
 ```
 usage: ldeploy content [-h] --env ENV [--ini INI] [--debug] [--recursive]
-                       [--target-folder TARGET_SPACE]
-                       (--folders SPACES [SPACES ...] | --dashboards DASHBOARDS [DASHBOARDS ...] | --looks LOOKS [LOOKS ...] | --export EXPORT)
+                       [--target-folder TARGET_FOLDER] [--no-verify-ssl]
+                       (--folders FOLDERS [FOLDERS ...] | --dashboards DASHBOARDS [DASHBOARDS ...] | --looks LOOKS [LOOKS ...] | --export EXPORT)
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -162,10 +162,11 @@ optional arguments:
   --ini INI             ini file to parse for credentials
   --debug               set logger to debug for more verbosity
   --recursive           Should folders deploy recursively
-  --target-folder TARGET_SPACE
+  --target-folder TARGET_FOLDER
                         override the default target folder with a custom path
-  --folders SPACES [SPACES ...]
-                        Spaces to fully deploy
+  --no-verify-ssl       Skip SSL Verification
+  --folders FOLDERS [FOLDERS ...]
+                        Folders to fully deploy
   --dashboards DASHBOARDS [DASHBOARDS ...]
                         Dashboards to deploy
   --looks LOOKS [LOOKS ...]
@@ -191,4 +192,4 @@ optional arguments:
 This project makes use of `pipenv` to manage dependencies. Follow the [installation
 instructions](https://pipenv-fork.readthedocs.io/en/latest/index.html). It is recommended to use [pyenv](https://github.com/pyenv/pyenv#installation) to manage installing python versions.
 
-Once `pipenv` has been installed, clone the repo and invoke `pipenv install -e . --pre --dev`.
+Once `pipenv` has been installed, clone this repo, `cd` into it, and invoke `pipenv install --ignore-pipfile`
