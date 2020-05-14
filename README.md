@@ -54,16 +54,23 @@ To build, clone this repo, cd into it, and execute a `docker build` command. For
 docker build -t looker_deployer .
 ```
 
+There are also pre-built images available in the repo's
+[Packages](https://github.com/JCPistell/looker_deployer/packages) section. 
+
 As noted above, a `looker.ini` file is required for API authentication. You will have to either volume-map the ini file
 when you run the container, or (recommended) build an image from this one that "burns" a relevant ini file into the
 container. Carrying on from the prior example, you could create a directory containing a Dockerfile and a looker.ini file. The Dockerfile would contain:
 
 ```
-FROM looker_deployer
+FROM docker.pkg.github.com/jcpistell/looker_deployer/looker_deployer:v1
 COPY looker.ini /
 ```
 
-Build the image and your config will be available from within the container.
+Build the image and your config will be available from within the container:
+
+```
+docker build -t ldeploy .
+```
 
 ## Usage
 
