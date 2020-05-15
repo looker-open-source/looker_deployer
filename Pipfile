@@ -9,6 +9,7 @@ pytest = "*"
 pytest-mock = "*"
 flake8 = "*"
 pytest-cov = "*"
+twine = "*"
 
 [packages]
 looker-sdk = "==0.1.3b7"

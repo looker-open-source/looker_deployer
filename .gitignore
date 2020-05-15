@@ -5,3 +5,5 @@ code_config.yaml
 .coverage
 *egg-info/
 .dockerignore
+dist/
+build/

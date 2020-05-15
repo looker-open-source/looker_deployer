@@ -42,8 +42,7 @@ verify_ssl=True
 
 ## Installation
 
-Coming soon to PyPi! - You'll be able to `pip install looker_deployer`. In the meantime, please follow the Development
-Setup instructions [below](#development)
+Looker Deployer is on PyPi! - You can install it with `pip install looker-deployer`.
 
 ### Dockerfile
 
@@ -55,7 +54,7 @@ docker build -t looker_deployer .
 ```
 
 There are also pre-built images available in the repo's
-[Packages](https://github.com/JCPistell/looker_deployer/packages) section. 
+[Packages](https://github.com/JCPistell/looker_deployer/packages) section.
 
 As noted above, a `looker.ini` file is required for API authentication. You will have to either volume-map the ini file
 when you run the container, or (recommended) build an image from this one that "burns" a relevant ini file into the
