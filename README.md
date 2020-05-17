@@ -34,7 +34,7 @@ verify_ssl=True
 
 [prod]
 api_version=3.1
-base_url=https://looker-test.company.com:19999
+base_url=https://looker-prod.company.com:19999
 client_id=abc
 client_secret=xyz
 verify_ssl=True
@@ -81,6 +81,53 @@ argument. For example:
 
 `ldeploy content -h`
 
+## Content Deployment
+
+This command makes use of `gazer` to either pull content from your dev Looker instance to a directory structure on your
+local machine or deploy content from said directory structure to a specified Looker instance. The command can work for
+specific sets of Looks or Dashboards or can work on entire folders - and will correctly create any folder it doesn't find
+in the target instance.
+
+All content deployment tasks begin by exporting a representation of your development environment's content folder tree
+to local disk. This is done with the `--export` command. This tree is then used in subsequent import commands to import
+dashboards, looks, or entire folder trees to another instance.
+
+The command accepts the following arguments:
+
+```
+usage: ldeploy content [-h] --env ENV [--ini INI] [--debug] [--recursive]
+                       [--target-folder TARGET_FOLDER]
+                       (--folders FOLDERS [FOLDERS ...] | --dashboards DASHBOARDS [DASHBOARDS ...] | --looks LOOKS [LOOKS ...] | --export EXPORT)
+
+optional arguments:
+  -h, --help            show this help message and exit
+  --env ENV             What environment to deploy to
+  --ini INI             ini file to parse for credentials
+  --debug               set logger to debug for more verbosity
+  --recursive           Should folders deploy recursively
+  --target-folder TARGET_FOLDER
+                        override the default target folder with a custom path
+  --folders FOLDERS [FOLDERS ...]
+                        Folders to fully deploy
+  --dashboards DASHBOARDS [DASHBOARDS ...]
+                        Dashboards to deploy
+  --looks LOOKS [LOOKS ...]
+                        Looks to deploy
+  --export EXPORT       pull content from dev
+```
+
+### Examples:
+
+- `ldeploy content --env Dev --export ~/foo/bar/` <- exports the Shared folder and all sub-folders to the
+  directory location `~/foo/bar/`
+- `ldeploy content --env prod --folders ~/foo/bar/Shared/Public` <- deploys every piece of content in
+  `Shared/Public` to the prod instance
+- `ldeploy content --env prod --folders ~/foo/bar/Shared/Public --recursive --target-folder Shared/FromDev/Public` <- deploys every piece of content in
+  `Shared/Public` and all child folders to the prod instance in the `Shared/FromDev/Public` folder.
+- `ldeploy content --env Prod --dashboards ~/foo/bar/Shared/Public/Dashboard_1.json
+  ~/foo/bar/Shared/Restricted/Dashboard_2.json` <- deploys `Dashboard1` and `Dashboard2` to their respective folders in
+  the Prod instance
+
 ## Board Deployment
 
 This command allows for the deployment of boards/homepages across instances. It attempts to resolve differences in
@@ -114,6 +161,37 @@ optional arguments:
 - `ldeploy boards --source dev --target prod_1 prod_2 --board 'My Updated Title Board' --title-change 'My Cool
   Board'` <- This deploys a board whose title has been changed from 'My Cool Board' to 'My Updated Title Board' from dev
   to two instances: prod_1 and prod_2
+
+
+## Connections Deployment
+
+This command allows for the migration of database connections across instances. For security purposes, Looker's API does
+not transmit password credentials, so this command allows for the injection of these credentials from the `.ini` file.
+
+The command accepts the following arguments:
+
+```
+usage: ldeploy connections [-h] --source SOURCE [--ini INI] --target TARGET
+                           [TARGET ...] [--pattern PATTERN]
+                           [--include-password] [--debug]
+
+optional arguments:
+  -h, --help            show this help message and exit
+  --source SOURCE       which environment to source the board from
+  --ini INI             ini file to parse for credentials
+  --target TARGET [TARGET ...]
+                        which target environment(s) to deploy to
+  --pattern PATTERN     regex pattern to filter which connections are deployed
+  --include-password    should passwords be set from the ini file?
+  --debug               set logger to debug for more verbosity
+```
+
+### Examples:
+
+- `ldeploy connections --source dev --target prod` <- This will deploy all connections in the dev instance to the prod
+  instance. No credentials will be included and would need to be manually added from the Looker UI.
+- `ldeploy connections --source dev --target prod --pattern ^bigquery --include-password` <- This will deploy all
+  connections that begin with `bigquery` from dev to prod and attempt to inject passwords included in the `.ini` file.
 
 ## Code Deployment
 
@@ -165,80 +243,6 @@ optional arguments:
 - `ldeploy code --spoke foo` <- This will deploy the spoke project named "foo" to the relevant instance
 - `ldeploy code --hub --spoke foo bar --hub-exclude bar --debug` <- This will deploy the hub project to all
   instances except `bar` and then deploy the spoke projects `foo` and `bar` to their respective instances
-
-## Connections Deployment
-
-This command allows for the migration of database connections across instances. For security purposes, Looker's API does
-not transmit password credentials, so this command allows for the injection of these credentials from the `.ini` file.
-
-The command accepts the following arguments:
-
-```
-usage: ldeploy connections [-h] --source SOURCE [--ini INI] --target TARGET
-                           [TARGET ...] [--pattern PATTERN]
-                           [--include-password] [--debug]
-
-optional arguments:
-  -h, --help            show this help message and exit
-  --source SOURCE       which environment to source the board from
-  --ini INI             ini file to parse for credentials
-  --target TARGET [TARGET ...]
-                        which target environment(s) to deploy to
-  --pattern PATTERN     regex pattern to filter which connections are deployed
-  --include-password    should passwords be set from the ini file?
-  --debug               set logger to debug for more verbosity
-```
-
-### Examples:
-
-- `ldeploy connections --source dev --target prod` <- This will deploy all connections in the dev instance to the prod
-  instance. No credentials will be included and would need to be manually added from the Looker UI.
-- `ldeploy connections --source dev --target prod --pattern ^bigquery --include-password` <- This will deploy all
-  connections that begin with `bigquery` from dev to prod and attempt to inject passwords included in the `.ini` file.
-
-
-## Content Deployment
-
-This command makes use of `gazer` to either pull content from your dev Looker instance to a directory structure on your
-local machine or deploy content from said directory structure to a specified Looker instance. The command can work for
-specific sets of Looks or Dashboards or can work on entire folders - and will correctly create any folder it doesn't find
-in the target instance. The command accepts the following arguments:
-
-```
-usage: ldeploy content [-h] --env ENV [--ini INI] [--debug] [--recursive]
-                       [--target-folder TARGET_FOLDER] [--no-verify-ssl]
-                       (--folders FOLDERS [FOLDERS ...] | --dashboards DASHBOARDS [DASHBOARDS ...] | --looks LOOKS [LOOKS ...] | --export EXPORT)
-
-optional arguments:
-  -h, --help            show this help message and exit
-  --env ENV             What environment to deploy to
-  --ini INI             ini file to parse for credentials
-  --debug               set logger to debug for more verbosity
-  --recursive           Should folders deploy recursively
-  --target-folder TARGET_FOLDER
-                        override the default target folder with a custom path
-  --no-verify-ssl       Skip SSL Verification
-  --folders FOLDERS [FOLDERS ...]
-                        Folders to fully deploy
-  --dashboards DASHBOARDS [DASHBOARDS ...]
-                        Dashboards to deploy
-  --looks LOOKS [LOOKS ...]
-                        Looks to deploy
-  --export EXPORT       pull content from dev
-```
-
-### Examples:
-
-- `ldeploy content --env Dev --export ~/foo/bar/` <- exports the Shared folder and all sub-folders to the
-  directory location `~/foo/bar/`
-- `ldeploy content --env prod --folders ~/foo/bar/Shared/Public` <- deploys every piece of content in
-  `Shared/Public` to the prod instance
-- `ldeploy content --env prod --folders ~/foo/bar/Shared/Public --recursive --target-folder Shared/FromDev/Public` <- deploys every piece of content in
-  `Shared/Public` and all child folders to the prod instance in the `Shared/FromDev/Public` folder.
-- `ldeploy content --env Prod --dashboards ~/foo/bar/Shared/Public/Dashboard_1.json
-  ~/foo/bar/Shared/Restricted/Dashboard_2.json` <- deploys `Dashboard1` and `Dashboard2` to their respective folders in
-  the Prod instance
-
 
 ## Development
 

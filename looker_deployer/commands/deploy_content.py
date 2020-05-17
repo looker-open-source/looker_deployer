@@ -55,12 +55,13 @@ def get_gzr_creds(ini, env):
     host = env_record["base_url"].lstrip("https://").split(":")[0]
     client_id = env_record["client_id"]
     client_secret = env_record["client_secret"]
+    verify_ssl = env_record["verify_ssl"]
 
-    return (host, client_id, client_secret)
+    return (host, client_id, client_secret, verify_ssl)
 
 
-def export_spaces(no_verify_ssl, env, ini, path):
-    host, client_id, client_secret = get_gzr_creds(ini, env)
+def export_spaces(env, ini, path):
+    host, client_id, client_secret, verify_ssl = get_gzr_creds(ini, env)
 
     gzr_command = [
         "gzr",
@@ -77,15 +78,16 @@ def export_spaces(no_verify_ssl, env, ini, path):
         client_secret
     ]
 
-    if no_verify_ssl:
+    # config parser returns a string - easier to parse that than convert to a bool
+    if verify_ssl == "False":
         gzr_command.append("--no-verify-ssl")
 
     subprocess.run(gzr_command)
 
 
-def import_content(content_type, content_json, space_id, no_verify_ssl, env, ini):
+def import_content(content_type, content_json, space_id, env, ini):
     assert content_type in ["dashboard", "look"], "Unsupported Content Type"
-    host, client_id, client_secret = get_gzr_creds(ini, env)
+    host, client_id, client_secret, verify_ssl = get_gzr_creds(ini, env)
 
     logger.info(
         "Deploying content",
@@ -94,7 +96,7 @@ def import_content(content_type, content_json, space_id, no_verify_ssl, env, ini
             "source_file": content_json,
             "folder_id": space_id,
             "host": host,
-            "no_verify_ssl": no_verify_ssl,
+            "verify_ssl": verify_ssl,
             "active_thread": threading.get_ident()
         }
     )
@@ -114,7 +116,8 @@ def import_content(content_type, content_json, space_id, no_verify_ssl, env, ini
         "--force"
     ]
 
-    if no_verify_ssl:
+    # config parser returns a string - easier to parse that than convert to a bool
+    if verify_ssl == "False":
         gzr_command.append("--no-verify-ssl")
 
     subprocess.run(gzr_command)
@@ -141,7 +144,7 @@ def build_spaces(spaces, sdk):
     return id_tracker[0]
 
 
-def deploy_space(s, sdk, env, ini, no_verify_ssl, recursive):
+def deploy_space(s, sdk, env, ini, recursive):
 
     logger.debug("working folder", extra={"working_folder": s})
 
@@ -173,7 +176,6 @@ def deploy_space(s, sdk, env, ini, no_verify_ssl, recursive):
             repeat("look"),
             look_files,
             repeat(space_id),
-            repeat(no_verify_ssl),
             repeat(env),
             repeat(ini)
         )
@@ -185,7 +187,6 @@ def deploy_space(s, sdk, env, ini, no_verify_ssl, recursive):
             repeat("dashboard"),
             dash_files,
             repeat(space_id),
-            repeat(no_verify_ssl),
             repeat(env),
             repeat(ini)
         )
@@ -194,12 +195,12 @@ def deploy_space(s, sdk, env, ini, no_verify_ssl, recursive):
     if recursive and space_children:
         logger.info("Attemting Recursion of children folders", extra={"children_folders": space_children})
         for child in space_children:
-            deploy_space(child, sdk, env, ini, no_verify_ssl, recursive)
+            deploy_space(child, sdk, env, ini, recursive)
     else:
         logger.info("No Recursion specified or empty child list", extra={"children_folders": space_children})
 
 
-def deploy_content(content_type, content, sdk, no_verify_ssl, env, ini):
+def deploy_content(content_type, content, sdk, env, ini):
     # extract directory path
     dirs = content.rpartition(os.sep)[0] + os.sep
 
@@ -213,11 +214,11 @@ def deploy_content(content_type, content, sdk, no_verify_ssl, env, ini):
     # The final value of id_tracker in build_spaces must be the targeted space id
     space_id = build_spaces(spaces_to_process, sdk)
 
-    import_content(content_type, content, space_id, no_verify_ssl, env, ini)
+    import_content(content_type, content, space_id, env, ini)
 
 
 def send_content(
-    sdk, env, ini, target_folder=None, spaces=None, dashboards=None, looks=None, recursive=False, no_verify_ssl=False
+    sdk, env, ini, target_folder=None, spaces=None, dashboards=None, looks=None, recursive=False
 ):
 
     if spaces:
@@ -235,10 +236,10 @@ def send_content(
                     # copy the source space directory tree to target space override
                     shutil.copytree(s, updated_space)
                     # kick off the job from the new space
-                    deploy_space(updated_space, sdk, env, ini, no_verify_ssl, recursive)
+                    deploy_space(updated_space, sdk, env, ini, recursive)
             # If no target space override, kick off job normally
             else:
-                deploy_space(s, sdk, env, ini, no_verify_ssl, recursive)
+                deploy_space(s, sdk, env, ini, recursive)
     if dashboards:
         logger.debug("Deploying dashboards", extra={"dashboards": dashboards})
         for dash in dashboards:
@@ -255,9 +256,9 @@ def send_content(
                     shutil.copy(dash, target_dir)
                     new_dash_path = [os.path.join(target_dir, f) for f in os.listdir(target_dir)][0]
                     # kick off the job from the new space
-                    deploy_content("dashboard", new_dash_path, sdk, no_verify_ssl, env, ini)
+                    deploy_content("dashboard", new_dash_path, sdk, env, ini)
             else:
-                deploy_content("dashboard", dash, sdk, no_verify_ssl, env, ini)
+                deploy_content("dashboard", dash, sdk, env, ini)
     if looks:
         logger.debug("Deploying looks", extra={"looks": looks})
         for look in looks:
@@ -274,9 +275,9 @@ def send_content(
                     shutil.copy(look, target_dir)
                     new_look_path = [os.path.join(target_dir, f) for f in os.listdir(target_dir)][0]
                     # kick off the job from the new space
-                    deploy_content("look", new_look_path, sdk, no_verify_ssl, env, ini)
+                    deploy_content("look", new_look_path, sdk, env, ini)
             else:
-                deploy_content("look", look, sdk, no_verify_ssl, env, ini)
+                deploy_content("look", look, sdk, env, ini)
 
 
 def main(args):
@@ -295,7 +296,7 @@ def main(args):
 
     if args.export:
         logger.info("Pulling content from dev", extra={"env": args.env, "pull_location": args.export})
-        export_spaces(args.no_verify_ssl, args.env, args.ini, args.export)
+        export_spaces(args.env, args.ini, args.export)
     else:
         sdk = get_client(args.ini, args.env)
         send_content(
@@ -306,6 +307,5 @@ def main(args):
             args.folders,
             args.dashboards,
             args.looks,
-            args.recursive,
-            args.no_verify_ssl
+            args.recursive
         )
