@@ -1,5 +1,6 @@
 import argparse
 from looker_deployer.commands import deploy_boards, deploy_code, deploy_connections, deploy_content
+from looker_deployer import __version__ as pkg
 
 
 loc = "looker.ini"
@@ -8,13 +9,22 @@ loc = "looker.ini"
 def main():
 
     parser = argparse.ArgumentParser()
+    parser.add_argument("-v", "--version", action="store_true", help="print version and exit"),
     subparsers = parser.add_subparsers()
     setup_board_subparser(subparsers)
     setup_code_subparser(subparsers)
     setup_connections_subparser(subparsers)
     setup_content_subparser(subparsers)
     args = parser.parse_args()
-    args.func(args)
+    if args.version:
+        print(pkg.__version__)
+        parser.exit(0)
+    else:
+        try:
+            args.func(args)
+        except AttributeError:
+            parser.print_help()
+            parser.exit(1)
 
 
 def setup_board_subparser(subparsers):
