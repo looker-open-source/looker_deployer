@@ -69,7 +69,6 @@ def setup_content_subparser(subparsers):
     content_subparser.add_argument("--debug", action="store_true", help="set logger to debug for more verbosity")
     content_subparser.add_argument("--recursive", action="store_true", help="Should folders deploy recursively")
     content_subparser.add_argument("--target-folder", help="override the default target folder with a custom path")
-    content_subparser.add_argument("--no-verify-ssl", default=False, action="store_true", help="Skip SSL Verification")
     content_group = content_subparser.add_mutually_exclusive_group(required=True)
     content_group.add_argument("--folders", nargs="+", help="Folders to fully deploy")
     content_group.add_argument("--dashboards", nargs="+", help="Dashboards to deploy")
