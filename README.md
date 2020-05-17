@@ -96,7 +96,7 @@ The command accepts the following arguments:
 
 ```
 usage: ldeploy content [-h] --env ENV [--ini INI] [--debug] [--recursive]
-                       [--target-folder TARGET_FOLDER] [--no-verify-ssl]
+                       [--target-folder TARGET_FOLDER]
                        (--folders FOLDERS [FOLDERS ...] | --dashboards DASHBOARDS [DASHBOARDS ...] | --looks LOOKS [LOOKS ...] | --export EXPORT)
 
 optional arguments:
@@ -107,7 +107,6 @@ optional arguments:
   --recursive           Should folders deploy recursively
   --target-folder TARGET_FOLDER
                         override the default target folder with a custom path
-  --no-verify-ssl       Skip SSL Verification
   --folders FOLDERS [FOLDERS ...]
                         Folders to fully deploy
   --dashboards DASHBOARDS [DASHBOARDS ...]
