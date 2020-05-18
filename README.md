@@ -61,7 +61,7 @@ when you run the container, or (recommended) build an image from this one that "
 container. Carrying on from the prior example, you could create a directory containing a Dockerfile and a looker.ini file. The Dockerfile would contain:
 
 ```
-FROM docker.pkg.github.com/jcpistell/looker_deployer/looker_deployer:v1
+FROM docker.pkg.github.com/jcpistell/looker_deployer/looker_deployer:v2
 COPY looker.ini /
 ```
 
