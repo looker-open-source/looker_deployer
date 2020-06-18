@@ -1,14 +1,9 @@
 import logging
-from looker_sdk import client, models
+from looker_sdk import models
 from looker_deployer.utils import deploy_logging
-
+from looker_deployer.utils.get_client import get_client
 
 logger = deploy_logging.get_logger(__name__)
-
-
-def get_client(ini, env):
-    sdk = client.setup(config_file=ini, section=env)
-    return sdk
 
 
 def match_dashboard_id(source_dashboard_id, source_sdk, target_sdk):
@@ -66,7 +61,7 @@ def create_or_update_board(source_board_object, target_sdk, title_override=None)
             extra={"title": search_title}
         )
 
-        new_board = models.Homepage(
+        new_board = models.WriteHomepage(
             title=source_board_object.title,
             description=source_board_object.description
         )
@@ -103,7 +98,7 @@ def create_or_update_board(source_board_object, target_sdk, title_override=None)
 
 
 def create_board_section(source_board_section_object, target_board_id, target_sdk):
-    new_board_section = models.HomepageSection(
+    new_board_section = models.WriteHomepageSection(
         title=source_board_section_object.title,
         description=source_board_section_object.description,
         detail_url=source_board_section_object.detail_url,
@@ -130,7 +125,7 @@ def create_board_item(source_board_item_object, target_board_section_id, source_
         look_id = match_look_id(source_board_item_object.look_id, source_sdk, target_sdk)
         url = f"/looks/{str(look_id)}"
 
-    new_board_item = models.HomepageItem(
+    new_board_item = models.WriteHomepageItem(
         title=source_board_item_object.title,
         description=source_board_item_object.description,
         dashboard_id=dashboard_id,

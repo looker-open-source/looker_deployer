@@ -9,15 +9,11 @@ from concurrent.futures import ThreadPoolExecutor
 from itertools import repeat
 from looker_deployer.utils import deploy_logging
 from looker_deployer.utils import parse_ini
-from looker_sdk import client, models
+from looker_deployer.utils.get_client import get_client
+from looker_sdk import models
 
 
 logger = deploy_logging.get_logger(__name__)
-
-
-def get_client(ini, env):
-    sdk = client.setup(config_file=ini, section=env)
-    return sdk
 
 
 def get_space_ids_from_name(space_name, parent_id, sdk):
@@ -41,7 +37,7 @@ def create_or_return_space(space_name, parent_id, sdk):
             raise e
         else:
             logger.warning("No folders found. Creating folder now")
-            new_space = models.Space(name=space_name, parent_id=parent_id)
+            new_space = models.CreateSpace(name=space_name, parent_id=parent_id)
             res = sdk.create_space(new_space)
             return res.id
 
