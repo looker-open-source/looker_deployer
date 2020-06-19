@@ -5,7 +5,16 @@ from looker_sdk import methods, models
 from looker_deployer.commands import deploy_content
 from looker_deployer.utils import parse_ini
 
-sdk = methods.LookerSDK("foo", "bar", "baz", "bosh")
+
+class mockSettings:
+    base_url = "taco"
+
+
+class mockAuth:
+    settings = mockSettings()
+
+
+sdk = methods.LookerSDK(mockAuth(), "bar", "baz", "bosh", "bizz")
 
 TRUE_INI = {
     "taco": {
