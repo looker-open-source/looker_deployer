@@ -7,7 +7,7 @@ logger = deploy_logging.get_logger(__name__)
 
 
 def match_dashboard_id(source_dashboard_id, source_sdk, target_sdk):
-    source = source_sdk.dashboard(source_dashboard_id)
+    source = source_sdk.dashboard(str(source_dashboard_id))
     logger.debug("Attempting dashboard match", extra={"title": source.title, "slug": source.slug, "id": source.id})
     target_dash = target_sdk.search_dashboards(slug=source.slug)
 
