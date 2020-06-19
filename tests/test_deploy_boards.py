@@ -2,7 +2,13 @@ import pytest
 from looker_deployer.commands import deploy_boards
 from looker_sdk import methods, models
 
-sdk = methods.LookerSDK("foo", "bar", "baz", "bosh")
+
+class mockSettings:
+    base_url = "taco"
+
+
+class mockAuth:
+    settings = mockSettings()
 
 
 class MockLook:
@@ -23,6 +29,9 @@ class MockHomepageItem:
 
 class MockHomepageSection:
     id = 4
+
+
+sdk = methods.LookerSDK(mockAuth(), "bar", "baz", "bosh", "bizz")
 
 
 class MockHomepage:
@@ -108,7 +117,7 @@ def test_create_board_create_homepage_call(mocker):
     mocker.patch.object(sdk, "create_homepage")
     sdk.search_homepages.return_value = []
     deploy_boards.create_or_update_board(test_board, sdk)
-    sdk.create_homepage.assert_called_with(models.Homepage(title="taco", description="burrito"))
+    sdk.create_homepage.assert_called_with(models.WriteHomepage(title="taco", description="burrito"))
 
 
 def test_create_or_update_board_search_error(mocker):
@@ -137,7 +146,7 @@ def test_create_or_update_board_update_homepage_call(mocker):
     mocker.patch.object(sdk, "delete_homepage_section")
     sdk.search_homepages.return_value = [MockHomepage()]
     deploy_boards.create_or_update_board(test_board, sdk)
-    sdk.update_homepage.assert_called_with(3, models.Homepage(title="taco", description="burrito"))
+    sdk.update_homepage.assert_called_with(3, models.WriteHomepage(title="taco", description="burrito"))
 
 
 def test_create_or_update_board_update_delete_call(mocker):
@@ -171,11 +180,9 @@ def test_create_board_section_create_homepage_section_call(mocker):
     deploy_boards.create_board_section(test_board_section, 1, sdk)
 
     sdk.create_homepage_section.assert_called_with(
-        models.HomepageSection(
+        models.WriteHomepageSection(
             title="taco",
             description="burrito",
-            detail_url="foo",
-            is_header=False,
             homepage_id=1
         )
     )
@@ -226,11 +233,8 @@ def test_create_board_item_dashboard_item_call(mocker):
     deploy_boards.match_dashboard_id.return_value = "1"
     deploy_boards.create_board_item(test_board_item, 10, sdk, sdk)
     sdk.create_homepage_item.assert_called_with(
-        models.HomepageItem(
-            title="taco",
-            description="burrito",
+        models.WriteHomepageItem(
             dashboard_id="1",
-            url="/dashboards/1",
             homepage_section_id=10
         )
     )
@@ -243,11 +247,8 @@ def test_create_board_item_look_item_call(mocker):
     deploy_boards.match_look_id.return_value = "1"
     deploy_boards.create_board_item(test_board_item, 10, sdk, sdk)
     sdk.create_homepage_item.assert_called_with(
-        models.HomepageItem(
-            title="taco",
-            description="burrito",
+        models.WriteHomepageItem(
             look_id="1",
-            url="/looks/1",
             homepage_section_id=10
         )
     )

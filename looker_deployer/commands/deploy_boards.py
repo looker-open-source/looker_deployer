@@ -87,7 +87,7 @@ def create_or_update_board(source_board_object, target_sdk, title_override=None)
         target_sdk.delete_homepage_section(section)
 
     # Update
-    update_board = models.Homepage(
+    update_board = models.WriteHomepage(
         title=source_board_object.title,
         description=source_board_object.description
     )
@@ -101,8 +101,6 @@ def create_board_section(source_board_section_object, target_board_id, target_sd
     new_board_section = models.WriteHomepageSection(
         title=source_board_section_object.title,
         description=source_board_section_object.description,
-        detail_url=source_board_section_object.detail_url,
-        is_header=source_board_section_object.is_header,
         homepage_id=target_board_id
     )
 
@@ -116,23 +114,17 @@ def create_board_item(source_board_item_object, target_board_section_id, source_
 
     dashboard_id = None
     look_id = None
-    url = None
 
     if source_board_item_object.dashboard_id:
         dashboard_id = match_dashboard_id(source_board_item_object.dashboard_id, source_sdk, target_sdk)
-        url = f"/dashboards/{str(dashboard_id)}"
     if source_board_item_object.look_id:
         look_id = match_look_id(source_board_item_object.look_id, source_sdk, target_sdk)
-        url = f"/looks/{str(look_id)}"
 
-    new_board_item = models.WriteHomepageItem(
-        title=source_board_item_object.title,
-        description=source_board_item_object.description,
-        dashboard_id=dashboard_id,
-        look_id=look_id,
-        url=url,
-        homepage_section_id=target_board_section_id
-    )
+    new_board_item = models.WriteHomepageItem()
+    new_board_item.__dict__.update(source_board_item_object.__dict__)
+    new_board_item.dashboard_id = dashboard_id
+    new_board_item.look_id = look_id
+    new_board_item.homepage_section_id = target_board_section_id
 
     logger.info(
         "Creating item",
