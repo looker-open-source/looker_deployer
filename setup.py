@@ -3,7 +3,7 @@ from looker_deployer import __version__ as pkg
 
 NAME = "looker_deployer"
 VERSION = pkg.__version__
-REQUIRES = ["looker-sdk>=0.1.3b8", "oyaml", "python-json-logger"]
+REQUIRES = ["looker-sdk==0.1.3b14", "oyaml", "python-json-logger"]
 
 setup(
     author="Colin Pistell",
