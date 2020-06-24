@@ -1,7 +1,16 @@
 from looker_deployer.commands import deploy_connections
 from looker_sdk import methods, models, error
 
-sdk = methods.LookerSDK("foo", "bar", "baz", "bosh")
+
+class mockSettings:
+    base_url = "taco"
+
+
+class mockAuth:
+    settings = mockSettings()
+
+
+sdk = methods.LookerSDK(mockAuth(), "bar", "baz", "bosh", "bizz")
 
 
 def test_get_filtered_connections(mocker):
@@ -31,7 +40,7 @@ def test_get_filtered_connections_filter(mocker):
 
 
 def test_write_connections_new(mocker):
-    conn_list = [models.DBConnection(name="Taco")]
+    conn_list = [models.WriteDBConnection(name="Taco")]
 
     mocker.patch.object(sdk, "connection", side_effect=error.SDKError("mocked error"))
     mocker.patch.object(sdk, "create_connection")
@@ -41,7 +50,7 @@ def test_write_connections_new(mocker):
 
 
 def test_write_connections_existing(mocker):
-    conn_list = [models.DBConnection(name="Taco")]
+    conn_list = [models.WriteDBConnection(name="Taco")]
 
     mocker.patch.object(sdk, "connection")
     mocker.patch.object(sdk, "update_connection")
@@ -53,7 +62,7 @@ def test_write_connections_existing(mocker):
 
 
 def test_write_connections_update_pw_existing(mocker):
-    conn_list = [models.DBConnection(name="Taco")]
+    conn_list = [models.WriteDBConnection(name="Taco")]
     conf = {"Taco": "Cat"}
 
     mocker.patch.object(sdk, "connection")
@@ -62,15 +71,15 @@ def test_write_connections_update_pw_existing(mocker):
     sdk.connection.return_value = "foo"
 
     deploy_connections.write_connections(conn_list, sdk, conf)
-    sdk.update_connection.assert_called_once_with("Taco", models.DBConnection(name="Taco", password="Cat"))
+    sdk.update_connection.assert_called_once_with("Taco", models.WriteDBConnection(name="Taco", password="Cat"))
 
 
 def test_write_connections_update_pw_new(mocker):
-    conn_list = [models.DBConnection(name="Taco")]
+    conn_list = [models.WriteDBConnection(name="Taco")]
     conf = {"Taco": "Cat"}
 
     mocker.patch.object(sdk, "connection", side_effect=error.SDKError("mocked error"))
     mocker.patch.object(sdk, "create_connection")
 
     deploy_connections.write_connections(conn_list, sdk, conf)
-    sdk.create_connection.assert_called_once_with(models.DBConnection(name="Taco", password="Cat"))
+    sdk.create_connection.assert_called_once_with(models.WriteDBConnection(name="Taco", password="Cat"))

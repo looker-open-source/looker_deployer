@@ -13,7 +13,7 @@ Looker Deployer (aka 'ldeploy') is a command line tool to help move Looker objec
 
 In order for these commands to correctly work a few assumptions/requirements are needed for your environment:
 
->- **Python** Looker Deployer requires Python 3.7+
+>- **Python** Looker Deployer requires Python 3.6+
 >- **Gazer** The content deployment command makes use of [gzr](https://github.com/looker-open-source/gzr) to automate content deployment, so you will need to have that
 >installed and configured properly. Gazer requires an up-to-date version of ruby.
 
@@ -26,14 +26,12 @@ of the `--ini` argument to specify its location. Here's an example ini file:
 
 ```
 [dev]
-api_version=3.1
 base_url=https://looker-dev.company.com:19999
 client_id=abc
 client_secret=xyz
 verify_ssl=True
 
 [prod]
-api_version=3.1
 base_url=https://looker-prod.company.com:19999
 client_id=abc
 client_secret=xyz

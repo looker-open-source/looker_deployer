@@ -1,15 +1,11 @@
 import logging
 import re
-from looker_sdk import client, error
+from looker_sdk import models, error
 from looker_deployer.utils import deploy_logging
 from looker_deployer.utils import parse_ini
+from looker_deployer.utils.get_client import get_client
 
 logger = deploy_logging.get_logger(__name__)
-
-
-def get_client(ini, env):
-    sdk = client.setup(config_file=ini, section=env)
-    return sdk
 
 
 def get_filtered_connections(source_sdk, pattern=None):
@@ -38,27 +34,31 @@ def get_filtered_connections(source_sdk, pattern=None):
 
 def write_connections(connections, target_sdk, db_config=None):
     for conn in connections:
+        # Create a DB Write Object from each connection
+        new_conn = models.WriteDBConnection()
+        new_conn.__dict__.update(conn.__dict__)
+
         conn_exists = True
         try:
-            target_sdk.connection(conn.name)
+            target_sdk.connection(new_conn.name)
         except error.SDKError:
             conn_exists = False
 
         if db_config:
-            logger.debug("Attempting password update", extra={"connection": conn.name})
+            logger.debug("Attempting password update", extra={"connection": new_conn.name})
             db_pass = db_config[conn.name]
-            conn.password = db_pass
+            new_conn.password = db_pass
 
         if not conn_exists:
             logger.debug("No existing connection found. Creating...")
-            logger.info("Deploying connection", extra={"connection": conn.name})
-            target_sdk.create_connection(conn)
-            logger.info("Deployment complete", extra={"connection": conn.name})
+            logger.info("Deploying connection", extra={"connection": new_conn.name})
+            target_sdk.create_connection(new_conn)
+            logger.info("Deployment complete", extra={"connection": new_conn.name})
         else:
             logger.debug("Existing connection found. Updating...")
-            logger.info("Deploying connection", extra={"connection": conn.name})
-            target_sdk.update_connection(conn.name, conn)
-            logger.info("Deployment complete", extra={"connection": conn.name})
+            logger.info("Deploying connection", extra={"connection": new_conn.name})
+            target_sdk.update_connection(new_conn.name, new_conn)
+            logger.info("Deployment complete", extra={"connection": new_conn.name})
 
 
 def send_connections(source_sdk, target_sdk, pattern=None, db_config=None):

@@ -1,18 +1,13 @@
 import logging
-from looker_sdk import client, models
+from looker_sdk import models
 from looker_deployer.utils import deploy_logging
-
+from looker_deployer.utils.get_client import get_client
 
 logger = deploy_logging.get_logger(__name__)
 
 
-def get_client(ini, env):
-    sdk = client.setup(config_file=ini, section=env)
-    return sdk
-
-
 def match_dashboard_id(source_dashboard_id, source_sdk, target_sdk):
-    source = source_sdk.dashboard(source_dashboard_id)
+    source = source_sdk.dashboard(str(source_dashboard_id))
     logger.debug("Attempting dashboard match", extra={"title": source.title, "slug": source.slug, "id": source.id})
     target_dash = target_sdk.search_dashboards(slug=source.slug)
 
@@ -66,7 +61,7 @@ def create_or_update_board(source_board_object, target_sdk, title_override=None)
             extra={"title": search_title}
         )
 
-        new_board = models.Homepage(
+        new_board = models.WriteHomepage(
             title=source_board_object.title,
             description=source_board_object.description
         )
@@ -92,7 +87,7 @@ def create_or_update_board(source_board_object, target_sdk, title_override=None)
         target_sdk.delete_homepage_section(section)
 
     # Update
-    update_board = models.Homepage(
+    update_board = models.WriteHomepage(
         title=source_board_object.title,
         description=source_board_object.description
     )
@@ -103,11 +98,9 @@ def create_or_update_board(source_board_object, target_sdk, title_override=None)
 
 
 def create_board_section(source_board_section_object, target_board_id, target_sdk):
-    new_board_section = models.HomepageSection(
+    new_board_section = models.WriteHomepageSection(
         title=source_board_section_object.title,
         description=source_board_section_object.description,
-        detail_url=source_board_section_object.detail_url,
-        is_header=source_board_section_object.is_header,
         homepage_id=target_board_id
     )
 
@@ -121,23 +114,17 @@ def create_board_item(source_board_item_object, target_board_section_id, source_
 
     dashboard_id = None
     look_id = None
-    url = None
 
     if source_board_item_object.dashboard_id:
         dashboard_id = match_dashboard_id(source_board_item_object.dashboard_id, source_sdk, target_sdk)
-        url = f"/dashboards/{str(dashboard_id)}"
     if source_board_item_object.look_id:
         look_id = match_look_id(source_board_item_object.look_id, source_sdk, target_sdk)
-        url = f"/looks/{str(look_id)}"
 
-    new_board_item = models.HomepageItem(
-        title=source_board_item_object.title,
-        description=source_board_item_object.description,
-        dashboard_id=dashboard_id,
-        look_id=look_id,
-        url=url,
-        homepage_section_id=target_board_section_id
-    )
+    new_board_item = models.WriteHomepageItem()
+    new_board_item.__dict__.update(source_board_item_object.__dict__)
+    new_board_item.dashboard_id = dashboard_id
+    new_board_item.look_id = look_id
+    new_board_item.homepage_section_id = target_board_section_id
 
     logger.info(
         "Creating item",
