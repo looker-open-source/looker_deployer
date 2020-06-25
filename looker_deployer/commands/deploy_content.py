@@ -48,16 +48,16 @@ def create_or_return_space(space_name, parent_id, sdk):
 def get_gzr_creds(ini, env):
     ini = parse_ini.read_ini(ini)
     env_record = ini[env]
-    host = env_record["base_url"].lstrip("https://").split(":")[0]
+    host, port = env_record["base_url"].lstrip("https://").split(":")
     client_id = env_record["client_id"]
     client_secret = env_record["client_secret"]
     verify_ssl = env_record["verify_ssl"]
 
-    return (host, client_id, client_secret, verify_ssl)
+    return (host, port, client_id, client_secret, verify_ssl)
 
 
 def export_spaces(env, ini, path, debug=False):
-    host, client_id, client_secret, verify_ssl = get_gzr_creds(ini, env)
+    host, port, client_id, client_secret, verify_ssl = get_gzr_creds(ini, env)
 
     gzr_command = [
         "gzr",
@@ -68,6 +68,8 @@ def export_spaces(env, ini, path, debug=False):
         path,
         "--host",
         host,
+        "--port",
+        port,
         "--client-id",
         client_id,
         "--client-secret",
@@ -85,7 +87,7 @@ def export_spaces(env, ini, path, debug=False):
 
 def import_content(content_type, content_json, space_id, env, ini, debug=False):
     assert content_type in ["dashboard", "look"], "Unsupported Content Type"
-    host, client_id, client_secret, verify_ssl = get_gzr_creds(ini, env)
+    host, port, client_id, client_secret, verify_ssl = get_gzr_creds(ini, env)
 
     logger.info(
         "Deploying content",
@@ -94,6 +96,7 @@ def import_content(content_type, content_json, space_id, env, ini, debug=False):
             "source_file": content_json,
             "folder_id": space_id,
             "host": host,
+            "port": port,
             "verify_ssl": verify_ssl,
             "active_thread": threading.get_ident()
         }
@@ -107,6 +110,8 @@ def import_content(content_type, content_json, space_id, env, ini, debug=False):
         space_id,
         "--host",
         host,
+        "--port",
+        port,
         "--client-id",
         client_id,
         "--client-secret",
