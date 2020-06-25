@@ -76,19 +76,19 @@ def test_get_gzr_creds_true(mocker):
     mocker.patch("looker_deployer.utils.parse_ini.read_ini")
     parse_ini.read_ini.return_value = TRUE_INI
     tup = deploy_content.get_gzr_creds("foo", "taco")
-    assert tup == ("foobarbaz.com", "abc", "xyz", "True")
+    assert tup == ("foobarbaz.com", "1234", "abc", "xyz", "True")
 
 
 def test_get_gzr_creds_false(mocker):
     mocker.patch("looker_deployer.utils.parse_ini.read_ini")
     parse_ini.read_ini.return_value = FALSE_INI
     tup = deploy_content.get_gzr_creds("foo", "taco")
-    assert tup == ("foobarbaz.com", "abc", "xyz", "False")
+    assert tup == ("foobarbaz.com", "1234", "abc", "xyz", "False")
 
 
 def test_export_space(mocker):
     mocker.patch("looker_deployer.commands.deploy_content.get_gzr_creds")
-    deploy_content.get_gzr_creds.return_value = ("foobar.com", "abc", "xyz", "True")
+    deploy_content.get_gzr_creds.return_value = ("foobar.com", "1234", "abc", "xyz", "True")
 
     mocker.patch("subprocess.run")
     deploy_content.export_spaces("env", "ini", "foo/bar", False)
@@ -101,6 +101,8 @@ def test_export_space(mocker):
         "foo/bar",
         "--host",
         "foobar.com",
+        "--port",
+        "1234",
         "--client-id",
         "abc",
         "--client-secret",
@@ -110,7 +112,7 @@ def test_export_space(mocker):
 
 def test_export_space_debug(mocker):
     mocker.patch("looker_deployer.commands.deploy_content.get_gzr_creds")
-    deploy_content.get_gzr_creds.return_value = ("foobar.com", "abc", "xyz", "True")
+    deploy_content.get_gzr_creds.return_value = ("foobar.com", "1234", "abc", "xyz", "True")
 
     mocker.patch("subprocess.run")
     deploy_content.export_spaces("env", "ini", "foo/bar", True)
@@ -123,6 +125,8 @@ def test_export_space_debug(mocker):
         "foo/bar",
         "--host",
         "foobar.com",
+        "--port",
+        "1234",
         "--client-id",
         "abc",
         "--client-secret",
@@ -133,7 +137,7 @@ def test_export_space_debug(mocker):
 
 def test_export_space_no_verify_ssl(mocker):
     mocker.patch("looker_deployer.commands.deploy_content.get_gzr_creds")
-    deploy_content.get_gzr_creds.return_value = ("foobar.com", "abc", "xyz", "False")
+    deploy_content.get_gzr_creds.return_value = ("foobar.com", "1234", "abc", "xyz", "False")
 
     mocker.patch("subprocess.run")
     deploy_content.export_spaces("env", "ini", "foo/bar", False)
@@ -146,6 +150,8 @@ def test_export_space_no_verify_ssl(mocker):
         "foo/bar",
         "--host",
         "foobar.com",
+        "--port",
+        "1234",
         "--client-id",
         "abc",
         "--client-secret",
@@ -156,7 +162,7 @@ def test_export_space_no_verify_ssl(mocker):
 
 def test_import_content(mocker):
     mocker.patch("looker_deployer.commands.deploy_content.get_gzr_creds")
-    deploy_content.get_gzr_creds.return_value = ("foobar.com", "abc", "xyz", "True")
+    deploy_content.get_gzr_creds.return_value = ("foobar.com", "1234", "abc", "xyz", "True")
 
     mocker.patch("subprocess.run")
     deploy_content.import_content("dashboard", "tacocat.json", "42", "env", "ini", False)
@@ -168,6 +174,8 @@ def test_import_content(mocker):
         "42",
         "--host",
         "foobar.com",
+        "--port",
+        "1234",
         "--client-id",
         "abc",
         "--client-secret",
@@ -178,7 +186,7 @@ def test_import_content(mocker):
 
 def test_import_content_debug(mocker):
     mocker.patch("looker_deployer.commands.deploy_content.get_gzr_creds")
-    deploy_content.get_gzr_creds.return_value = ("foobar.com", "abc", "xyz", "True")
+    deploy_content.get_gzr_creds.return_value = ("foobar.com", "1234", "abc", "xyz", "True")
 
     mocker.patch("subprocess.run")
     deploy_content.import_content("dashboard", "tacocat.json", "42", "env", "ini", True)
@@ -190,6 +198,8 @@ def test_import_content_debug(mocker):
         "42",
         "--host",
         "foobar.com",
+        "--port",
+        "1234",
         "--client-id",
         "abc",
         "--client-secret",
@@ -201,7 +211,7 @@ def test_import_content_debug(mocker):
 
 def test_import_content_no_verify_ssl(mocker):
     mocker.patch("looker_deployer.commands.deploy_content.get_gzr_creds")
-    deploy_content.get_gzr_creds.return_value = ("foobar.com", "abc", "xyz", "False")
+    deploy_content.get_gzr_creds.return_value = ("foobar.com", "1234", "abc", "xyz", "False")
 
     mocker.patch("subprocess.run")
     deploy_content.import_content("dashboard", "tacocat.json", "42", "env", "ini", False)
@@ -213,6 +223,8 @@ def test_import_content_no_verify_ssl(mocker):
         "42",
         "--host",
         "foobar.com",
+        "--port",
+        "1234",
         "--client-id",
         "abc",
         "--client-secret",
