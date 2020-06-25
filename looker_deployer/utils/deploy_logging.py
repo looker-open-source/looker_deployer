@@ -42,7 +42,7 @@ def get_logger(name, handler=None):
     if handler is None:
         handler = logging.StreamHandler()
     formatter = CustomJsonFormatter(
-        "(timestamp) (levelname) (module) (funcName) (message)"
+        "%(levelname) %(module) %(funcName) %(message)"
     )
     handler.setFormatter(formatter)
     logger.addHandler(handler)
