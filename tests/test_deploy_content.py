@@ -18,7 +18,7 @@ sdk = methods.LookerSDK(mockAuth(), "bar", "baz", "bosh", "bizz")
 
 TRUE_INI = {
     "taco": {
-        "base_url": "https://foobarbaz.com:1234",
+        "base_url": "https://phoobarbaz.com:1234",
         "client_id": "abc",
         "client_secret": "xyz",
         "verify_ssl": "True"
@@ -27,7 +27,7 @@ TRUE_INI = {
 
 FALSE_INI = {
     "taco": {
-        "base_url": "https://foobarbaz.com:1234",
+        "base_url": "https://phoobarbaz.com:1234",
         "client_id": "abc",
         "client_secret": "xyz",
         "verify_ssl": "False"
@@ -76,14 +76,14 @@ def test_get_gzr_creds_true(mocker):
     mocker.patch("looker_deployer.utils.parse_ini.read_ini")
     parse_ini.read_ini.return_value = TRUE_INI
     tup = deploy_content.get_gzr_creds("foo", "taco")
-    assert tup == ("foobarbaz.com", "1234", "abc", "xyz", "True")
+    assert tup == ("phoobarbaz.com", "1234", "abc", "xyz", "True")
 
 
 def test_get_gzr_creds_false(mocker):
     mocker.patch("looker_deployer.utils.parse_ini.read_ini")
     parse_ini.read_ini.return_value = FALSE_INI
     tup = deploy_content.get_gzr_creds("foo", "taco")
-    assert tup == ("foobarbaz.com", "1234", "abc", "xyz", "False")
+    assert tup == ("phoobarbaz.com", "1234", "abc", "xyz", "False")
 
 
 def test_export_space(mocker):
