@@ -48,7 +48,7 @@ def create_or_return_space(space_name, parent_id, sdk):
 def get_gzr_creds(ini, env):
     ini = parse_ini.read_ini(ini)
     env_record = ini[env]
-    host, port = env_record["base_url"].lstrip("https://").split(":")
+    host, port = env_record["base_url"].replace("https://", "").split(":")
     client_id = env_record["client_id"]
     client_secret = env_record["client_secret"]
     verify_ssl = env_record["verify_ssl"]
