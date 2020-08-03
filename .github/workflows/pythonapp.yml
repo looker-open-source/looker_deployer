@@ -21,7 +21,7 @@ jobs:
         python-version: 3.7
     - name: Install dependencies
       run: |
-        pip install flake8 pytest
+        pip install flake8 pytest pytest-mock
         pip install .
     - name: Lint with flake8
       run: |
@@ -44,7 +44,7 @@ jobs:
         python-version: 3.8
     - name: Install dependencies
       run: |
-        pip install flake8 pytest
+        pip install flake8 pytest pytest-mock
         pip install .
     - name: Lint with flake8
       run: |
@@ -68,7 +68,7 @@ jobs:
         python-version: 3.6
     - name: Install dependencies
       run: |
-        pip install flake8 pytest
+        pip install flake8 pytest pytest-mock
         pip install .
     - name: Lint with flake8
       run: |
