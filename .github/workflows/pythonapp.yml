@@ -19,20 +19,19 @@ jobs:
       uses: actions/setup-python@v1
       with:
         python-version: 3.7
-    - name: Install pipenv
-      uses: dschep/install-pipenv-action@v1
     - name: Install dependencies
       run: |
-        pipenv install --dev
+        pip install flake8 pytest pytest-mock
+        pip install .
     - name: Lint with flake8
       run: |
         # stop the build if there are Python syntax errors or undefined names
-        pipenv run flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
         # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
-        pipenv run flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+        flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
     - name: Test with pytest
       run: |
-        pipenv run python -m pytest
+        pytest
 
   build_38:
     runs-on: ubuntu-latest
@@ -43,20 +42,19 @@ jobs:
       uses: actions/setup-python@v1
       with:
         python-version: 3.8
-    - name: Install pipenv
-      uses: dschep/install-pipenv-action@v1
     - name: Install dependencies
       run: |
-        pipenv install --dev
+        pip install flake8 pytest pytest-mock
+        pip install .
     - name: Lint with flake8
       run: |
         # stop the build if there are Python syntax errors or undefined names
-        pipenv run flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
         # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
-        pipenv run flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+        flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
     - name: Test with pytest
       run: |
-        pipenv run python -m pytest
+        pytest
 
 
   build_36:
@@ -68,18 +66,16 @@ jobs:
       uses: actions/setup-python@v1
       with:
         python-version: 3.6
-    - name: Install pipenv
-      uses: dschep/install-pipenv-action@v1
     - name: Install dependencies
       run: |
-        pipenv install --dev
+        pip install flake8 pytest pytest-mock
+        pip install .
     - name: Lint with flake8
       run: |
         # stop the build if there are Python syntax errors or undefined names
-        pipenv run flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
         # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
-        pipenv run flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+        flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
     - name: Test with pytest
       run: |
-        pipenv run python -m pytest
-
+        pytest

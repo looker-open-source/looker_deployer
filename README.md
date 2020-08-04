@@ -9,6 +9,10 @@ Looker Deployer
 Looker Deployer (aka 'ldeploy') is a command line tool to help move Looker objects across instances. This includes Content
 (Looks, Dashboards, entire Spaces, etc.), Boards and Connections.
 
+## Status and Support
+
+Looker Deployer is NOT supported or warranteed by Looker in any way. Please do not contact Looker support for issues with Looker Deployer. Issues can be logged via [https://github.com/llooker/looker_deployer/issues](https://github.com/llooker/looker_deployer/issues)
+
 ## Requirements
 
 In order for these commands to correctly work a few assumptions/requirements are needed for your environment:
