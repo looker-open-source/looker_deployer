@@ -12,7 +12,7 @@ def match_dashboard_id(source_dashboard_id, source_sdk, target_sdk):
     target_dash = target_sdk.search_dashboards(slug=source.slug)
 
     assert len(target_dash) < 2, "Found multiple slugs. Something is wrong and it's probably time to contact Looker"
-    assert len(target_dash) == 1, "Could not find dashboard {source.title} in target environment. Has it been deployed?"
+    assert len(target_dash) == 1, f"Could not find dashboard {source.title} in target env. Has it been deployed?"
 
     target_id = target_dash[0].id
     logger.debug("Found dashboard", extra={"id": target_id})
@@ -26,7 +26,7 @@ def match_look_id(source_look_id, source_sdk, target_sdk):
     target_look = target_sdk.search_looks(title=source.title)
 
     assert len(target_look) < 2, "Found multiple titles. Please rename a look or remove duplicates"
-    assert len(target_look) == 1, "Could not find look {source.title} in target environment. Has it been deployed?"
+    assert len(target_look) == 1, f"Could not find look {source.title} in target env. Has it been deployed?"
 
     target_id = target_look[0].id
     logger.debug("Found look", extra={"id": target_id})
@@ -158,16 +158,26 @@ def audit_board_content(board_object, source_sdk, target_sdk):
         match_look_id(look, source_sdk, target_sdk)
 
 
-def send_boards(board_name, source_sdk, target_sdk, title_override=None):
+def send_boards(board_name, source_sdk, target_sdk, title_override=None, allow_partial=False):
     source_board = return_board(board_name, source_sdk)
-    audit_board_content(source_board, source_sdk, target_sdk)
+
+    if not allow_partial:
+        audit_board_content(source_board, source_sdk, target_sdk)
+
     target_board_id = create_or_update_board(source_board, target_sdk, title_override)
 
     for section in source_board.homepage_sections:
         target_section_id = create_board_section(section, target_board_id, target_sdk)
 
         for item in section.homepage_items:
-            create_board_item(item, target_section_id, source_sdk, target_sdk)
+            try:
+                create_board_item(item, target_section_id, source_sdk, target_sdk)
+            except AssertionError:
+                if allow_partial:
+                    logger.warning("Could not find content!", extra={"item": item})
+                    pass
+                else:
+                    raise
 
 
 def main(args):
@@ -180,4 +190,4 @@ def main(args):
     for t in args.target:
         target_sdk = get_client(args.ini, t)
 
-        send_boards(args.board, source_sdk, target_sdk, args.title_change)
+        send_boards(args.board, source_sdk, target_sdk, args.title_change, args.allow_partial)

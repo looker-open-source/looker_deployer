@@ -33,7 +33,11 @@ def setup_board_subparser(subparsers):
     boards_subparser.add_argument("--target", required=True, nargs="+", help="which target environment(s) to deploy to")
     boards_subparser.add_argument("--board", required=True, help="which board to deploy")
     boards_subparser.add_argument("--ini", default=loc, help="ini file to parse for credentials")
-
+    boards_subparser.add_argument(
+        "--allow-partial",
+        action="store_true",
+        help="allow partial deployment of board content if not all content is present on target instance?"
+    )
     boards_subparser.add_argument(
         "--title-change",
         help="if updating title, the old title to replace in target environments"
