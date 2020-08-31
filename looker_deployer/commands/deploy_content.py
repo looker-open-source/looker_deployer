@@ -82,6 +82,11 @@ def export_spaces(env, ini, path, debug=False):
     if debug:
         gzr_command.append("--debug")
 
+    # if we're running on windows we need to appropriately call the command-line arg"
+    if os.name == "nt":
+        win_exec = ["cmd.exe", "/c"]
+        gzr_command = win_exec + gzr_command
+
     subprocess.run(gzr_command)
 
 
@@ -124,6 +129,11 @@ def import_content(content_type, content_json, space_id, env, ini, debug=False):
         gzr_command.append("--no-verify-ssl")
     if debug:
         gzr_command.append("--debug")
+
+    # if we're running on windows we need to appropriately call the command-line arg"
+    if os.name == "nt":
+        win_exec = ["cmd.exe", "/c"]
+        gzr_command = win_exec + gzr_command
 
     subprocess.run(gzr_command)
 
