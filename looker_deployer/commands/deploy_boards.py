@@ -18,6 +18,19 @@ class MultipleAssetsFoundError(Exception):
         return f"{self.asset_name} -> {self.message}"
 
 
+class TargetContentNotFound(Exception):
+    """Exception raised if content is not found in target instance"""
+
+    def __init__(self, missing_dashes, missing_looks, message="Content not found in target instance."):
+        self.missing_dashes = missing_dashes
+        self.missing_looks = missing_looks
+        self.message = message
+        super().__init__(self.message)
+
+    def __str__(self):
+        return f"{self.message} -> dashes: {self.missing_dashes}, looks: {self.missing_looks}"
+
+
 def match_dashboard_id(source_dashboard_id, source_sdk, target_sdk):
     source = source_sdk.dashboard(str(source_dashboard_id))
     logger.debug("Attempting dashboard match", extra={"title": source.title, "slug": source.slug, "id": source.id})
@@ -161,6 +174,9 @@ def audit_board_content(board_object, source_sdk, target_sdk):
     dash_list = []
     look_list = []
 
+    missing_dashes = []
+    missing_looks = []
+
     for i in board_object.homepage_sections:
         for j in i.homepage_items:
             if j.dashboard_id:
@@ -169,16 +185,39 @@ def audit_board_content(board_object, source_sdk, target_sdk):
                 look_list.append(j.look_id)
 
     for dash in dash_list:
-        match_dashboard_id(dash, source_sdk, target_sdk)
+        try:
+            match_dashboard_id(dash, source_sdk, target_sdk)
+        except AssertionError:
+            dash_title = source_sdk.dashboard(str(dash)).title
+            missing_dashes.append({"dash_id": dash, "dash_title": dash_title})
+
     for look in look_list:
-        match_look_id(look, source_sdk, target_sdk)
+        try:
+            match_look_id(look, source_sdk, target_sdk)
+        except AssertionError:
+            look_title = source_sdk.look(look).title
+            missing_looks.append({"look_id": look, "look_title": look_title})
+
+    return (missing_dashes, missing_looks)
 
 
 def send_boards(board_name, source_sdk, target_sdk, title_override=None, allow_partial=False):
     source_board = return_board(board_name, source_sdk)
 
-    if not allow_partial:
-        audit_board_content(source_board, source_sdk, target_sdk)
+    missing_dashes, missing_looks = audit_board_content(source_board, source_sdk, target_sdk)
+    if not allow_partial and (missing_dashes or missing_looks):
+        logger.error(
+            "Missing Content. Make sure it's deployed or rerun with allow-partial flag.",
+            extra={"missing_dashboards": missing_dashes, "missing_looks": missing_looks}
+        )
+        raise TargetContentNotFound(missing_dashes, missing_looks)
+    elif missing_dashes or missing_looks:
+        logger.warning(
+            "Missing content warning.",
+            extra={"missing_dashboards": missing_dashes, "missing_looks": missing_looks}
+        )
+    else:
+        logger.info("All content accounted for!")
 
     target_board_id = create_or_update_board(source_board, target_sdk, title_override)
 

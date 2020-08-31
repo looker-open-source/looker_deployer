@@ -59,7 +59,7 @@ def test_match_dashboard_id_multi(mocker):
     mocker.patch.object(sdk, "search_dashboards")
     sdk.search_dashboards.return_value = [dash, dash]
 
-    with pytest.raises(AssertionError):
+    with pytest.raises(deploy_boards.MultipleAssetsFoundError):
         deploy_boards.match_dashboard_id(1, sdk, sdk)
 
 
@@ -81,7 +81,7 @@ def test_match_look_id_multi(mocker):
     mocker.patch.object(sdk, "search_looks")
     sdk.search_looks.return_value = [look, look]
 
-    with pytest.raises(AssertionError):
+    with pytest.raises(deploy_boards.MultipleAssetsFoundError):
         deploy_boards.match_look_id(1, sdk, sdk)
 
 
