@@ -66,7 +66,10 @@ def match_look_id(source_look_id, source_sdk, target_sdk):
 def return_board(board_name, source_sdk):
     logger.debug("Searching boards", extra={"title": board_name})
     board_list = source_sdk.search_homepages(title=board_name)
-    assert len(board_list) < 2, "More than one board found! Refine your search or remove duplicate names."
+
+    if len(board_list) > 1:
+        raise MultipleAssetsFoundError(board_name)
+
     assert len(board_list) == 1, "Could not find board! Double check available titles and try again."
 
     logger.debug("Found board", extra={"board": board_list})
@@ -229,7 +232,7 @@ def send_boards(board_name, source_sdk, target_sdk, title_override=None, allow_p
                 create_board_item(item, target_section_id, source_sdk, target_sdk)
             except AssertionError:
                 if allow_partial:
-                    logger.warning("Could not find content!", extra={"item": item})
+                    logger.warning("Could not find content!", extra={"item": item.title})
                     pass
                 else:
                     raise
