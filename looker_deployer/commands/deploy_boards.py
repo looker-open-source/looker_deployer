@@ -6,12 +6,26 @@ from looker_deployer.utils.get_client import get_client
 logger = deploy_logging.get_logger(__name__)
 
 
+class MultipleAssetsFoundError(Exception):
+    """Exception raised if multiple assets are found"""
+
+    def __init__(self, asset_name, message="Found multiple entries for asset. Please remove duplicates"):
+        self.asset_name = asset_name
+        self.message = message
+        super().__init__(self.message)
+
+    def __str__(self):
+        return f"{self.asset_name} -> {self.message}"
+
+
 def match_dashboard_id(source_dashboard_id, source_sdk, target_sdk):
     source = source_sdk.dashboard(str(source_dashboard_id))
     logger.debug("Attempting dashboard match", extra={"title": source.title, "slug": source.slug, "id": source.id})
     target_dash = target_sdk.search_dashboards(slug=source.slug)
 
-    assert len(target_dash) < 2, "Found multiple slugs. Something is wrong and it's probably time to contact Looker"
+    if len(target_dash) > 1:
+        raise MultipleAssetsFoundError(source.title)
+
     assert len(target_dash) == 1, f"Could not find dashboard {source.title} in target env. Has it been deployed?"
 
     target_id = target_dash[0].id
@@ -25,7 +39,9 @@ def match_look_id(source_look_id, source_sdk, target_sdk):
     logger.debug("Attempting look match", extra={"title": source.title, "id": source.id})
     target_look = target_sdk.search_looks(title=source.title)
 
-    assert len(target_look) < 2, "Found multiple titles. Please rename a look or remove duplicates"
+    if len(target_look) > 1:
+        raise MultipleAssetsFoundError(source.title)
+
     assert len(target_look) == 1, f"Could not find look {source.title} in target env. Has it been deployed?"
 
     target_id = target_look[0].id
