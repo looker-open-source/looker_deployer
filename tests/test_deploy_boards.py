@@ -25,10 +25,13 @@ class MockDash:
 
 class MockHomepageItem:
     id = 5
+    dashboard_id = 2
+    look_id = 1
 
 
 class MockHomepageSection:
     id = 4
+    homepage_items = [MockHomepageItem()]
 
 
 sdk = methods.LookerSDK(mockAuth(), "bar", "baz", "bosh", "bizz")
@@ -59,7 +62,7 @@ def test_match_dashboard_id_multi(mocker):
     mocker.patch.object(sdk, "search_dashboards")
     sdk.search_dashboards.return_value = [dash, dash]
 
-    with pytest.raises(AssertionError):
+    with pytest.raises(deploy_boards.MultipleAssetsFoundError):
         deploy_boards.match_dashboard_id(1, sdk, sdk)
 
 
@@ -81,7 +84,7 @@ def test_match_look_id_multi(mocker):
     mocker.patch.object(sdk, "search_looks")
     sdk.search_looks.return_value = [look, look]
 
-    with pytest.raises(AssertionError):
+    with pytest.raises(deploy_boards.MultipleAssetsFoundError):
         deploy_boards.match_look_id(1, sdk, sdk)
 
 
@@ -96,7 +99,7 @@ def test_return_board_multi(mocker):
     mocker.patch.object(sdk, "search_homepages")
     sdk.search_homepages.return_value = [42, 81]
 
-    with pytest.raises(AssertionError):
+    with pytest.raises(deploy_boards.MultipleAssetsFoundError):
         deploy_boards.return_board("foo", sdk)
 
 
@@ -252,3 +255,23 @@ def test_create_board_item_look_item_call(mocker):
             homepage_section_id=10
         )
     )
+
+
+def test_audit_board_with_misses(mocker):
+    test_board = MockHomepage()
+    mocker.patch("looker_deployer.commands.deploy_boards.match_dashboard_id", side_effect=AssertionError)
+    mocker.patch("looker_deployer.commands.deploy_boards.match_look_id", side_effect=AssertionError)
+    mocker.patch.object(sdk, "dashboard")
+    mocker.patch.object(sdk, "look")
+    sdk.dashboard.return_value = MockDash()
+    sdk.look.return_value = MockLook()
+    missing = deploy_boards.audit_board_content(test_board, sdk, sdk)
+    assert missing == ([{"dash_id": 2, "dash_title": "foobarbaz"}], [{"look_id": 1, "look_title": "foobarbaz"}])
+
+
+def test_audit_board_no_misses(mocker):
+    test_board = MockHomepage()
+    mocker.patch("looker_deployer.commands.deploy_boards.match_dashboard_id")
+    mocker.patch("looker_deployer.commands.deploy_boards.match_look_id")
+    missing = deploy_boards.audit_board_content(test_board, sdk, sdk)
+    assert missing == ([], [])
