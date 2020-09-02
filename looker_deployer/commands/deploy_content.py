@@ -56,40 +56,6 @@ def get_gzr_creds(ini, env):
     return (host, port, client_id, client_secret, verify_ssl)
 
 
-def export_spaces(env, ini, path, debug=False):
-    host, port, client_id, client_secret, verify_ssl = get_gzr_creds(ini, env)
-
-    gzr_command = [
-        "gzr",
-        "space",
-        "export",
-        "1",
-        "--dir",
-        path,
-        "--host",
-        host,
-        "--port",
-        port,
-        "--client-id",
-        client_id,
-        "--client-secret",
-        client_secret
-    ]
-
-    # config parser returns a string - easier to parse that than convert to a bool
-    if verify_ssl == "False":
-        gzr_command.append("--no-verify-ssl")
-    if debug:
-        gzr_command.append("--debug")
-
-    # if we're running on windows we need to appropriately call the command-line arg"
-    if os.name == "nt":
-        win_exec = ["cmd.exe", "/c"]
-        gzr_command = win_exec + gzr_command
-
-    subprocess.run(gzr_command)
-
-
 def import_content(content_type, content_json, space_id, env, ini, debug=False):
     assert content_type in ["dashboard", "look"], "Unsupported Content Type"
     host, port, client_id, client_secret, verify_ssl = get_gzr_creds(ini, env)
@@ -311,19 +277,15 @@ def main(args):
         if not args.target_folder.endswith(os.sep):
             args.target_folder += os.sep
 
-    if args.export:
-        logger.info("Pulling content from dev", extra={"env": args.env, "pull_location": args.export})
-        export_spaces(args.env, args.ini, args.export, args.debug)
-    else:
-        sdk = get_client(args.ini, args.env)
-        send_content(
-            sdk,
-            args.env,
-            args.ini,
-            args.target_folder,
-            args.folders,
-            args.dashboards,
-            args.looks,
-            args.recursive,
-            args.debug
-        )
+    sdk = get_client(args.ini, args.env)
+    send_content(
+        sdk,
+        args.env,
+        args.ini,
+        args.target_folder,
+        args.folders,
+        args.dashboards,
+        args.looks,
+        args.recursive,
+        args.debug
+    )
