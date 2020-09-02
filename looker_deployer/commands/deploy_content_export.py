@@ -4,19 +4,20 @@ import logging
 from pathlib import Path
 from looker_deployer.utils import deploy_logging
 from looker_deployer.commands.deploy_content import get_gzr_creds
+from looker_deployer.utils.get_client import get_client
 
 
 logger = deploy_logging.get_logger(__name__)
 
 
-def export_spaces(env, ini, path, debug=False):
+def export_spaces(folder_id, env, ini, path, debug=False):
     host, port, client_id, client_secret, verify_ssl = get_gzr_creds(ini, env)
 
     gzr_command = [
         "gzr",
         "space",
         "export",
-        "1",
+        folder_id,
         "--dir",
         path,
         "--host",
@@ -43,23 +44,28 @@ def export_spaces(env, ini, path, debug=False):
     subprocess.run(gzr_command)
 
 
-def recurse_folders(folder_id, folder_list, sdk):
+def recurse_folders(folder_id, folder_list, sdk, debug=False):
     space = sdk.space(str(folder_id))
     folder_list.append(space.name)
     if space.parent_id:
         recurse_folders(space.parent_id, folder_list)
 
 
-def send_export(export_spaces, local_target, sdk):
-    for s in export_spaces:
-        # create local directory
+def send_export(folder_ids, local_target, env, ini, sdk, debug=False):
+    for fid in folder_ids:
 
         # generate the list of folders
         folder_list = []
-        recurse_folders(s, folder_list, sdk)
+        recurse_folders(fid, folder_list, sdk)
+        # list is generated in reverse order, so we have to correct
         folder_list.reverse()
 
-    pass
+        # create the target directory. Parent is called b/c the final directory is created during export
+        path = Path([local_target] + folder_list).parent
+        path.mkdir(parents=True, exist_ok=True)
+
+        # export the folder
+        export_spaces(fid, env, ini, str(path), debug)
 
 
 def main(args):
@@ -69,10 +75,9 @@ def main(args):
 
     logger.debug("ini file", extra={"ini": args.ini})
 
-    for folder in args.folders:
-        assert folder.startswith("Shared"), "Export folder paths MUST begin with 'Shared'"
     logger.info(
         "Exporting content",
         extra={"env": args.env, "folders": args.folders, "local_target": args.local_target}
     )
-    export_spaces(args.env, args.ini, args.export, args.debug)
+    sdk = get_client(args.ini, args.env)
+    send_export(args.folders, args.local_target, args.env, args.ini, sdk, args.debug)

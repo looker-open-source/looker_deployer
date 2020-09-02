@@ -1,5 +1,6 @@
 import argparse
-from looker_deployer.commands import deploy_boards, deploy_code, deploy_connections, deploy_content
+from looker_deployer.commands import deploy_boards, deploy_code, deploy_connections
+from looker_deployer.commands import deploy_content, deploy_content_export
 from looker_deployer import __version__ as pkg
 
 
@@ -78,7 +79,7 @@ def setup_connections_subparser(subparsers):
 
 def setup_content_subparser(subparsers):
     content_subparser = subparsers.add_parser("content")
-    import_export_subparsers = content_subparser.add_subparsers(dest="content_command")
+    import_export_subparsers = content_subparser.add_subparsers()
     export_subparser = import_export_subparsers.add_parser("export")
     import_subparser = import_export_subparsers.add_parser("import")
 
@@ -87,7 +88,7 @@ def setup_content_subparser(subparsers):
     export_subparser.add_argument("--debug", action="store_true", help="set logger to debug for more verbosity")
     export_subparser.add_argument("--folders", nargs="+", required=True, help="What folders to export content from")
     export_subparser.add_argument("--local-target", required=True, help="Local directory to store content")
-    export_subparser.set_defaults(func=deploy_content.main)
+    export_subparser.set_defaults(func=deploy_content_export.main)
 
     import_subparser.add_argument("--env", required=True, help="What environment to deploy to")
     import_subparser.add_argument("--ini", default=loc, help="ini file to parse for credentials")
