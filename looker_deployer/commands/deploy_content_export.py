@@ -47,8 +47,13 @@ def export_spaces(folder_id, env, ini, path, debug=False):
 def recurse_folders(folder_id, folder_list, sdk, debug=False):
     space = sdk.space(str(folder_id))
     folder_list.append(space.name)
+    logger.debug(
+        "recursive folder crawl status",
+        extra={"current_id": folder_id, "folder_name": space.name, "current_list": folder_list}
+    )
     if space.parent_id:
-        recurse_folders(space.parent_id, folder_list)
+        logger.debug("going for recursion", extra={"parent_id": space.parent_id})
+        recurse_folders(space.parent_id, folder_list, sdk, debug)
 
 
 def send_export(folder_ids, local_target, env, ini, sdk, debug=False):
@@ -56,12 +61,14 @@ def send_export(folder_ids, local_target, env, ini, sdk, debug=False):
 
         # generate the list of folders
         folder_list = []
-        recurse_folders(fid, folder_list, sdk)
+        recurse_folders(fid, folder_list, sdk, debug)
         # list is generated in reverse order, so we have to correct
         folder_list.reverse()
+        logger.debug("folder_list", extra={"folder_id": fid, "list": folder_list})
 
         # create the target directory. Parent is called b/c the final directory is created during export
-        path = Path([local_target] + folder_list).parent
+        path_string = "/".join([local_target] + folder_list)
+        path = Path(path_string).parent
         path.mkdir(parents=True, exist_ok=True)
 
         # export the folder
