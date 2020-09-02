@@ -1,10 +1,6 @@
-import pytest
-import os
 import subprocess
-from pathlib import Path
-from looker_sdk import methods, models
+from looker_sdk import methods
 from looker_deployer.commands import deploy_content_export
-from looker_deployer.utils import parse_ini
 
 
 class mockSpace:
