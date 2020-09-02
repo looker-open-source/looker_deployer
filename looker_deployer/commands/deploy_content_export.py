@@ -55,13 +55,15 @@ def recurse_folders(folder_id, folder_list, sdk, debug=False):
         logger.debug("going for recursion", extra={"parent_id": space.parent_id})
         recurse_folders(space.parent_id, folder_list, sdk, debug)
 
+    return folder_list
+
 
 def send_export(folder_ids, local_target, env, ini, sdk, debug=False):
     for fid in folder_ids:
 
         # generate the list of folders
         folder_list = []
-        recurse_folders(fid, folder_list, sdk, debug)
+        folder_list = recurse_folders(fid, folder_list, sdk, debug)
         # list is generated in reverse order, so we have to correct
         folder_list.reverse()
         logger.debug("folder_list", extra={"folder_id": fid, "list": folder_list})
