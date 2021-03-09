@@ -12,11 +12,11 @@ pytest-cov = "*"
 twine = "*"
 
 [packages]
-looker-sdk = ">=0.1.3b8"
 oyaml = "*"
 python-json-logger = "*"
 e1839a8 = {editable = true,path = "."}
 looker-deployer = {editable = true,path = "."}
+looker-sdk = "*"
 
 [requires]
 python_version = "3.7"
