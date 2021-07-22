@@ -19,6 +19,8 @@ logger = deploy_logging.get_logger(__name__)
 def get_space_ids_from_name(space_name, parent_id, sdk):
     if (space_name == "Shared" and parent_id == "0"):
         return ["1"]
+    elif (space_name == "Shared" and parent_id == "0"):
+        return sdk.search_spaces(name=space_name)[0].id
     logger.debug("space info", extra={"space_name": space_name, "parent_id": parent_id})
     space_list = sdk.search_spaces(name=space_name, parent_id=parent_id)
     id_list = [i.id for i in space_list]
