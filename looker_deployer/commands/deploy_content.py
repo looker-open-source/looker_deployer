@@ -275,7 +275,7 @@ def main(args):
 
     if args.target_folder:
         # Force any target space override to start from Shared
-        #assert args.target_folder.startswith("Shared"), "Target Space MUST begin with 'Shared'"
+        assert args.target_folder.startswith("Shared"), "Target space does not begin with 'Shared', please specify base with --target-base"
         # Make sure trailing sep is in place
         if not args.target_folder.endswith(os.sep):
             args.target_folder += os.sep
