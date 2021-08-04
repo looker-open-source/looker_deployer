@@ -19,7 +19,7 @@ logger = deploy_logging.get_logger(__name__)
 def get_space_ids_from_name(space_name, parent_id, sdk):
     if (space_name == "Shared" and parent_id == "0"):
         return ["1"]
-    elif (space_name == "Embed Groups" and parent_id == "0"):
+    elif (space_name == "Embed Groups" and parent_id == "0"): # TODO Update this function to handle any base folder
         return sdk.search_spaces(name=space_name, parent_id = None)[0].id
     logger.debug("space info", extra={"space_name": space_name, "parent_id": parent_id})
     space_list = sdk.search_spaces(name=space_name, parent_id=parent_id)
@@ -140,7 +140,7 @@ def deploy_space(s, sdk, env, ini, recursive, debug=False, target_base=None):
     logger.debug("files to process", extra={"looks": look_files, "dashboards": dash_files})
 
     # cut down directory to looker-specific paths
-    a, b, c = s.partition(target_base)  # Hard coded to Shared for now TODO: Change this!
+    a, b, c = s.partition(target_base)  
     c = c.rpartition(os.sep)[0]
     logger.debug("partition components", extra={"a": a, "b": b, "c": c})
 
@@ -191,7 +191,7 @@ def deploy_content(content_type, content, sdk, env, ini, debug=False, target_bas
     dirs = content.rpartition(os.sep)[0] + os.sep
 
     # cut down directory to looker-specific paths
-    a, b, c = dirs.partition(target_base)  # Hard coded to Shared for now TODO: Change this!
+    a, b, c = dirs.partition(target_base)  
     c = c.rpartition(os.sep)[0]  # strip trailing slash
 
     # turn into a list of spaces to process
