@@ -274,12 +274,10 @@ def main(args):
     logger.debug("ini file", extra={"ini": args.ini})
 
     if args.target_folder:
-        # Check target-base is set if target-folder does not start with shared
-        if not args.target_folder.startswith("Shared"):
-            assert not args.target_base  == "Shared", "Target folder does not begin with 'Shared', please specify correct base with --target-base"
         # Make sure trailing sep is in place
         if not args.target_folder.endswith(os.sep):
             args.target_folder += os.sep
+        args.target_base = args.target_folder.split('/')[0]
 
     sdk = get_client(args.ini, args.env)
     send_content(
