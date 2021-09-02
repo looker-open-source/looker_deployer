@@ -57,13 +57,29 @@ def match_user_attributes(source_user_attribute,target_user_attributes):
   
   return matched_user_attribute
 
+def match_by_key(tuple_to_search,dictionary_to_match,key_to_match_on):
+  matched = None
+
+  for item in tuple_to_search:
+    if getattr(item,key_to_match_on) == getattr(dictionary_to_match,key_to_match_on): 
+      matched = item
+      break
+  
+  return matched
+
+def add_group_name_information(source_sdk,list_to_update):
+  for i, item in enumerate(list_to_update):
+      item_group_name = source_sdk.group(group_id=item.group_id)
+      item.name = item_group_name.name
+      list_to_update[i] = item
+  return list_to_update
 
 def send_user_attributes(source_sdk,target_sdk,pattern):
   
   #INFO: Get All User Attirbutes From Source Instance
   user_attributes = get_filtered_user_attributes(source_sdk,pattern)
   target_user_attributes = get_filtered_user_attributes(target_sdk,pattern)
-  print(user_attributes)
+  target_groups = target_sdk.all_groups()
 
   #INFO: Start Loop of Create/Update User Attribute on Target and Update Group Values if set
   for user_attribute in user_attributes:
@@ -90,17 +106,28 @@ def send_user_attributes(source_sdk,target_sdk,pattern):
       matched_user_attribute = target_sdk.update_user_attribute(matched_user_attribute.id, new_user_attribute)
       logger.info("Deployment complete", extra={"user_attribute": new_user_attribute.name})
     #INFO: Set group values for user attribute
-    #INFO: Need to test if overwrite not
-    #BUG: Will probably need to reject group ids that are not in the target to ensure it doesn't fail
-    user_attribute_group_value = get_user_attribute_group_value(source_sdk,user_attribute)
-    target_sdk.set_user_attribute_group_values(matched_user_attribute.id,user_attribute_group_value)
+    user_attribute_group_values = get_user_attribute_group_value(source_sdk,user_attribute)
+    user_attribute_group_values = add_group_name_information(source_sdk,user_attribute_group_values)
+    #INFO: Need to loop through the group values in a user attribute to determine matching group
+    for i, user_attribute_group_value in enumerate(user_attribute_group_values):
+      target_group = match_by_key(target_groups,user_attribute_group_value,"name")
+      if target_group:
+        user_attribute_group_value.group_id = target_group.id
+        user_attribute_group_values[i] = user_attribute_group_value
+      else:
+        user_attribute_group_values.remove(user_attribute_group_value)
+
+    target_sdk.set_user_attribute_group_values(user_attribute_id=matched_user_attribute.id, body=user_attribute_group_values)
+
 
 def main():
   ini =  '/Users/adamminton/Documents/credentials/looker.ini'
   source_sdk = looker_sdk.init31(ini,section='version218')
   target_sdk = looker_sdk.init31(ini,section='version2110')
-  pattern = '^testingme'
+  pattern = '^testing_'
   debug = True
+
+  #source_sdk.group(group_id=41)
 
   if debug:
     logger.setLevel(logging.DEBUG)
