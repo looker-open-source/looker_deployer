@@ -90,17 +90,13 @@ def send_permission_sets(source_sdk,target_sdk,pattern):
       matched_permission_set = target_sdk.update_permission_set(matched_permission_set.id, new_permission_set)
       logger.info("Deployment complete", extra={"permission_set": new_permission_set.name})
 
-def main():
-  ini =  '/Users/adamminton/Documents/credentials/looker.ini'
-  source_sdk = looker_sdk.init31(ini,section='version218')
-  target_sdk = looker_sdk.init31(ini,section='version2110')
-  pattern = '^testing_'
-  #pattern = None
-  debug = True
+def main(args):
 
-  if debug:
+  if args.debug:
     logger.setLevel(logging.DEBUG)
+  
+  source_sdk = get_client(args.ini, args.source)
 
-  send_permission_sets(source_sdk,target_sdk,pattern)
-
-main()
+  for t in args.target:
+    target_sdk = get_client(args.ini, t)
+    send_permission_sets(source_sdk,target_sdk,args.pattern)

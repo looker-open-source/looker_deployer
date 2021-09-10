@@ -98,17 +98,12 @@ def send_roles(source_sdk,target_sdk,pattern):
       matched_role = target_sdk.update_role(matched_role.id, new_role)
       logger.info("Deployment complete", extra={"role": new_role.name})
 
-def main():
-  ini =  '/Users/adamminton/Documents/credentials/looker.ini'
-  source_sdk = looker_sdk.init31(ini,section='version218')
-  target_sdk = looker_sdk.init31(ini,section='version2110')
-  pattern = '^testing_'
-  #pattern = None
-  debug = True
-
-  if debug:
+def main(args):
+  if args.debug:
     logger.setLevel(logging.DEBUG)
+  
+  source_sdk = get_client(args.ini, args.source)
 
-  send_roles(source_sdk,target_sdk,pattern)
-
-main()
+  for t in args.target:
+    target_sdk = get_client(args.ini, t)
+    send_roles(source_sdk,target_sdk,args.pattern)

@@ -72,17 +72,12 @@ def send_role_to_group(source_sdk,target_sdk,pattern):
     logger.debug("Deployment Complete", extra={"role_name": role.name,"group_ids":groups_for_update})
 
 
-def main():
-  ini =  '/Users/adamminton/Documents/credentials/looker.ini'
-  source_sdk = looker_sdk.init31(ini,section='version218')
-  target_sdk = looker_sdk.init31(ini,section='version2110')
-  pattern = '^testing_'
-  #pattern = None
-  debug = True
-
-  if debug:
+def main(args):
+  if args.debug:
     logger.setLevel(logging.DEBUG)
+  
+  source_sdk = get_client(args.ini, args.source)
 
-  send_role_to_group(source_sdk,target_sdk,pattern)
-
-main()
+  for t in args.target:
+    target_sdk = get_client(args.ini, t)
+    send_role_to_group(source_sdk,target_sdk,args.pattern)

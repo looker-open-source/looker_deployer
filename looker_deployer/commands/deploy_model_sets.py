@@ -90,17 +90,12 @@ def send_model_sets(source_sdk,target_sdk,pattern):
       matched_model_set = target_sdk.update_model_set(matched_model_set.id, new_model_set)
       logger.info("Deployment complete", extra={"model_set": new_model_set.name})
 
-def main():
-  ini =  '/Users/adamminton/Documents/credentials/looker.ini'
-  source_sdk = looker_sdk.init31(ini,section='version218')
-  target_sdk = looker_sdk.init31(ini,section='version2110')
-  pattern = '^testing'
-  #pattern = None
-  debug = True
-
-  if debug:
+def main(args):
+  if args.debug:
     logger.setLevel(logging.DEBUG)
+  
+  source_sdk = get_client(args.ini, args.source)
 
-  send_model_sets(source_sdk,target_sdk,pattern)
-
-main()
+  for t in args.target:
+    target_sdk = get_client(args.ini, t)
+    send_model_sets(source_sdk,target_sdk,args.pattern)

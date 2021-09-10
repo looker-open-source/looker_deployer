@@ -120,18 +120,12 @@ def send_user_attributes(source_sdk,target_sdk,pattern):
     target_sdk.set_user_attribute_group_values(user_attribute_id=matched_user_attribute.id, body=user_attribute_group_values)
 
 
-def main():
-  ini =  '/Users/adamminton/Documents/credentials/looker.ini'
-  source_sdk = looker_sdk.init31(ini,section='version218')
-  target_sdk = looker_sdk.init31(ini,section='version2110')
-  pattern = '^testing_'
-  debug = True
+def main(args):
+  if args.debug:
+        logger.setLevel(logging.DEBUG)
+  
+  source_sdk = get_client(args.ini, args.source)
 
-  #source_sdk.group(group_id=41)
-
-  if debug:
-    logger.setLevel(logging.DEBUG)
-
-  send_user_attributes(source_sdk,target_sdk,pattern)
-
-main()
+  for t in args.target:
+    target_sdk = get_client(args.ini, t)
+    send_user_attributes(source_sdk,target_sdk,args.pattern)
