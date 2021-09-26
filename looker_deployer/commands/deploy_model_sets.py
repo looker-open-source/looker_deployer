@@ -5,19 +5,9 @@ import looker_sdk
 from looker_deployer.utils import deploy_logging
 from looker_deployer.utils import parse_ini
 from looker_deployer.utils.get_client import get_client
-# from looker_deployer.utils import match_by_key
+from looker_deployer.utils import match_by_key
 
 logger = deploy_logging.get_logger(__name__)
-
-def match_by_key(tuple_to_search,dictionary_to_match,key_to_match_on):
-  matched = None
-  
-  for item in tuple_to_search:
-    if getattr(item,key_to_match_on) == getattr(dictionary_to_match,key_to_match_on): 
-      matched = item
-      break
-  
-  return matched
 
 def get_filtered_model_sets(source_sdk, pattern=None):
   model_sets = source_sdk.all_model_sets()
@@ -58,19 +48,18 @@ def get_user_attribute_group_value(source_sdk,user_attribute):
   
   return user_attribute_group_value
 
-def send_model_sets(source_sdk,target_sdk,pattern):
+def write_model_sets(model_sets,target_sdk,pattern=None):
   
-  #INFO: Get All User Attirbutes From Source Instance
-  model_sets = get_filtered_model_sets(source_sdk,pattern)
+  #INFO: Get filtered model sets from target Instance
   target_model_sets = get_filtered_model_sets(target_sdk,pattern)
 
   #INFO: Start Loop of Create/Update on Target
   for model_set in model_sets:
-    #INFO: Create user attribute
+    #INFO: Create model set
     new_model_set = models.WriteModelSet()
     new_model_set.__dict__.update(model_set.__dict__)
     
-    #INFO: Test if user attribute is already in target
+    #INFO: Test if model set is already in target
     matched_model_set = match_by_key(target_model_sets,model_set,"name")
     
     if matched_model_set:
@@ -78,17 +67,21 @@ def send_model_sets(source_sdk,target_sdk,pattern):
     else:
       model_set_exists = False
 
-    #INFO: Create or Update the User Attribute
+    #INFO: Create or Update the Model Set
     if not model_set_exists:
       logger.debug("No Model Set found. Creating...")
       logger.debug("Deploying Model Set", extra={"model_set": model_set.name})
-      matched_model_set = target_sdk.create_model_set(body=new_model_set)
+      matched_model_set = target_sdk.create_model_set(new_model_set)
       logger.info("Deployment complete", extra={"model_set": new_model_set.name})
     else:
       logger.debug("Existing model set found. Updating...")
       logger.debug("Deploying Model Set", extra={"model_set": new_model_set.name})
       matched_model_set = target_sdk.update_model_set(matched_model_set.id, new_model_set)
       logger.info("Deployment complete", extra={"model_set": new_model_set.name})
+
+def send_model_sets(source_sdk,target_sdk,pattern=None):
+  model_sets = get_filtered_model_sets(source_sdk,pattern)
+  write_model_sets(model_sets,target_sdk,pattern)
 
 def main(args):
   if args.debug:
