@@ -1,22 +1,10 @@
 import logging
 import re
-from looker_sdk import models, error
-import looker_sdk
 from looker_deployer.utils import deploy_logging
-from looker_deployer.utils import parse_ini
 from looker_deployer.utils.get_client import get_client
+from looker_deployer.utils.match_by_key import match_by_key
 
 logger = deploy_logging.get_logger(__name__)
-
-def match_by_key(tuple_to_search,dictionary_to_match,key_to_match_on):
-  matched = None
-
-  for item in tuple_to_search:
-    if getattr(item,key_to_match_on) == getattr(dictionary_to_match,key_to_match_on): 
-      matched = item
-      break
-  
-  return matched
 
 def get_filtered_roles(source_sdk, pattern=None):
   roles = source_sdk.all_roles()
@@ -41,7 +29,7 @@ def get_filtered_roles(source_sdk, pattern=None):
   
   return roles
 
-def send_role_to_group(source_sdk,target_sdk,pattern):
+def write_role_to_group(source_sdk,target_sdk,pattern):
   
   #INFO: Get all roles 
   roles = get_filtered_roles(source_sdk,pattern)
@@ -69,8 +57,7 @@ def send_role_to_group(source_sdk,target_sdk,pattern):
     logger.debug("Updating Role Group. Updating...") 
     logger.debug("Deploying Role Group", extra={"role_name": role.name,"group_ids":groups_for_update})
     target_sdk.set_role_groups(role_id=matched_role.id,body=groups_for_update)
-    logger.debug("Deployment Complete", extra={"role_name": role.name,"group_ids":groups_for_update})
-
+    logger.info("Deployment Complete", extra={"role_name": role.name,"group_ids":groups_for_update})
 
 def main(args):
   if args.debug:
@@ -80,4 +67,4 @@ def main(args):
 
   for t in args.target:
     target_sdk = get_client(args.ini, t)
-    send_role_to_group(source_sdk,target_sdk,args.pattern)
+    write_role_to_group(source_sdk,target_sdk,args.pattern)

@@ -46,7 +46,7 @@ def test_write_model_sets_new(mocker):
     mocker.patch.object(sdk, "create_model_set")
 
     deploy_model_sets.write_model_sets(model_set_list,sdk)
-    sdk.create_model_set.assert_called_once_with(body=model_set_list[0])
+    sdk.create_model_set.assert_called_once_with(model_set_list[0])
 
 
 def test_write_model_sets_existing(mocker):

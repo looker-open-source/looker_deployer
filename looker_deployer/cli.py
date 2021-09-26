@@ -15,7 +15,7 @@
 import argparse
 from looker_deployer.commands import deploy_boards, deploy_code, deploy_connections
 from looker_deployer.commands import deploy_content, deploy_content_export
-from looker_deployer.commands import deploy_permission_sets, deploy_model_sets, deploy_roles, deploy_groups, deploy_group_in_group, deploy_role_to_groups, deploy_user_attributes
+from looker_deployer.commands import deploy_permission_sets, deploy_model_sets, deploy_roles, deploy_groups, deploy_group_in_group, deploy_role_to_group, deploy_user_attributes
 from looker_deployer import __version__ as pkg
 
 
@@ -169,13 +169,13 @@ def setup_group_in_group_subparser(subparsers):
     group_in_group_subparser.set_defaults(func=deploy_group_in_group.main)
 
 def setup_role_to_group_subparser(subparsers):
-    role_to_group_subparser = subparsers.add_parser("role_to_groups")
+    role_to_group_subparser = subparsers.add_parser("role_to_group")
     role_to_group_subparser.add_argument("--source", required=True, help="which environment to source the role to groups from")
     role_to_group_subparser.add_argument("--ini", default=loc, help="ini file to parse for credentials")
     role_to_group_subparser.add_argument("--target", nargs="+", required=True, help="which target environment(s) to deploy to")
     role_to_group_subparser.add_argument("--pattern", help="regex pattern to filter which role to groups are deployed")
     role_to_group_subparser.add_argument("--debug", action="store_true", help="set logger to debug for more verbosity")
-    role_to_group_subparser.set_defaults(func=deploy_role_to_groups.main)
+    role_to_group_subparser.set_defaults(func=deploy_role_to_group.main)
 
 def setup_user_attributes_subparser(subparsers):
     user_attributes_subparser = subparsers.add_parser("user_attributes")

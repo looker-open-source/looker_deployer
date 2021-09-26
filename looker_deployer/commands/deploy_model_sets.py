@@ -1,11 +1,9 @@
 import logging
 import re
-from looker_sdk import models, error
-import looker_sdk
+from looker_sdk import models
 from looker_deployer.utils import deploy_logging
-from looker_deployer.utils import parse_ini
 from looker_deployer.utils.get_client import get_client
-from looker_deployer.utils import match_by_key
+from looker_deployer.utils.match_by_key import match_by_key
 
 logger = deploy_logging.get_logger(__name__)
 
@@ -32,7 +30,7 @@ def get_filtered_model_sets(source_sdk, pattern=None):
         "filtered_model_sets": [i.name for i in model_sets],
         "pattern": pattern
       }
-    )
+    ) 
   
   return model_sets
 
@@ -68,10 +66,12 @@ def write_model_sets(model_sets,target_sdk,pattern=None):
       logger.info("Deployment complete", extra={"model_set": new_model_set.name})
 
 def send_model_sets(source_sdk,target_sdk,pattern=None):
+  #INFO: Get all model sets from source instance
   model_sets = get_filtered_model_sets(source_sdk,pattern)
   write_model_sets(model_sets,target_sdk,pattern)
 
 def main(args):
+
   if args.debug:
     logger.setLevel(logging.DEBUG)
   
