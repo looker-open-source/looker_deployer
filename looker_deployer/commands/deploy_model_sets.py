@@ -36,18 +36,6 @@ def get_filtered_model_sets(source_sdk, pattern=None):
   
   return model_sets
 
-def get_user_attribute_group_value(source_sdk,user_attribute):
-  user_attribute_group_value = source_sdk.all_user_attribute_group_values(user_attribute.id)
-
-  logger.debug(
-    "User Attribute Group Value Pulled",
-    extra ={
-      "group_ids": [i.group_id for i in user_attribute_group_value]
-    }
-  )
-  
-  return user_attribute_group_value
-
 def write_model_sets(model_sets,target_sdk,pattern=None):
   
   #INFO: Get filtered model sets from target Instance
