@@ -1,11 +1,9 @@
 import logging
 import re
-from looker_sdk import models, error
-import looker_sdk
-from looker_sdk.sdk.api31.models import UserAttribute
+from looker_sdk import models
 from looker_deployer.utils import deploy_logging
-from looker_deployer.utils import parse_ini
 from looker_deployer.utils.get_client import get_client
+from looker_deployer.utils.match_by_key import match_by_key
 
 logger = deploy_logging.get_logger(__name__)
 
@@ -57,16 +55,6 @@ def match_user_attributes(source_user_attribute,target_user_attributes):
   
   return matched_user_attribute
 
-def match_by_key(tuple_to_search,dictionary_to_match,key_to_match_on):
-  matched = None
-
-  for item in tuple_to_search:
-    if getattr(item,key_to_match_on) == getattr(dictionary_to_match,key_to_match_on): 
-      matched = item
-      break
-  
-  return matched
-
 def add_group_name_information(source_sdk,list_to_update):
   for i, item in enumerate(list_to_update):
       item_group_name = source_sdk.group(group_id=item.group_id)
@@ -74,7 +62,7 @@ def add_group_name_information(source_sdk,list_to_update):
       list_to_update[i] = item
   return list_to_update
 
-def send_user_attributes(source_sdk,target_sdk,pattern):
+def write_user_attributes(source_sdk,target_sdk,pattern):
   
   #INFO: Get All User Attirbutes From Source Instance
   user_attributes = get_filtered_user_attributes(source_sdk,pattern)
@@ -119,19 +107,13 @@ def send_user_attributes(source_sdk,target_sdk,pattern):
 
     target_sdk.set_user_attribute_group_values(user_attribute_id=matched_user_attribute.id, body=user_attribute_group_values)
 
+def main(args):
 
-def main():
-  ini =  '/Users/adamminton/Documents/credentials/looker.ini'
-  source_sdk = looker_sdk.init31(ini,section='version218')
-  target_sdk = looker_sdk.init31(ini,section='version2110')
-  pattern = '^testing_'
-  debug = True
+  if args.debug:
+        logger.setLevel(logging.DEBUG)
+  
+  source_sdk = get_client(args.ini, args.source)
 
-  #source_sdk.group(group_id=41)
-
-  if debug:
-    logger.setLevel(logging.DEBUG)
-
-  send_user_attributes(source_sdk,target_sdk,pattern)
-
-main()
+  for t in args.target:
+    target_sdk = get_client(args.ini, t)
+    write_user_attributes(source_sdk,target_sdk,args.pattern)
