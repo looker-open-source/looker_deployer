@@ -86,7 +86,7 @@ def write_user_attributes(source_sdk,target_sdk,pattern):
     if not user_attribute_exists:
       logger.debug("No User Attribute found. Creating...")
       logger.debug("Deploying User Attribute", extra={"user_attribute": new_user_attribute.name})
-      matched_user_attribute = target_sdk.create_user_attribute(body=new_user_attribute)
+      matched_user_attribute = target_sdk.create_user_attribute(new_user_attribute)
       logger.info("Deployment complete", extra={"user_attribute": new_user_attribute.name})
     else:
       logger.debug("Existing user attribute found. Updating...")

@@ -57,7 +57,7 @@ def write_groups(groups,target_sdk,pattern):
     if not group_exists:
       logger.debug("No Group found. Creating...")
       logger.debug("Deploying Group", extra={"group": group.name})
-      matched_group = target_sdk.create_group(body=new_group)
+      matched_group = target_sdk.create_group(new_group)
       logger.info("Deployment complete", extra={"group": new_group.name})
     else:
       logger.debug("Existing Group found. Updating...")

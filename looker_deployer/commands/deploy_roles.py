@@ -63,7 +63,7 @@ def write_roles(roles,target_sdk,pattern):
     if not role_exists:
       logger.debug("No Role found. Creating...")
       logger.debug("Deploying Role", extra={"role": role.name})
-      matched_role = target_sdk.create_role(body=new_role)
+      matched_role = target_sdk.create_role(new_role)
       logger.info("Deployment complete", extra={"role": new_role.name})
     else:
       logger.debug("Existing Role found. Updating...")
