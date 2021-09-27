@@ -1,5 +1,5 @@
 from looker_deployer.commands import deploy_model_sets
-from looker_sdk import methods, models, error
+from looker_sdk import methods, models
 
 
 class mockSettings:
