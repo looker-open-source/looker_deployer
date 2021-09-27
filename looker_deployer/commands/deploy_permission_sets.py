@@ -57,7 +57,7 @@ def write_permission_sets(permission_sets,target_sdk,pattern=None):
     if not permission_set_exists:
       logger.debug("No Permission Set found. Creating...")
       logger.debug("Deploying Permission Set", extra={"permission_set": permission_set.name})
-      matched_permission_set = target_sdk.create_permission_set(body=new_permission_set)
+      matched_permission_set = target_sdk.create_permission_set(new_permission_set)
       logger.info("Deployment complete", extra={"permission_set": new_permission_set.name})
     else:
       logger.debug("Existing permission set found. Updating...")
