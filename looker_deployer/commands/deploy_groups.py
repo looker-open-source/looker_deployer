@@ -34,7 +34,7 @@ def get_filtered_groups(source_sdk, pattern=None):
   
   return groups
 
-def write_groups(groups,target_sdk,pattern):
+def write_groups(groups,target_sdk,pattern=None):
   
   #INFO: Get all groups from target instances that match pattern for name
   target_groups = get_filtered_groups(target_sdk,pattern)
@@ -65,7 +65,7 @@ def write_groups(groups,target_sdk,pattern):
       matched_group = target_sdk.update_group(matched_group.id, new_group)
       logger.info("Deployment complete", extra={"group": new_group.name})
 
-def send_groups(source_sdk,target_sdk,pattern):
+def send_groups(source_sdk,target_sdk,pattern=None):
   #INFO: Get all groups from source instance
   groups = get_filtered_groups(source_sdk,pattern)
   write_groups(groups,target_sdk,pattern)
