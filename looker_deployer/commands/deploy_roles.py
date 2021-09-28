@@ -30,7 +30,7 @@ def get_filtered_roles(source_sdk, pattern=None):
   
   return roles
 
-def write_roles(roles,target_sdk,pattern):
+def write_roles(roles,target_sdk,pattern=None):
   
   #INFO: Get all roles from target instances that match pattern for name
   target_roles = get_filtered_roles(target_sdk,pattern)
@@ -71,7 +71,7 @@ def write_roles(roles,target_sdk,pattern):
       matched_role = target_sdk.update_role(matched_role.id, new_role)
       logger.info("Deployment complete", extra={"role": new_role.name})
 
-def send_roles(source_sdk,target_sdk,pattern):
+def send_roles(source_sdk,target_sdk,pattern=None):
   #INFO: Get all roles from source instance
   roles = get_filtered_roles(source_sdk,pattern)
   write_roles(roles,target_sdk,pattern)
