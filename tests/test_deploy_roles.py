@@ -1,5 +1,4 @@
 from looker_sdk.rtl import model
-from looker_sdk.sdk.api31.models import PermissionSet
 from looker_deployer.commands import deploy_roles
 from looker_sdk import methods, models
 
