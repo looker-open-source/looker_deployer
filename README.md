@@ -281,6 +281,8 @@ Due to the related nature of role settings in Looker, it is recommended to run t
 6. Role to Group
 7. User Attributes
 
+If you have externally manged groups, you will need to ensure you update for SAML/LDAP is done prior to Group in Group.
+
 ## Model Sets Deployment
 
 This command allows for the migration of model sets across instances.
@@ -364,7 +366,7 @@ optional arguments:
 
 ## Groups Deployment
 
-This command allows for the migration of groups across instances.
+This command allows for the migration of non-externally managed groups across instances.
 
 Matching for create or update will be based on the name of the setting, since IDs are auto-incremented.
 
@@ -398,7 +400,7 @@ Matching for create or delete will be based on the name of the setting, since ID
 The command accepts the following arguments:
 
 ```
-usage: ldeploy group_in_groups [-h] --source SOURCE [--ini INI] --target TARGE [TARGET ...] [--pattern PATTERN] [--debug]
+usage: ldeploy group_in_group [-h] --source SOURCE [--ini INI] --target TARGE [TARGET ...] [--pattern PATTERN] [--debug]
 
 optional arguments:
   -h, --help            show this help message and exit
