@@ -34,7 +34,7 @@ def get_filtered_groups(source_sdk, pattern=None):
   
   return groups
 
-def write_groups_in_group(source_sdk,target_sdk,pattern):
+def write_groups_in_group(source_sdk,target_sdk,pattern=None):
   
   #INFO: Get all groups from source and target instances that match pattern for name
   groups = get_filtered_groups(source_sdk,pattern)
