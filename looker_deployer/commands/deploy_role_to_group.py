@@ -29,9 +29,9 @@ def get_filtered_roles(source_sdk, pattern=None):
   
   return roles
 
-def write_role_to_group(source_sdk,target_sdk,pattern):
+def write_role_to_group(source_sdk,target_sdk,pattern=None):
   
-  #INFO: Get all roles 
+  #INFO: Get all roles and groups information
   roles = get_filtered_roles(source_sdk,pattern)
   target_roles = get_filtered_roles(target_sdk,pattern)
   groups = source_sdk.all_groups()
