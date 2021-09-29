@@ -62,7 +62,7 @@ def add_group_name_information(source_sdk,list_to_update):
       list_to_update[i] = item
   return list_to_update
 
-def write_user_attributes(source_sdk,target_sdk,pattern):
+def write_user_attributes(source_sdk,target_sdk,pattern=None):
   
   #INFO: Get All User Attirbutes From Source Instance
   user_attributes = get_filtered_user_attributes(source_sdk,pattern)
@@ -105,7 +105,8 @@ def write_user_attributes(source_sdk,target_sdk,pattern):
       else:
         user_attribute_group_values.remove(user_attribute_group_value)
 
-    target_sdk.set_user_attribute_group_values(user_attribute_id=matched_user_attribute.id, body=user_attribute_group_values)
+    if user_attribute_group_values:
+      target_sdk.set_user_attribute_group_values(user_attribute_id=matched_user_attribute.id, body=user_attribute_group_values)
 
 def main(args):
 
