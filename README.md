@@ -281,18 +281,20 @@ Due to the related nature of role settings in Looker, it is recommended to run t
 6. Role to Group
 7. User Attributes
 
-If you have externally manged groups, you will need to ensure you update for SAML/LDAP is done prior to Group in Group.
+**Special Considerations:**
+
+If you have externally manged groups, you will need to ensure you update for SAML/LDAP is done prior to Group in Group. These special groups are not migrated by the code referenced above.
 
 ## Model Sets Deployment
 
 This command allows for the migration of model sets across instances.
 
-Matching for create or update will be based on the name of the setting, since IDs are auto-incremented.
+Matching for create/update/delete will be based on the name of the setting, since IDs are auto-incremented.
 
 The command accepts the following arguments:
 
 ```
-usage: ldeploy model_sets [-h] --source SOURCE [--ini INI] --target TARGE [TARGET ...] [--pattern PATTERN] [--debug]
+usage: ldeploy model_sets [-h] --source SOURCE [--ini INI] --target TARGE [TARGET ...] [--pattern PATTERN] [--delete] [--debug]
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -301,6 +303,7 @@ optional arguments:
   --target TARGET [TARGET ...]
                         which target environment(s) to deploy to
   --pattern PATTERN     regex pattern to filter
+  --delete              allows for deletion from target based on name
   --debug               set logger to debug for more verbosity
 ```
 
@@ -314,12 +317,12 @@ optional arguments:
 
 This command allows for the migration of permission sets across instances.
 
-Matching for create or update will be based on the name of the setting, since IDs are auto-incremented.
+Matching for create/update/delete will be based on the name of the setting, since IDs are auto-incremented.
 
 The command accepts the following arguments:
 
 ```
-usage: ldeploy permission_sets [-h] --source SOURCE [--ini INI] --target TARGE [TARGET ...] [--pattern PATTERN] [--debug]
+usage: ldeploy permission_sets [-h] --source SOURCE [--ini INI] --target TARGE [TARGET ...] [--pattern PATTERN] [--delete] [--debug]
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -328,6 +331,7 @@ optional arguments:
   --target TARGET [TARGET ...]
                         which target environment(s) to deploy to
   --pattern PATTERN     regex pattern to filter
+  --delete              allows for deletion from target based on name
   --debug               set logger to debug for more verbosity
 ```
 
@@ -341,12 +345,12 @@ optional arguments:
 
 This command allows for the migration of roles across instances.
 
-Matching for create or update will be based on the name of the setting, since IDs are auto-incremented.
+Matching for create/update/delete will be based on the name of the setting, since IDs are auto-incremented.
 
 The command accepts the following arguments:
 
 ```
-usage: ldeploy roles [-h] --source SOURCE [--ini INI] --target TARGE [TARGET ...] [--pattern PATTERN] [--debug]
+usage: ldeploy roles [-h] --source SOURCE [--ini INI] --target TARGE [TARGET ...] [--pattern PATTERN] [--delete] [--debug]
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -355,6 +359,7 @@ optional arguments:
   --target TARGET [TARGET ...]
                         which target environment(s) to deploy to
   --pattern PATTERN     regex pattern to filter
+  --delete              allows for deletion from target based on name
   --debug               set logger to debug for more verbosity
 ```
 
@@ -368,12 +373,12 @@ optional arguments:
 
 This command allows for the migration of non-externally managed groups across instances.
 
-Matching for create or update will be based on the name of the setting, since IDs are auto-incremented.
+Matching for create/update/delete will be based on the name of the setting, since IDs are auto-incremented.
 
 The command accepts the following arguments:
 
 ```
-usage: ldeploy groups [-h] --source SOURCE [--ini INI] --target TARGE [TARGET ...] [--pattern PATTERN] [--debug]
+usage: ldeploy groups [-h] --source SOURCE [--ini INI] --target TARGE [TARGET ...] [--pattern PATTERN] [--delete] [--debug]
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -382,6 +387,7 @@ optional arguments:
   --target TARGET [TARGET ...]
                         which target environment(s) to deploy to
   --pattern PATTERN     regex pattern to filter
+  --delete              allows for deletion from target based on name
   --debug               set logger to debug for more verbosity
 ```
 
@@ -447,14 +453,14 @@ optional arguments:
 
 ## User Attributes Deployment
 
-This command allows for the migration of user attributes across instances.
+This command allows for the migration of non-system managed user attributes across instances (i.e. id, first_name, last_name, email).
 
-Matching for create or update will be based on the name of the setting, since IDs are auto-incremented. This includes assignments made for user attributes made by group names.
+Matching for create/update/delete will be based on the name of the setting, since IDs are auto-incremented. This includes assignments made for user attributes made by group names.
 
 The command accepts the following arguments:
 
 ```
-usage: ldeploy user_attributes [-h] --source SOURCE [--ini INI] --target TARGE [TARGET ...] [--pattern PATTERN] [--debug]
+usage: ldeploy user_attributes [-h] --source SOURCE [--ini INI] --target TARGE [TARGET ...] [--pattern PATTERN] [--delete] [--debug]
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -463,6 +469,7 @@ optional arguments:
   --target TARGET [TARGET ...]
                         which target environment(s) to deploy to
   --pattern PATTERN     regex pattern to filter
+  --delete              allows for deletion from target based on name
   --debug               set logger to debug for more verbosity
 ```
 
