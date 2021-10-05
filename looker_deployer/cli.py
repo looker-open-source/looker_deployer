@@ -138,6 +138,7 @@ def setup_model_sets_subparser(subparsers):
     model_sets_subparser.add_argument("--ini", default=loc, help="ini file to parse for credentials")
     model_sets_subparser.add_argument("--target", nargs="+", required=True, help="which target environment(s) to deploy to")
     model_sets_subparser.add_argument("--pattern", help="regex pattern to filter which model sets are deployed")
+    model_sets_subparser.add_argument("--delete", action="store_true", help="enables the ability for explicit deletes of model sets in target")
     model_sets_subparser.add_argument("--debug", action="store_true", help="set logger to debug for more verbosity")
     model_sets_subparser.set_defaults(func=deploy_model_sets.main)
 

@@ -32,7 +32,7 @@ def get_filtered_model_sets(source_sdk, pattern=None):
   
   return model_sets
 
-def write_model_sets(model_sets,target_sdk,pattern=None):
+def write_model_sets(model_sets,target_sdk,pattern=None,allow_delete=None):
   
   #INFO: Get filtered model sets from target Instance
   target_model_sets = get_filtered_model_sets(target_sdk,pattern)
@@ -63,10 +63,23 @@ def write_model_sets(model_sets,target_sdk,pattern=None):
       matched_model_set = target_sdk.update_model_set(matched_model_set.id, new_model_set)
       logger.info("Deployment complete", extra={"model_set": new_model_set.name})
 
-def send_model_sets(source_sdk,target_sdk,pattern=None):
+  #INFO: Delete missing model sets that are not in target
+  if allow_delete:
+    for target_model_set in target_model_sets:
+      
+      #INFO: Test if model set is already in target
+      matched_model_set = match_by_key(model_sets,target_model_set,"name")
+
+      if not matched_model_set:
+        logger.debug("No Source Model Set found. Deleting...")
+        logger.debug("Deleting Model Set", extra={"model_set": target_model_set.name})
+        target_sdk.delete_model_set(target_model_set.id)
+        logger.info("Delete complete", extra={"model_set": target_model_set.name})
+
+def send_model_sets(source_sdk,target_sdk,pattern=None,allow_delete=None):
   #INFO: Get all model sets from source instance
   model_sets = get_filtered_model_sets(source_sdk,pattern)
-  write_model_sets(model_sets,target_sdk,pattern)
+  write_model_sets(model_sets,target_sdk,pattern,allow_delete)
 
 def main(args):
 
@@ -77,4 +90,4 @@ def main(args):
 
   for t in args.target:
     target_sdk = get_client(args.ini, t)
-    send_model_sets(source_sdk,target_sdk,args.pattern)
+    send_model_sets(source_sdk,target_sdk,args.pattern,args.delete)
