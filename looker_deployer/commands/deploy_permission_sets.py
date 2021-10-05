@@ -64,17 +64,17 @@ def write_permission_sets(permission_sets,target_sdk,pattern=None,allow_delete=N
       logger.info("Deployment complete", extra={"permission_set": new_permission_set.name})
 
   #INFO: Delete missing permission sets that are not in source
-    if allow_delete:
-      for target_permission_set in target_permission_sets:
-        
-        #INFO: Test if model set is already in target
-        matched_permission_set = match_by_key(permission_sets,target_permission_set,"name")
+  if allow_delete:
+    for target_permission_set in target_permission_sets:
+      
+      #INFO: Test if model set is already in target
+      matched_permission_set = match_by_key(permission_sets,target_permission_set,"name")
 
-        if not matched_permission_set:
-          logger.debug("No Source Permission Set found. Deleting...")
-          logger.debug("Deleting Permission Set", extra={"permission_set": target_permission_set.name})
-          target_sdk.delete_permission_set(target_permission_set.id)
-          logger.info("Delete complete", extra={"permission_set": target_permission_set.name})
+      if not matched_permission_set:
+        logger.debug("No Source Permission Set found. Deleting...")
+        logger.debug("Deleting Permission Set", extra={"permission_set": target_permission_set.name})
+        target_sdk.delete_permission_set(target_permission_set.id)
+        logger.info("Delete complete", extra={"permission_set": target_permission_set.name})
 
 def send_permission_sets(source_sdk, target_sdk,pattern=None,allow_delete=None):
   #INFO: Get all permissions sets from source instance
