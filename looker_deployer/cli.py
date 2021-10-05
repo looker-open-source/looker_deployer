@@ -149,6 +149,7 @@ def setup_roles_subparser(subparsers):
     roles_subparser.add_argument("--ini", default=loc, help="ini file to parse for credentials")
     roles_subparser.add_argument("--target", nargs="+", required=True, help="which target environment(s) to deploy to")
     roles_subparser.add_argument("--pattern", help="regex pattern to filter which roles are deployed")
+    roles_subparser.add_argument("--delete", action="store_true", help="enables the ability for explicit deletes of roles in target")
     roles_subparser.add_argument("--debug", action="store_true", help="set logger to debug for more verbosity")
     roles_subparser.set_defaults(func=deploy_roles.main)
 

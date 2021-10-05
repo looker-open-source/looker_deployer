@@ -9,7 +9,7 @@ logger = deploy_logging.get_logger(__name__)
 
 def get_filtered_roles(source_sdk, pattern=None):
   roles = source_sdk.all_roles()
-
+  roles = [i for i in roles if not i.name == "Admin"]
   logger.debug(
     "Roles pulled",
     extra={
@@ -30,7 +30,7 @@ def get_filtered_roles(source_sdk, pattern=None):
   
   return roles
 
-def write_roles(roles,target_sdk,pattern=None):
+def write_roles(roles,target_sdk,pattern=None,allow_delete=None):
   
   #INFO: Get all roles from target instances that match pattern for name
   target_roles = get_filtered_roles(target_sdk,pattern)
@@ -71,10 +71,23 @@ def write_roles(roles,target_sdk,pattern=None):
       matched_role = target_sdk.update_role(matched_role.id, new_role)
       logger.info("Deployment complete", extra={"role": new_role.name})
 
-def send_roles(source_sdk,target_sdk,pattern=None):
+  #INFO: Delete missing roles that are not in the source
+  if allow_delete:
+    for target_role in target_roles:
+      
+      #INFO: Test if model set is already in target
+      matched_role = match_by_key(roles,target_role,"name")
+
+      if not matched_role:
+        logger.debug("No Source Role found. Deleting...")
+        logger.debug("Deleting Role", extra={"role": target_role.name})
+        target_sdk.delete_role(target_role.id)
+        logger.info("Delete complete", extra={"role": target_role.name})
+
+def send_roles(source_sdk,target_sdk,pattern=None,allow_delete=None):
   #INFO: Get all roles from source instance
   roles = get_filtered_roles(source_sdk,pattern)
-  write_roles(roles,target_sdk,pattern)
+  write_roles(roles,target_sdk,pattern,allow_delete)
 
 def main(args):
 
@@ -85,4 +98,4 @@ def main(args):
 
   for t in args.target:
     target_sdk = get_client(args.ini, t)
-    send_roles(source_sdk,target_sdk,args.pattern)
+    send_roles(source_sdk,target_sdk,args.pattern,args.delete)
