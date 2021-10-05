@@ -159,6 +159,7 @@ def setup_groups_subparser(subparsers):
     groups_subparser.add_argument("--ini", default=loc, help="ini file to parse for credentials")
     groups_subparser.add_argument("--target", nargs="+", required=True, help="which target environment(s) to deploy to")
     groups_subparser.add_argument("--pattern", help="regex pattern to filter which groups are deployed")
+    groups_subparser.add_argument("--delete", action="store_true", help="enables the ability for explicit deletes of groups in target")
     groups_subparser.add_argument("--debug", action="store_true", help="set logger to debug for more verbosity")
     groups_subparser.set_defaults(func=deploy_groups.main)
 
