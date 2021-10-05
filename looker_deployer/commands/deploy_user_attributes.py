@@ -17,20 +17,19 @@ def get_filtered_user_attributes(source_sdk, pattern=None):
     }
   )
 
-  for user_attribute in user_attributes:
-    if user_attribute.is_system:
-      user_attributes.remove(user_attribute)
+  user_attributes = [i for i in user_attributes if not i.is_system]
 
   if pattern:
     compiled_pattern = re.compile(pattern)
     user_attributes = [i for i in user_attributes if compiled_pattern.search(i.name)]
-    logger.debug(
-      "User Attributes filtered",
-      extra={
-        "filtered_user_attributes": [i.name for i in user_attributes],
-        "pattern": pattern
-      }
-    )
+  
+  logger.debug(
+    "User Attributes filtered",
+    extra={
+      "filtered_user_attributes": [i.name for i in user_attributes],
+      "pattern": pattern
+    }
+  )
   
   return user_attributes
 

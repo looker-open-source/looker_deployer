@@ -17,9 +17,7 @@ def get_filtered_permission_sets(source_sdk, pattern=None):
     }
   )
 
-  for permission_set in permission_sets:
-    if permission_set.built_in:
-      permission_sets.remove(permission_set)
+  permission_sets = [i for i in permission_sets if not i.built_in]
 
   if pattern:
     compiled_pattern = re.compile(pattern)

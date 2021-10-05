@@ -17,9 +17,7 @@ def get_filtered_groups(source_sdk, pattern=None):
     }
   )
 
-  for group in groups:
-    if group.externally_managed:
-      groups.remove(group)
+  groups = [i for i in groups if not i.externally_managed]
 
   if pattern:
     compiled_pattern = re.compile(pattern)

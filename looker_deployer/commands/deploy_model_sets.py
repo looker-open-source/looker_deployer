@@ -17,9 +17,7 @@ def get_filtered_model_sets(source_sdk, pattern=None):
     }
   )
 
-  for model_set in model_sets:
-    if model_set.built_in:
-      model_sets.remove(model_set)
+  model_sets = [i for i in model_sets if not i.built_in]
 
   if pattern:
     compiled_pattern = re.compile(pattern)
