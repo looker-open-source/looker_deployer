@@ -61,7 +61,7 @@ def add_group_name_information(source_sdk,list_to_update):
       list_to_update[i] = item
   return list_to_update
 
-def write_user_attributes(source_sdk,target_sdk,pattern=None):
+def write_user_attributes(source_sdk,target_sdk,pattern=None,allow_delete = None):
   
   #INFO: Get All User Attirbutes From Source Instance
   user_attributes = get_filtered_user_attributes(source_sdk,pattern)
@@ -106,6 +106,19 @@ def write_user_attributes(source_sdk,target_sdk,pattern=None):
 
     if user_attribute_group_values:
       target_sdk.set_user_attribute_group_values(user_attribute_id=matched_user_attribute.id, body=user_attribute_group_values)
+  
+  #INFO: Delete missing users attirbutes that are not in source
+  if allow_delete:
+    for target_user_attribute in target_user_attributes:
+      
+      #INFO: Test if user attribute is already in target
+      matched_user_attribute = match_by_key(user_attributes,target_user_attribute,"name")
+
+      if not matched_user_attribute:
+        logger.debug("No Source User Attribute found. Deleting...")
+        logger.debug("Deleting User Attribute", extra={"user_attribute": target_user_attribute.name})
+        target_sdk.delete_user_attribute(target_user_attribute.id)
+        logger.info("Delete complete", extra={"user_attribute": target_user_attribute.name})
 
 def main(args):
 
@@ -116,4 +129,4 @@ def main(args):
 
   for t in args.target:
     target_sdk = get_client(args.ini, t)
-    write_user_attributes(source_sdk,target_sdk,args.pattern)
+    write_user_attributes(source_sdk,target_sdk,args.pattern,args.delete)

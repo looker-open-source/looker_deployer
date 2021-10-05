@@ -187,5 +187,6 @@ def setup_user_attributes_subparser(subparsers):
     user_attributes_subparser.add_argument("--ini", default=loc, help="ini file to parse for credentials")
     user_attributes_subparser.add_argument("--target", nargs="+", required=True, help="which target environment(s) to deploy to")
     user_attributes_subparser.add_argument("--pattern", help="regex pattern to filter which user attributess are deployed")
+    user_attributes_subparser.add_argument("--delete", action="store_true", help="enables the ability for explicit deletes of user attributes in target")
     user_attributes_subparser.add_argument("--debug", action="store_true", help="set logger to debug for more verbosity")
     user_attributes_subparser.set_defaults(func=deploy_user_attributes.main)
