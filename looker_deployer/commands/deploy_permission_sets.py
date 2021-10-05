@@ -32,7 +32,7 @@ def get_filtered_permission_sets(source_sdk, pattern=None):
   
   return permission_sets
 
-def write_permission_sets(permission_sets,target_sdk,pattern=None):
+def write_permission_sets(permission_sets,target_sdk,pattern=None,allow_delete=None):
   
   #INFO: Get all permission sets from target instances that match pattern for name
   target_permission_sets = get_filtered_permission_sets(target_sdk,pattern)
@@ -63,10 +63,23 @@ def write_permission_sets(permission_sets,target_sdk,pattern=None):
       matched_permission_set = target_sdk.update_permission_set(matched_permission_set.id, new_permission_set)
       logger.info("Deployment complete", extra={"permission_set": new_permission_set.name})
 
-def send_permission_sets(source_sdk, target_sdk,pattern=None):
+  #INFO: Delete missing permission sets that are not in source
+    if allow_delete:
+      for target_permission_set in target_permission_sets:
+        
+        #INFO: Test if model set is already in target
+        matched_permission_set = match_by_key(permission_sets,target_permission_set,"name")
+
+        if not matched_permission_set:
+          logger.debug("No Source Permission Set found. Deleting...")
+          logger.debug("Deleting Permission Set", extra={"permission_set": target_permission_set.name})
+          target_sdk.delete_permission_set(target_permission_set.id)
+          logger.info("Delete complete", extra={"permission_set": target_permission_set.name})
+
+def send_permission_sets(source_sdk, target_sdk,pattern=None,allow_delete=None):
   #INFO: Get all permissions sets from source instance
   permission_sets = get_filtered_permission_sets(source_sdk,pattern)
-  write_permission_sets(permission_sets,target_sdk,pattern)
+  write_permission_sets(permission_sets,target_sdk,pattern,allow_delete)
 
 def main(args):
 
@@ -77,4 +90,4 @@ def main(args):
 
   for t in args.target:
     target_sdk = get_client(args.ini, t)
-    send_permission_sets(source_sdk,target_sdk,args.pattern)
+    send_permission_sets(source_sdk,target_sdk,args.pattern,args.delete)

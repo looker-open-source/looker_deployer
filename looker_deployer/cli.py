@@ -129,6 +129,7 @@ def setup_permission_sets_subparser(subparsers):
     permission_sets_subparser.add_argument("--ini", default=loc, help="ini file to parse for credentials")
     permission_sets_subparser.add_argument("--target", nargs="+", required=True, help="which target environment(s) to deploy to")
     permission_sets_subparser.add_argument("--pattern", help="regex pattern to filter which permission sets are deployed")
+    permission_sets_subparser.add_argument("--delete", action="store_true", help="enables the ability for explicit deletes of permission sets in target")
     permission_sets_subparser.add_argument("--debug", action="store_true", help="set logger to debug for more verbosity")
     permission_sets_subparser.set_defaults(func=deploy_permission_sets.main)
 
