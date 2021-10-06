@@ -45,7 +45,7 @@ def test_write_model_sets_new(mocker):
     mocker.patch.object(sdk, "all_model_sets")
     mocker.patch.object(sdk, "create_model_set")
 
-    deploy_model_sets.write_model_sets(model_set_list,sdk)
+    deploy_model_sets.write_model_sets(model_set_list, sdk)
     sdk.create_model_set.assert_called_once_with(model_set_list[0])
 
 
@@ -54,8 +54,8 @@ def test_write_model_sets_existing(mocker):
 
     mocker.patch.object(sdk, "all_model_sets")
     mocker.patch.object(sdk, "update_model_set")
-    
-    sdk.all_model_sets.return_value = [models.ModelSet(name="Taco",id=1)]
-    
-    deploy_model_sets.write_model_sets(model_set_list,sdk)
+
+    sdk.all_model_sets.return_value = [models.ModelSet(name="Taco", id=1)]
+
+    deploy_model_sets.write_model_sets(model_set_list, sdk)
     sdk.update_model_set.assert_called_once_with(1, model_set_list[0])

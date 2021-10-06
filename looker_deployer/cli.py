@@ -123,6 +123,7 @@ def setup_content_subparser(subparsers):
     content_group.add_argument("--looks", nargs="+", help="Looks to deploy")
     import_subparser.set_defaults(func=deploy_content.main)
 
+
 def setup_permission_sets_subparser(subparsers):
     permission_sets_subparser = subparsers.add_parser("permission_sets")
     permission_sets_subparser.add_argument("--source", required=True, help="which environment to source the permission sets from")
@@ -132,6 +133,7 @@ def setup_permission_sets_subparser(subparsers):
     permission_sets_subparser.add_argument("--delete", action="store_true", help="enables the ability for explicit deletes of permission sets in target")
     permission_sets_subparser.add_argument("--debug", action="store_true", help="set logger to debug for more verbosity")
     permission_sets_subparser.set_defaults(func=deploy_permission_sets.main)
+
 
 def setup_model_sets_subparser(subparsers):
     model_sets_subparser = subparsers.add_parser("model_sets")
@@ -143,6 +145,7 @@ def setup_model_sets_subparser(subparsers):
     model_sets_subparser.add_argument("--debug", action="store_true", help="set logger to debug for more verbosity")
     model_sets_subparser.set_defaults(func=deploy_model_sets.main)
 
+
 def setup_roles_subparser(subparsers):
     roles_subparser = subparsers.add_parser("roles")
     roles_subparser.add_argument("--source", required=True, help="which environment to source the roles from")
@@ -152,6 +155,7 @@ def setup_roles_subparser(subparsers):
     roles_subparser.add_argument("--delete", action="store_true", help="enables the ability for explicit deletes of roles in target")
     roles_subparser.add_argument("--debug", action="store_true", help="set logger to debug for more verbosity")
     roles_subparser.set_defaults(func=deploy_roles.main)
+
 
 def setup_groups_subparser(subparsers):
     groups_subparser = subparsers.add_parser("groups")
@@ -163,6 +167,7 @@ def setup_groups_subparser(subparsers):
     groups_subparser.add_argument("--debug", action="store_true", help="set logger to debug for more verbosity")
     groups_subparser.set_defaults(func=deploy_groups.main)
 
+
 def setup_group_in_group_subparser(subparsers):
     group_in_group_subparser = subparsers.add_parser("group_in_group")
     group_in_group_subparser.add_argument("--source", required=True, help="which environment to source the group in group from")
@@ -172,6 +177,7 @@ def setup_group_in_group_subparser(subparsers):
     group_in_group_subparser.add_argument("--debug", action="store_true", help="set logger to debug for more verbosity")
     group_in_group_subparser.set_defaults(func=deploy_group_in_group.main)
 
+
 def setup_role_to_group_subparser(subparsers):
     role_to_group_subparser = subparsers.add_parser("role_to_group")
     role_to_group_subparser.add_argument("--source", required=True, help="which environment to source the role to groups from")
@@ -180,6 +186,7 @@ def setup_role_to_group_subparser(subparsers):
     role_to_group_subparser.add_argument("--pattern", help="regex pattern to filter which role to groups are deployed")
     role_to_group_subparser.add_argument("--debug", action="store_true", help="set logger to debug for more verbosity")
     role_to_group_subparser.set_defaults(func=deploy_role_to_group.main)
+
 
 def setup_user_attributes_subparser(subparsers):
     user_attributes_subparser = subparsers.add_parser("user_attributes")

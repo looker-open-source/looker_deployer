@@ -1,4 +1,3 @@
-from looker_sdk.rtl import model
 from looker_deployer.commands import deploy_groups
 from looker_sdk import methods, models
 
@@ -46,7 +45,7 @@ def test_write_groups_new(mocker):
     mocker.patch.object(sdk, "all_groups")
     mocker.patch.object(sdk, "create_group")
 
-    deploy_groups.write_groups(group_list,sdk)
+    deploy_groups.write_groups(group_list, sdk)
     sdk.create_group.assert_called_once_with(group_list[0])
 
 
@@ -56,7 +55,7 @@ def test_write_groups_existing(mocker):
     mocker.patch.object(sdk, "all_groups")
     mocker.patch.object(sdk, "update_group")
 
-    sdk.all_groups.return_value = [models.Group(name="Taco",id=1)]
+    sdk.all_groups.return_value = [models.Group(name="Taco", id=1)]
 
-    deploy_groups.write_groups(group_list,sdk)
-    sdk.update_group.assert_called_once_with(1,group_list[0])
+    deploy_groups.write_groups(group_list, sdk)
+    sdk.update_group.assert_called_once_with(1, group_list[0])
