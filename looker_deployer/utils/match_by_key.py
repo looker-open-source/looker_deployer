@@ -5,6 +5,6 @@ def match_by_key(tuple_to_search, dictionary_to_match, key_to_match_on):
         if getattr(item, key_to_match_on) == getattr(
           dictionary_to_match, key_to_match_on):
             matched = item
-        break
+            break
 
     return matched
