@@ -11,3 +11,4 @@ build/
 .python-version
 helpme.txt
 tests/__pycache__
+.pytest_cache
