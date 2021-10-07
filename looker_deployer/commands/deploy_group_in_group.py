@@ -44,7 +44,7 @@ def write_groups_in_group(source_sdk, target_sdk, pattern=None):
     # INFO: Start Loop of Create/Update on Target
     for group in groups:
         matched_group = match_by_key(target_groups, group, "name")
-        logger.debug("Group Mathced " + matched_group)
+        logger.debug("Group Matched " + matched_group.name)
         groups_in_group = source_sdk.all_group_groups(group.id)
         target_groups_in_group = target_sdk.all_group_groups(matched_group.id)
 
