@@ -91,7 +91,7 @@ def test_import_content(mocker):
     deploy_content.get_gzr_creds.return_value = ("foobar.com", "1234", "abc", "xyz", "True")
 
     mocker.patch("subprocess.run")
-    deploy_content.import_content("dashboard", "tacocat.json", "42", "env", "ini", False, "Shared")
+    deploy_content.import_content("dashboard", "tacocat.json", "42", "env", "ini", False)
     subprocess.run.assert_called_with([
         "gzr",
         "dashboard",
@@ -115,7 +115,7 @@ def test_import_content_debug(mocker):
     deploy_content.get_gzr_creds.return_value = ("foobar.com", "1234", "abc", "xyz", "True")
 
     mocker.patch("subprocess.run")
-    deploy_content.import_content("dashboard", "tacocat.json", "42", "env", "ini", True, "Shared")
+    deploy_content.import_content("dashboard", "tacocat.json", "42", "env", "ini", True)
     subprocess.run.assert_called_with([
         "gzr",
         "dashboard",
@@ -140,7 +140,7 @@ def test_import_content_no_verify_ssl(mocker):
     deploy_content.get_gzr_creds.return_value = ("foobar.com", "1234", "abc", "xyz", "False")
 
     mocker.patch("subprocess.run")
-    deploy_content.import_content("dashboard", "tacocat.json", "42", "env", "ini", False, "Shared")
+    deploy_content.import_content("dashboard", "tacocat.json", "42", "env", "ini", False)
     subprocess.run.assert_called_with([
         "gzr",
         "dashboard",
@@ -167,7 +167,7 @@ def test_import_content_win(mocker):
     mocker.patch("os.name", "nt")
 
     mocker.patch("subprocess.run")
-    deploy_content.import_content("dashboard", "tacocat.json", "42", "env", "ini", False, "Shared")
+    deploy_content.import_content("dashboard", "tacocat.json", "42", "env", "ini", False)
     subprocess.run.assert_called_with([
         "cmd.exe",
         "/c",
@@ -226,7 +226,7 @@ def test_deploy_space_look_call(mocker):
 
     mocker.patch("looker_deployer.commands.deploy_content.import_content")
     deploy_content.deploy_space("Foo/Shared/Bar", "sdk", "env", "ini", False, False, "Shared")
-    deploy_content.import_content.assert_called_once_with("look", "Foo/Shared/Bar/Look_test", "42", "env", "ini", False, "Shared")
+    deploy_content.import_content.assert_called_once_with("look", "Foo/Shared/Bar/Look_test", "42", "env", "ini", False)
 
 
 def test_deploy_space_dashboard_call(mocker):
@@ -250,8 +250,7 @@ def test_deploy_space_dashboard_call(mocker):
         "42",
         "env",
         "ini",
-        False,
-        "Shared"
+        False
     )
 
 
@@ -269,4 +268,4 @@ def test_deploy_content_import_content_call(mocker):
 
     mocker.patch("looker_deployer.commands.deploy_content.import_content")
     deploy_content.deploy_content("look", "Foo/Shared/Bar/Look_test.json", "sdk", "env", "ini", False, "Shared")
-    deploy_content.import_content.assert_called_with("look", "Foo/Shared/Bar/Look_test.json", "42", "env", "ini", False, "Shared")
+    deploy_content.import_content.assert_called_with("look", "Foo/Shared/Bar/Look_test.json", "42", "env", "ini", False)
