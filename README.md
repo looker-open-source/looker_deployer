@@ -1,7 +1,7 @@
 Looker Deployer
 ===============
 
-![badge](https://github.com/JCPistell/looker_deployer/workflows/python_application/badge.svg)
+![badge](https://github.com/looker-open-source/looker_deployer/workflows/python_application/badge.svg)
 
 
 ## Intro
@@ -11,7 +11,7 @@ Looker Deployer (aka 'ldeploy') is a command line tool to help move Looker objec
 
 ## Status and Support
 
-Looker Deployer is NOT supported or warranteed by Looker in any way. Please do not contact Looker support for issues with Looker Deployer. Issues can be logged via [https://github.com/llooker/looker_deployer/issues](https://github.com/llooker/looker_deployer/issues)
+Looker Deployer is NOT supported or warranteed by Looker in any way. Please do not contact Looker support for issues with Looker Deployer. Issues can be logged via [https://github.com/llooker/looker_deployer/issues](https://github.com/looker-open-source/looker_deployer/issues)
 
 ## Requirements
 
