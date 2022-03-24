@@ -3,7 +3,8 @@
   "bump-patch-for-minor-pre-major": true,
   "packages": {
     ".": {
-      "release-type": "python"
+      "release-type": "python",
+      "package-name": "looker-deployer"
     }
   }
 }
