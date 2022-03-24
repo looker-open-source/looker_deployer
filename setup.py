@@ -17,7 +17,7 @@ from looker_deployer import version as pkg
 
 NAME = "looker_deployer"
 VERSION = pkg.__version__
-REQUIRES = ["looker-sdk", "oyaml", "python-json-logger"]
+REQUIRES = ["looker-sdk>=21.18.0", "oyaml", "python-json-logger"]
 
 setup(
     author="Looker Open Source",
