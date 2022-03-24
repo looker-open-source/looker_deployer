@@ -13,7 +13,7 @@
 # limitations under the License.
 
 from setuptools import setup
-from looker_deployer import __version__ as pkg
+from looker_deployer import version as pkg
 
 NAME = "looker_deployer"
 VERSION = pkg.__version__

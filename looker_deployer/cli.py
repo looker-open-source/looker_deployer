@@ -15,7 +15,7 @@
 import argparse
 from looker_deployer.commands import deploy_boards, deploy_code, deploy_connections
 from looker_deployer.commands import deploy_content, deploy_content_export
-from looker_deployer import __version__ as pkg
+from looker_deployer import version as pkg
 
 
 loc = "looker.ini"
