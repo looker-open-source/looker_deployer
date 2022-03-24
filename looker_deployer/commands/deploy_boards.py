@@ -187,12 +187,9 @@ def create_board_item(source_board_item_object, target_board_section_id, source_
     return resp
 
 
-def audit_board_content(board_object, source_sdk, target_sdk):
+def board_content_lists(board_object):
     dash_list = []
     look_list = []
-
-    missing_dashes = []
-    missing_looks = []
 
     for i in board_object.homepage_sections:
         for j in i.homepage_items:
@@ -200,6 +197,15 @@ def audit_board_content(board_object, source_sdk, target_sdk):
                 dash_list.append(j.dashboard_id)
             if j.look_id:
                 look_list.append(j.look_id)
+
+    return(dash_list, look_list)
+
+
+def audit_board_content(board_object, source_sdk, target_sdk):
+    missing_dashes = []
+    missing_looks = []
+
+    dash_list, look_list = board_content_lists(board_object)
 
     for dash in dash_list:
         try:
