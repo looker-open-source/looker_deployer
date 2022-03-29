@@ -15,8 +15,8 @@
 import argparse
 from looker_deployer.commands import deploy_boards, deploy_code, deploy_connections
 from looker_deployer.commands import deploy_content, deploy_content_export
-from looker_deployer.commands import deploy_permission_sets, deploy_model_sets, deploy_roles, deploy_groups, deploy_group_in_group, deploy_role_to_group, deploy_user_attributes
 from looker_deployer import version as pkg
+
 
 loc = "looker.ini"
 
@@ -30,13 +30,6 @@ def main():
     setup_code_subparser(subparsers)
     setup_connections_subparser(subparsers)
     setup_content_subparser(subparsers)
-    setup_permission_sets_subparser(subparsers)
-    setup_model_sets_subparser(subparsers)
-    setup_roles_subparser(subparsers)
-    setup_groups_subparser(subparsers)
-    setup_group_in_group_subparser(subparsers)
-    setup_role_to_group_subparser(subparsers)
-    setup_user_attributes_subparser(subparsers)
     args = parser.parse_args()
     if args.version:
         print(pkg.__version__)
@@ -121,78 +114,3 @@ def setup_content_subparser(subparsers):
     content_group.add_argument("--dashboards", nargs="+", help="Dashboards to deploy")
     content_group.add_argument("--looks", nargs="+", help="Looks to deploy")
     import_subparser.set_defaults(func=deploy_content.main)
-
-
-def setup_permission_sets_subparser(subparsers):
-    permission_sets_subparser = subparsers.add_parser("permission_sets")
-    permission_sets_subparser.add_argument("--source", required=True, help="which environment to source the permission sets from")
-    permission_sets_subparser.add_argument("--ini", default=loc, help="ini file to parse for credentials")
-    permission_sets_subparser.add_argument("--target", nargs="+", required=True, help="which target environment(s) to deploy to")
-    permission_sets_subparser.add_argument("--pattern", help="regex pattern to filter which permission sets are deployed")
-    permission_sets_subparser.add_argument("--delete", action="store_true", help="enables the ability for explicit deletes of permission sets in target")
-    permission_sets_subparser.add_argument("--debug", action="store_true", help="set logger to debug for more verbosity")
-    permission_sets_subparser.set_defaults(func=deploy_permission_sets.main)
-
-
-def setup_model_sets_subparser(subparsers):
-    model_sets_subparser = subparsers.add_parser("model_sets")
-    model_sets_subparser.add_argument("--source", required=True, help="which environment to source the model sets from")
-    model_sets_subparser.add_argument("--ini", default=loc, help="ini file to parse for credentials")
-    model_sets_subparser.add_argument("--target", nargs="+", required=True, help="which target environment(s) to deploy to")
-    model_sets_subparser.add_argument("--pattern", help="regex pattern to filter which model sets are deployed")
-    model_sets_subparser.add_argument("--delete", action="store_true", help="enables the ability for explicit deletes of model sets in target")
-    model_sets_subparser.add_argument("--debug", action="store_true", help="set logger to debug for more verbosity")
-    model_sets_subparser.set_defaults(func=deploy_model_sets.main)
-
-
-def setup_roles_subparser(subparsers):
-    roles_subparser = subparsers.add_parser("roles")
-    roles_subparser.add_argument("--source", required=True, help="which environment to source the roles from")
-    roles_subparser.add_argument("--ini", default=loc, help="ini file to parse for credentials")
-    roles_subparser.add_argument("--target", nargs="+", required=True, help="which target environment(s) to deploy to")
-    roles_subparser.add_argument("--pattern", help="regex pattern to filter which roles are deployed")
-    roles_subparser.add_argument("--delete", action="store_true", help="enables the ability for explicit deletes of roles in target")
-    roles_subparser.add_argument("--debug", action="store_true", help="set logger to debug for more verbosity")
-    roles_subparser.set_defaults(func=deploy_roles.main)
-
-
-def setup_groups_subparser(subparsers):
-    groups_subparser = subparsers.add_parser("groups")
-    groups_subparser.add_argument("--source", required=True, help="which environment to source the groups from")
-    groups_subparser.add_argument("--ini", default=loc, help="ini file to parse for credentials")
-    groups_subparser.add_argument("--target", nargs="+", required=True, help="which target environment(s) to deploy to")
-    groups_subparser.add_argument("--pattern", help="regex pattern to filter which groups are deployed")
-    groups_subparser.add_argument("--delete", action="store_true", help="enables the ability for explicit deletes of groups in target")
-    groups_subparser.add_argument("--debug", action="store_true", help="set logger to debug for more verbosity")
-    groups_subparser.set_defaults(func=deploy_groups.main)
-
-
-def setup_group_in_group_subparser(subparsers):
-    group_in_group_subparser = subparsers.add_parser("group_in_group")
-    group_in_group_subparser.add_argument("--source", required=True, help="which environment to source the group in group from")
-    group_in_group_subparser.add_argument("--ini", default=loc, help="ini file to parse for credentials")
-    group_in_group_subparser.add_argument("--target", nargs="+", required=True, help="which target environment(s) to deploy to")
-    group_in_group_subparser.add_argument("--pattern", help="regex pattern to filter which group in group are deployed")
-    group_in_group_subparser.add_argument("--debug", action="store_true", help="set logger to debug for more verbosity")
-    group_in_group_subparser.set_defaults(func=deploy_group_in_group.main)
-
-
-def setup_role_to_group_subparser(subparsers):
-    role_to_group_subparser = subparsers.add_parser("role_to_group")
-    role_to_group_subparser.add_argument("--source", required=True, help="which environment to source the role to groups from")
-    role_to_group_subparser.add_argument("--ini", default=loc, help="ini file to parse for credentials")
-    role_to_group_subparser.add_argument("--target", nargs="+", required=True, help="which target environment(s) to deploy to")
-    role_to_group_subparser.add_argument("--pattern", help="regex pattern to filter which role to groups are deployed")
-    role_to_group_subparser.add_argument("--debug", action="store_true", help="set logger to debug for more verbosity")
-    role_to_group_subparser.set_defaults(func=deploy_role_to_group.main)
-
-
-def setup_user_attributes_subparser(subparsers):
-    user_attributes_subparser = subparsers.add_parser("user_attributes")
-    user_attributes_subparser.add_argument("--source", required=True, help="which environment to source the user attributess from")
-    user_attributes_subparser.add_argument("--ini", default=loc, help="ini file to parse for credentials")
-    user_attributes_subparser.add_argument("--target", nargs="+", required=True, help="which target environment(s) to deploy to")
-    user_attributes_subparser.add_argument("--pattern", help="regex pattern to filter which user attributess are deployed")
-    user_attributes_subparser.add_argument("--delete", action="store_true", help="enables the ability for explicit deletes of user attributes in target")
-    user_attributes_subparser.add_argument("--debug", action="store_true", help="set logger to debug for more verbosity")
-    user_attributes_subparser.set_defaults(func=deploy_user_attributes.main)
