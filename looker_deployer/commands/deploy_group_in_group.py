@@ -34,7 +34,7 @@ def get_filtered_groups(source_sdk, pattern=None):
     return groups
 
 
-def write_groups_in_group(source_sdk, target_sdk, pattern=None):
+def write_groups_in_group(source_sdk, target_sdk, pattern=None):  # noqa: C901
 
     # INFO: Get all groups from source and target instances that match pattern
     # for name
