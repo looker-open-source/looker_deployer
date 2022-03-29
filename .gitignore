@@ -8,3 +8,4 @@ code_config.yaml
 dist/
 build/
 .python-version
+.vscode

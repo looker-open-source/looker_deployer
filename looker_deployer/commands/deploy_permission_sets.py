@@ -62,7 +62,7 @@ def write_permission_sets(permission_sets, target_sdk, pattern=None,
             logger.debug("Deploying Permission Set",
                          extra={"permission_set": permission_set.name})
             matched_permission_set = target_sdk.create_permission_set(
-                                      new_permission_set)
+                new_permission_set)
             logger.info("Deployment complete",
                         extra={"permission_set": new_permission_set.name})
         else:
@@ -70,8 +70,8 @@ def write_permission_sets(permission_sets, target_sdk, pattern=None,
             logger.debug("Deploying Permission Set",
                          extra={"permission_set": new_permission_set.name})
             matched_permission_set = target_sdk.update_permission_set(
-                                      matched_permission_set.id,
-                                      new_permission_set)
+                matched_permission_set.id,
+                new_permission_set)
             logger.info("Deployment complete",
                         extra={"permission_set": new_permission_set.name})
 

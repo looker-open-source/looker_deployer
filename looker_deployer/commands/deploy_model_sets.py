@@ -66,7 +66,7 @@ def write_model_sets(model_sets, target_sdk, pattern=None, allow_delete=None):
             logger.debug("Deploying Model Set",
                          extra={"model_set": new_model_set.name})
             matched_model_set = target_sdk.update_model_set(
-                                matched_model_set.id, new_model_set)
+                matched_model_set.id, new_model_set)
             logger.info("Deployment complete",
                         extra={"model_set": new_model_set.name})
 
