@@ -1,5 +1,13 @@
 # Changelog
 
+### [0.3.4](https://www.github.com/looker-open-source/looker_deployer/compare/looker-deployer-v0.3.3...looker-deployer-v0.3.4) (2022-03-29)
+
+
+### Bug Fixes
+
+* flake8 testing ([1ca7976](https://www.github.com/looker-open-source/looker_deployer/commit/1ca7976c555a7a3625052c93ba0838790515fdbb))
+* ignore c901 on specific function ([25d81d6](https://www.github.com/looker-open-source/looker_deployer/commit/25d81d631c3bdfcf4004a9cb168b452f1a49939f))
+
 ### [0.3.3](https://www.github.com/looker-open-source/looker_deployer/compare/looker-deployer-v0.3.2...looker-deployer-v0.3.3) (2022-03-24)
 
 
