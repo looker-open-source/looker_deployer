@@ -104,7 +104,7 @@ usage: ldeploy content export [-h] --env ENV [--ini INI] [--debug] --folders
 
 optional arguments:
   -h, --help            show this help message and exit
-  --env ENV             What environment to deploy to
+  --env ENV             What environment to deploy from
   --ini INI             ini file to parse for credentials
   --debug               set logger to debug for more verbosity
   --folders FOLDERS [FOLDERS ...]
