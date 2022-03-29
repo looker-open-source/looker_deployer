@@ -38,11 +38,11 @@ def get_filtered_user_attributes(source_sdk, pattern=None):
 
 def get_user_attribute_group_value(source_sdk, user_attribute):
     user_attribute_group_value = \
-      source_sdk.all_user_attribute_group_values(user_attribute.id)
+        source_sdk.all_user_attribute_group_values(user_attribute.id)
 
     logger.debug("User Attribute Group Value Pulled", extra={
-                  "group_ids": [i.group_id for i in user_attribute_group_value]
-        })
+        "group_ids": [i.group_id for i in user_attribute_group_value]
+    })
 
     return user_attribute_group_value
 
@@ -93,8 +93,7 @@ def write_user_attributes(source_sdk, target_sdk,
             logger.debug("No User Attribute found. Creating...")
             logger.debug("Deploying User Attribute",
                          extra={"user_attribute": new_user_attribute.name})
-            matched_user_attribute = target_sdk.create_user_attribute(
-                                      new_user_attribute)
+            matched_user_attribute = target_sdk.create_user_attribute(new_user_attribute)
             logger.info("Deployment complete",
                         extra={"user_attribute": new_user_attribute.name})
         else:
@@ -102,21 +101,21 @@ def write_user_attributes(source_sdk, target_sdk,
             logger.debug("Deploying User Attribute",
                          extra={"user_attribute": new_user_attribute.name})
             matched_user_attribute = target_sdk.update_user_attribute(
-                                      matched_user_attribute.id,
-                                      new_user_attribute)
+                matched_user_attribute.id,
+                new_user_attribute)
             logger.info("Deployment complete",
                         extra={"user_attribute": new_user_attribute.name})
         # INFO: Set group values for user attribute
         user_attribute_group_values = get_user_attribute_group_value(
-          source_sdk, user_attribute)
+            source_sdk, user_attribute)
         user_attribute_group_values = add_group_name_information(
-          source_sdk, user_attribute_group_values)
+            source_sdk, user_attribute_group_values)
         # INFO: Need to loop through the group values in a user attribute to
         # determine matching group
         for i, user_attribute_group_value in enumerate(
-          user_attribute_group_values):
+                user_attribute_group_values):
             target_group = match_by_key(
-              target_groups, user_attribute_group_value, "name")
+                target_groups, user_attribute_group_value, "name")
             if target_group:
                 user_attribute_group_value.group_id = target_group.id
                 user_attribute_group_values[i] = user_attribute_group_value
@@ -125,8 +124,8 @@ def write_user_attributes(source_sdk, target_sdk,
 
         if user_attribute_group_values:
             target_sdk.set_user_attribute_group_values(
-              user_attribute_id=matched_user_attribute.id,
-              body=user_attribute_group_values)
+                user_attribute_id=matched_user_attribute.id,
+                body=user_attribute_group_values)
 
     # INFO: Delete missing users attirbutes that are not in source
     if allow_delete:
@@ -134,7 +133,7 @@ def write_user_attributes(source_sdk, target_sdk,
 
             # INFO: Test if user attribute is already in target
             matched_user_attribute = match_by_key(
-              user_attributes, target_user_attribute, "name")
+                user_attributes, target_user_attribute, "name")
 
             if not matched_user_attribute:
                 logger.debug("No Source User Attribute found. Deleting...")
