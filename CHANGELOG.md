@@ -3,6 +3,10 @@
 ### [0.3.4](https://www.github.com/looker-open-source/looker_deployer/compare/looker-deployer-v0.3.3...looker-deployer-v0.3.4) (2022-03-29)
 
 
+### Features
+
+* Updates for Additional Admin Functionality ([554fee8](https://github.com/looker-open-source/looker_deployer/commit/554fee8d09daaaecd1c01c70d5b4bc7f33b279f2))
+
 ### Bug Fixes
 
 * flake8 testing ([1ca7976](https://www.github.com/looker-open-source/looker_deployer/commit/1ca7976c555a7a3625052c93ba0838790515fdbb))
