@@ -73,7 +73,7 @@ docker build -t ldeploy .
 
 ###  Local Installation
 
-It is recommended to set up a python virtual environment if you intend to user looker-deployer on your local machine rather 
+It is recommended to set up a python virtual environment if you intend to use looker-deployer on your local machine rather 
 than using the docker image.  This will prevent other modules from creating conflicts with the looker-deployer install.
 
 [pyenv](https://github.com/pyenv/pyenv) offers easy management of python versions and virtual environments.
@@ -85,7 +85,7 @@ pyenv install 3.8.3
 pyenv virtualenv 3.8.3 ldeploy
 ```
 
-Activate the virtual environment and install lookder-deployer:
+Activate the virtual environment and install looker-deployer:
 ```
 pyenv activate ldeploy
 pip install looker-deployer
