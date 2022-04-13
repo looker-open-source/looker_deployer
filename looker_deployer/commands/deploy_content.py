@@ -54,8 +54,8 @@ def create_or_return_space(space_name, parent_id, sdk):
         if len(target_id) > 1:
             logger.error("More than one Space found with that parent/name", extra={"space_ids": target_id})
             raise e
-        elif parent_id == '2':
-            logger.warning("Cannot create folder in Users.  Add the User first, then import their content", extra={"folder": space_name})
+        elif (parent_id == '2' and len(target_id) == 0):
+            logger.warning("Cannot create folder in Users.  Add the User first, then import their content", extra={"folder": space_name, "target_id": len(target_id)})
             raise e
         else:
             logger.warning("No folders found. Creating folder now")

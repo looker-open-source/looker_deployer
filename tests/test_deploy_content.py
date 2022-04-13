@@ -82,7 +82,7 @@ def test_create_or_return_space_none_found(mocker):
     sdk.create_space.return_value = models.Space(name="Foo", parent_id="1", id="42")
     deploy_content.get_space_ids_from_name.return_value = []
 
-    target_id = deploy_content.create_or_return_space("foo", "2", sdk)
+    target_id = deploy_content.create_or_return_space("foo", "5", sdk)
     assert target_id == "42"
 
 
