@@ -54,6 +54,9 @@ def create_or_return_space(space_name, parent_id, sdk):
         if len(target_id) > 1:
             logger.error("More than one Space found with that parent/name", extra={"space_ids": target_id})
             raise e
+        elif parent_id == '2':
+            logger.warning("Cannot create folder in Users.  Add the User first, then import their content", extra={"folder": space_name})
+            raise e
         else:
             logger.warning("No folders found. Creating folder now")
             new_space = models.CreateSpace(name=space_name, parent_id=parent_id)
@@ -294,6 +297,8 @@ def main(args):
         if not args.target_folder.endswith(os.sep):
             args.target_folder += os.sep
         args.target_base = args.target_folder.split('/')[0]
+    else:
+        args.target_base = 'Shared'
 
     sdk = get_client(args.ini, args.env)
     send_content(
