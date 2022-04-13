@@ -7,3 +7,5 @@ code_config.yaml
 .dockerignore
 dist/
 build/
+.python-version
+.vscode

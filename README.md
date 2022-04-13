@@ -1,8 +1,6 @@
-Looker Deployer
-===============
+# Looker Deployer
 
-![badge](https://github.com/JCPistell/looker_deployer/workflows/python_application/badge.svg)
-
+![badge](https://github.com/looker-open-source/looker_deployer/workflows/python_application/badge.svg)
 
 ## Intro
 
@@ -11,15 +9,15 @@ Looker Deployer (aka 'ldeploy') is a command line tool to help move Looker objec
 
 ## Status and Support
 
-Looker Deployer is NOT supported or warranteed by Looker in any way. Please do not contact Looker support for issues with Looker Deployer. Issues can be logged via [https://github.com/llooker/looker_deployer/issues](https://github.com/llooker/looker_deployer/issues)
+As of November 2021, Looker Deployer is supported, but not warrantied by Bytecode IO, Inc.  Issues and feature requests can be reported via https://github.com/llooker/looker_deployer/issues, which will be regularly monitored and prioritized by Bytecode IO, Inc., a preferred Looker consulting partner.
 
 ## Requirements
 
 In order for these commands to correctly work a few assumptions/requirements are needed for your environment:
 
->- **Python** Looker Deployer requires Python 3.6+
->- **Gazer** The content deployment command makes use of [gzr](https://github.com/looker-open-source/gzr) to automate content deployment, so you will need to have that
->installed and configured properly. Gazer requires an up-to-date version of ruby.
+> - **Python** Looker Deployer requires Python 3.6+
+> - **Gazer** The content deployment command makes use of [gzr](https://github.com/looker-open-source/gzr) to automate content deployment, so you will need to have that
+>   installed and configured properly. Gazer requires an up-to-date version of ruby.
 
 ### Authentication and Configuration
 
@@ -106,7 +104,7 @@ usage: ldeploy content export [-h] --env ENV [--ini INI] [--debug] --folders
 
 optional arguments:
   -h, --help            show this help message and exit
-  --env ENV             What environment to deploy to
+  --env ENV             What environment to deploy from
   --ini INI             ini file to parse for credentials
   --debug               set logger to debug for more verbosity
   --folders FOLDERS [FOLDERS ...]
@@ -143,16 +141,15 @@ optional arguments:
 
 ### Examples:
 
-- `ldeploy content export --env dev --folders 1  --local-target ./foo/bar/` <- exports the Shared folder (id 1) and all sub-folders to the
+- `ldeploy content export --env dev --folders 1 --local-target ./foo/bar/` <- exports the Shared folder (id 1) and all sub-folders to the
   directory location `./foo/bar/`
-- `ldeploy content export --env dev --folders 5 8  --local-target ./foo/bar/` <- exports folders 5 and 8 (and all of their sub-folders) to the
+- `ldeploy content export --env dev --folders 5 8 --local-target ./foo/bar/` <- exports folders 5 and 8 (and all of their sub-folders) to the
   directory location `./foo/bar/`
 - `ldeploy content import --env prod --folders ./foo/bar/Shared/Public` <- deploys every piece of content in
   `Shared/Public` to the prod instance
 - `ldeploy content import --env prod --folders ./foo/bar/Shared/Public --recursive --target-folder Shared/FromDev/Public` <- deploys every piece of content in
   `Shared/Public` and all sub-folders to the prod instance in the `Shared/FromDev/Public` folder.
-- `ldeploy content import --env prod --dashboards ./foo/bar/Shared/Public/Dashboard_1.json
-  ./foo/bar/Shared/Restricted/Dashboard_2.json` <- deploys `Dashboard1` and `Dashboard2` to their respective folders in
+- `ldeploy content import --env prod --dashboards ./foo/bar/Shared/Public/Dashboard_1.json ./foo/bar/Shared/Restricted/Dashboard_2.json` <- deploys `Dashboard1` and `Dashboard2` to their respective folders in
   the prod instance
 
 ## Board Deployment
@@ -187,11 +184,9 @@ optional arguments:
 
 - `ldeploy boards --source dev --target prod --board 'My Cool Board'` <- deploys the board 'My Cool Board' from
   dev to prod
-- `ldeploy boards --source dev --target prod_1 prod_2 --allow-partial --board 'My Updated Title Board' --title-change 'My Cool
-  Board'` <- This deploys a board whose title has been changed from 'My Cool Board' to 'My Updated Title Board' from dev
+- `ldeploy boards --source dev --target prod_1 prod_2 --allow-partial --board 'My Updated Title Board' --title-change 'My Cool Board'` <- This deploys a board whose title has been changed from 'My Cool Board' to 'My Updated Title Board' from dev
   to two instances: prod_1 and prod_2. Any content not present in either prod instance will be skipped without raising
   any errors.
-
 
 ## Connections Deployment
 
@@ -235,7 +230,7 @@ An overview of the relevant architecture (click to embiggen):
 
 In order to use the code deployment tool, a `code_config.yaml` file is required. This file requires a list of instances - one
 for each client production instance. This list must include the name (used to refer to that instance in the commands),
-  the endpoint, and the name of that instances spoke project. In addition, the config file requires an entry for the
+the endpoint, and the name of that instances spoke project. In addition, the config file requires an entry for the
 common hub project and can optionally include a list of names to instance names to exclude from hub deployments. Here's
 an example config:
 
@@ -273,6 +268,216 @@ optional arguments:
 - `ldeploy code --spoke foo` <- This will deploy the spoke project named "foo" to the relevant instance
 - `ldeploy code --hub --spoke foo bar --hub-exclude bar --debug` <- This will deploy the hub project to all
   instances except `bar` and then deploy the spoke projects `foo` and `bar` to their respective instances
+
+## Role Admin Settings
+
+Due to the related nature of role settings in Looker, it is recommended to run these commands in the following order to ensure the prior information is available:
+
+1. Model Sets
+2. Permission Sets
+3. Roles
+4. Groups
+5. Group in Group
+6. Role to Group
+7. User Attributes
+
+**Special Considerations:**
+
+If you have externally manged groups, you will need to ensure you update for SAML/LDAP is done prior to Group in Group. These special groups are not migrated by the code referenced above.
+
+## Model Sets Deployment
+
+This command allows for the migration of model sets across instances.
+
+Matching for create/update/delete will be based on the name of the setting, since IDs are auto-incremented.
+
+The command accepts the following arguments:
+
+```
+usage: ldeploy model_sets [-h] --source SOURCE [--ini INI] --target TARGE [TARGET ...] [--pattern PATTERN] [--delete] [--debug]
+
+optional arguments:
+  -h, --help            show this help message and exit
+  --source SOURCE       which environment to source the model sets from
+  --ini INI             ini file to parse for credentials
+  --target TARGET [TARGET ...]
+                        which target environment(s) to deploy to
+  --pattern PATTERN     regex pattern to filter
+  --delete              allows for deletion from target based on name
+  --debug               set logger to debug for more verbosity
+```
+
+### Examples:
+
+- `ldeploy model_sets --source dev --target prod` <- This will deploy all model sets in the dev instance to the prod
+  instance.
+- `ldeploy model_sets --source dev --target prod --pattern ^test` <- This will deploy all model sets that starts with test.
+
+## Permission Sets Deployment
+
+This command allows for the migration of permission sets across instances.
+
+Matching for create/update/delete will be based on the name of the setting, since IDs are auto-incremented.
+
+The command accepts the following arguments:
+
+```
+usage: ldeploy permission_sets [-h] --source SOURCE [--ini INI] --target TARGE [TARGET ...] [--pattern PATTERN] [--delete] [--debug]
+
+optional arguments:
+  -h, --help            show this help message and exit
+  --source SOURCE       which environment to source the permission sets from
+  --ini INI             ini file to parse for credentials
+  --target TARGET [TARGET ...]
+                        which target environment(s) to deploy to
+  --pattern PATTERN     regex pattern to filter
+  --delete              allows for deletion from target based on name
+  --debug               set logger to debug for more verbosity
+```
+
+### Examples:
+
+- `ldeploy permission_sets --source dev --target prod` <- This will deploy all permission sets in the dev instance to the prod
+  instance.
+- `ldeploy permission_sets --source dev --target prod --pattern ^test` <- This will deploy all permission sets that starts with test.
+
+## Roles Deployment
+
+This command allows for the migration of roles across instances.
+
+Matching for create/update/delete will be based on the name of the setting, since IDs are auto-incremented.
+
+The command accepts the following arguments:
+
+```
+usage: ldeploy roles [-h] --source SOURCE [--ini INI] --target TARGE [TARGET ...] [--pattern PATTERN] [--delete] [--debug]
+
+optional arguments:
+  -h, --help            show this help message and exit
+  --source SOURCE       which environment to source the roles from
+  --ini INI             ini file to parse for credentials
+  --target TARGET [TARGET ...]
+                        which target environment(s) to deploy to
+  --pattern PATTERN     regex pattern to filter
+  --delete              allows for deletion from target based on name
+  --debug               set logger to debug for more verbosity
+```
+
+### Examples:
+
+- `ldeploy roles --source dev --target prod` <- This will deploy all roles in the dev instance to the prod
+  instance.
+- `ldeploy roles --source dev --target prod --pattern ^test` <- This will deploy all roles that starts with test.
+
+## Groups Deployment
+
+This command allows for the migration of non-externally managed groups across instances.
+
+Matching for create/update/delete will be based on the name of the setting, since IDs are auto-incremented.
+
+The command accepts the following arguments:
+
+```
+usage: ldeploy groups [-h] --source SOURCE [--ini INI] --target TARGE [TARGET ...] [--pattern PATTERN] [--delete] [--debug]
+
+optional arguments:
+  -h, --help            show this help message and exit
+  --source SOURCE       which environment to source the groups from
+  --ini INI             ini file to parse for credentials
+  --target TARGET [TARGET ...]
+                        which target environment(s) to deploy to
+  --pattern PATTERN     regex pattern to filter
+  --delete              allows for deletion from target based on name
+  --debug               set logger to debug for more verbosity
+```
+
+### Examples:
+
+- `ldeploy groups --source dev --target prod` <- This will deploy all groups in the dev instance to the prod
+  instance.
+- `ldeploy groups --source dev --target prod --pattern ^test` <- This will deploy all groups that starts with test.
+
+## Group in Group (i.e. Groups Hierarchy) Deployment
+
+This command allows for the migration of groups belonging to other groups across instances.
+
+Matching for create or delete will be based on the name of the setting, since IDs are auto-incremented.
+
+The command accepts the following arguments:
+
+```
+usage: ldeploy group_in_group [-h] --source SOURCE [--ini INI] --target TARGE [TARGET ...] [--pattern PATTERN] [--debug]
+
+optional arguments:
+  -h, --help            show this help message and exit
+  --source SOURCE       which environment to source the group hierarchy from
+  --ini INI             ini file to parse for credentials
+  --target TARGET [TARGET ...]
+                        which target environment(s) to deploy to
+  --pattern PATTERN     regex pattern to filter
+  --debug               set logger to debug for more verbosity
+```
+
+### Examples:
+
+- `ldeploy group_in_group --source dev --target prod` <- This will deploy all group in groups in the dev instance to the prod
+  instance.
+- `ldeploy group_in_group --source dev --target prod --pattern ^test` <- This will deploy all group in groups that starts with test.
+
+## Role to Group Deployment
+
+This command allows for the migration of roles associated to groups across instances.
+
+Matching for create or update will be based on the name of the setting, since IDs are auto-incremented.
+
+The command accepts the following arguments:
+
+```
+usage: ldeploy role_to_group [-h] --source SOURCE [--ini INI] --target TARGE [TARGET ...] [--pattern PATTERN] [--debug]
+
+optional arguments:
+  -h, --help            show this help message and exit
+  --source SOURCE       which environment to source the role to group from
+  --ini INI             ini file to parse for credentials
+  --target TARGET [TARGET ...]
+                        which target environment(s) to deploy to
+  --pattern PATTERN     regex pattern to filter
+  --debug               set logger to debug for more verbosity
+```
+
+### Examples:
+
+- `ldeploy role_to_group --source dev --target prod` <- This will deploy all roles to group in the dev instance to the prod
+  instance.
+- `ldeploy role_to_group --source dev --target prod --pattern ^test` <- This will deploy all roles to groups that starts with test.
+
+## User Attributes Deployment
+
+This command allows for the migration of non-system managed user attributes across instances (i.e. id, first_name, last_name, email).
+
+Matching for create/update/delete will be based on the name of the setting, since IDs are auto-incremented. This includes assignments made for user attributes made by group names.
+
+The command accepts the following arguments:
+
+```
+usage: ldeploy user_attributes [-h] --source SOURCE [--ini INI] --target TARGE [TARGET ...] [--pattern PATTERN] [--delete] [--debug]
+
+optional arguments:
+  -h, --help            show this help message and exit
+  --source SOURCE       which environment to source the user attributes from
+  --ini INI             ini file to parse for credentials
+  --target TARGET [TARGET ...]
+                        which target environment(s) to deploy to
+  --pattern PATTERN     regex pattern to filter
+  --delete              allows for deletion from target based on name
+  --debug               set logger to debug for more verbosity
+```
+
+### Examples:
+
+- `ldeploy user_attributes --source dev --target prod` <- This will deploy all user attributes in the dev instance to the prod
+  instance.
+- `ldeploy user_attributes --source dev --target prod --pattern ^test` <- This will deploy all user attributes that starts with test.
 
 ## Development
 
