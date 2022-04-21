@@ -15,9 +15,10 @@ As of November 2021, Looker Deployer is supported, but not warrantied by Bytecod
 
 In order for these commands to correctly work a few assumptions/requirements are needed for your environment:
 
-> - **Python** Looker Deployer requires Python 3.6+
+> - **Python** Looker Deployer requires Python 3.6-3.8
 > - **Gazer** The content deployment command makes use of [gzr](https://github.com/looker-open-source/gzr) to automate content deployment, so you will need to have that
 >   installed and configured properly. Gazer requires an up-to-date version of ruby.
+
 
 ### Authentication and Configuration
 
@@ -69,6 +70,32 @@ Build the image and your config will be available from within the container:
 ```
 docker build -t ldeploy .
 ```
+
+###  Local Installation
+
+It is recommended to set up a python virtual environment if you intend to use looker-deployer on your local machine rather 
+than using the docker image.  This will prevent other modules from creating conflicts with the looker-deployer install.
+
+[pyenv](https://github.com/pyenv/pyenv) offers easy management of python versions and virtual environments.
+
+Once pyenv is installed, install the desired version of Python and create the virtual environment named ldeploy:
+
+```
+pyenv install 3.8.3
+pyenv virtualenv 3.8.3 ldeploy
+```
+
+Activate the virtual environment and install looker-deployer:
+```
+pyenv activate ldeploy
+pip install looker-deployer
+```
+
+looker-deployer is now ready for use!  Once you are finished, deactivate the virtual environment:
+```
+source deactivate
+```
+
 
 ## Usage
 
