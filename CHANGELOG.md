@@ -1,5 +1,12 @@
 # Changelog
 
+### [0.3.5](https://www.github.com/looker-open-source/looker_deployer/compare/looker-deployer-v0.3.4...looker-deployer-v0.3.5) (2022-05-20)
+
+
+### Features
+
+* Adding a custom user agent ([c9cb353](https://www.github.com/looker-open-source/looker_deployer/commit/c9cb353dbf2e9c42485241c2d29f2b2fc8a99d34))
+
 ### [0.3.4](https://www.github.com/looker-open-source/looker_deployer/compare/looker-deployer-v0.3.3...looker-deployer-v0.3.4) (2022-03-29)
 
 
