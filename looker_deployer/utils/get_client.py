@@ -13,8 +13,9 @@
 # limitations under the License.
 
 from looker_deployer import version
-from looker_sdk import api_settings, methods, requests_transport,auth_session, serialize, _settings
+from looker_sdk import api_settings, methods, requests_transport, auth_session, serialize, _settings
 from typing import Optional
+
 
 def configure_sdk(
     config_file: str = "looker.ini",
@@ -27,7 +28,7 @@ def configure_sdk(
     )
     settings.is_configured()
     settings.headers['User-Agent'] = f"Looker Deployer {version.__version__}"
-    transport = requests_transport.RequestsTransport.configure(settings)    
+    transport = requests_transport.RequestsTransport.configure(settings)
     return methods.Looker31SDK(
         auth_session.AuthSession(settings, transport, serialize.deserialize31, "3.1"),
         serialize.deserialize31,
