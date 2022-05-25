@@ -35,7 +35,9 @@ def get_space_ids_from_name(space_name, parent_id, sdk):
         return ["1"]
     elif (space_name == "Embed Groups" and parent_id == "0"): 
         return sdk.search_spaces(name=space_name, parent_id = None)[0].id
-    elif (space_name == "Users" and parent_id == "0"): # TODO Update this function to handle any base folder
+    elif (space_name == "Users" and parent_id == "0"):
+        return sdk.search_spaces(name=space_name, parent_id = None)[0].id
+    elif (space_name == "Embed Users" and parent_id == "0"): 
         return sdk.search_spaces(name=space_name, parent_id = None)[0].id
     logger.debug("space info", extra={"space_name": space_name, "parent_id": parent_id})
     space_list = sdk.search_spaces(name=space_name, parent_id=parent_id)
