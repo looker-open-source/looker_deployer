@@ -139,6 +139,12 @@ optional arguments:
                         Looks to deploy
 ```
 
+**Import base folder**
+Support has been added for importing contenting to base folders other than Shared.  There are a few important notes to go along with that:
+- Users, Embed Users, and Embed Groups folders must exist before running the import, ldeploy cannot create them.
+- Users, Embed Users, and Embed Groups folders must be uniquely named.
+- "Shared" is the default base folder if no other is specified using "--target-folder"
+
 ### Examples:
 
 - `ldeploy content export --env dev --folders 1 --local-target ./foo/bar/` <- exports the Shared folder (id 1) and all sub-folders to the
@@ -151,6 +157,9 @@ optional arguments:
   `Shared/Public` and all sub-folders to the prod instance in the `Shared/FromDev/Public` folder.
 - `ldeploy content import --env prod --dashboards ./foo/bar/Shared/Public/Dashboard_1.json ./foo/bar/Shared/Restricted/Dashboard_2.json` <- deploys `Dashboard1` and `Dashboard2` to their respective folders in
   the prod instance
+- `ldeploy content import --env prod --folders ./dev/Users --recursive --target-folder Users` <- deploys every piece of content in `dev/Users` and all sub-folders to the prod instance in the `Users` folder
+- `ldeploy content import --env prod --folders "./dev/Embed Users" --recursive --target-folder "Embed Users"` <- deploys every piece of content in `dev/Embed Users` and all sub-folders to the prod instance in the `Embed Groups` folder
+- `ldeploy content import --env prod --folders "./dev/Embed Groups" --recursive --target-folder "Embed Groups"` <- deploys every piece of content in `dev/Embed Groups` and all sub-folders to the prod instance in the `Embed Groups` folder
 
 ## Board Deployment
 
