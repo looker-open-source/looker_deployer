@@ -74,10 +74,10 @@ ENTRYPOINT ["ldeploy"]
 Then simply: 
 
 ```
-docker build -t looker_deployer .
+docker build -t ldeploy .
 ```
 
-You can get use: ```docker run looker_deployer <command> <parameters> ...```
+You can get use: ```docker run ldeploy <command> <parameters> ...```
 
 ###  Local Installation
 
