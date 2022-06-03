@@ -47,29 +47,37 @@ Looker Deployer is on PyPi! - You can install it with `pip install looker-deploy
 
 ### Dockerfile
 
-This repo includes a Dockerfile that can be used to containerize Deployer. It includes all dependencies, such as Gazer.
-To build, clone this repo, cd into it, and execute a `docker build` command. For example:
-
-```
-docker build -t looker_deployer .
-```
-
-There are also pre-built images available on [Dockerhub](https://hub.docker.com/r/jcpistell/looker_deployer)
-
-As noted above, a `looker.ini` file is required for API authentication. You will have to either volume-map the ini file
+A `looker.ini` file is required for API authentication. You will have to either volume-map the ini file
 when you run the container, or (recommended) build an image from this one that "burns" a relevant ini file into the
-container. You could create a directory containing a Dockerfile and a looker.ini file. The Dockerfile would contain:
+container. 
+
+To do this, create a directory with an `looker.ini` file and a `Dockerfile` with the following content: 
 
 ```
-FROM jcpistell/looker_deployer:latest
-COPY looker.ini /
+FROM python:3.8-slim
+
+RUN apt update
+RUN apt -y install ruby ruby-dev
+RUN gem install gazer
+
+RUN apt -y install git 
+RUN git clone https://github.com/looker-open-source/looker_deployer.git
+
+WORKDIR /looker_deployer
+
+COPY looker.ini . 
+RUN pip install .
+
+ENTRYPOINT ["ldeploy"]
 ```
 
-Build the image and your config will be available from within the container:
+Then simply: 
 
 ```
 docker build -t ldeploy .
 ```
+
+You can get use: ```docker run ldeploy <command> <parameters> ...```
 
 ###  Local Installation
 
