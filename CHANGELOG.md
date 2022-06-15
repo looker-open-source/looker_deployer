@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.7](https://github.com/looker-open-source/looker_deployer/compare/looker-deployer-v0.3.6...looker-deployer-v0.3.7) (2022-06-15)
+
+
+### Features
+
+* new import destinations ([#91](https://github.com/looker-open-source/looker_deployer/issues/91)) ([719011b](https://github.com/looker-open-source/looker_deployer/commit/719011b2f54f64a736853bd9e7631c698494b546))
+
 ## [0.3.6](https://github.com/looker-open-source/looker_deployer/compare/looker-deployer-v0.3.5...looker-deployer-v0.3.6) (2022-06-15)
 
 
