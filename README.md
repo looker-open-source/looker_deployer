@@ -15,7 +15,7 @@ As of November 2021, Looker Deployer is supported, but not warrantied by Bytecod
 
 In order for these commands to correctly work a few assumptions/requirements are needed for your environment:
 
-> - **Python** Looker Deployer requires Python 3.6-3.8
+> - **Python** Looker Deployer requires Python 3.6-3.9
 > - **Gazer** The content deployment command makes use of [gzr](https://github.com/looker-open-source/gzr) to automate content deployment, so you will need to have that
 >   installed and configured properly. Gazer requires an up-to-date version of ruby.
 
@@ -54,7 +54,7 @@ container.
 To do this, create a directory with an `looker.ini` file and a `Dockerfile` with the following content: 
 
 ```
-FROM python:3.8-slim
+FROM python:3.9-slim
 
 RUN apt update
 RUN apt -y install ruby ruby-dev
