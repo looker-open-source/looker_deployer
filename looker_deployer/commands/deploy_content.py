@@ -33,6 +33,13 @@ logger = deploy_logging.get_logger(__name__)
 def get_space_ids_from_name(space_name, parent_id, sdk):
     if (space_name == "Shared" and parent_id == "0"):
         return ["1"]
+    elif (space_name == "Embed Groups" and parent_id == "0"):
+        return sdk.search_spaces(name=space_name, parent_id=None)[0].id
+    elif (space_name == "Users" and parent_id == "0"):
+        return sdk.search_spaces(name=space_name, parent_id=None)[0].id
+    elif (space_name == "Embed Users" and parent_id == "0"):
+        return sdk.search_spaces(name=space_name, parent_id=None)[0].id
+    logger.debug("space info", extra={"space_name": space_name, "parent_id": parent_id})
     space_list = sdk.search_spaces(name=space_name, parent_id=parent_id)
     id_list = [i.id for i in space_list]
 
@@ -48,6 +55,9 @@ def create_or_return_space(space_name, parent_id, sdk):
     except AssertionError as e:
         if len(target_id) > 1:
             logger.error("More than one Space found with that parent/name", extra={"space_ids": target_id})
+            raise e
+        elif (parent_id == '2' and len(target_id) == 0):
+            logger.warning("Cannot create folder in Users.  Add the User first, then import their content", extra={"folder": space_name, "target_id": len(target_id)})
             raise e
         else:
             logger.warning("No folders found. Creating folder now")
@@ -139,7 +149,7 @@ def build_spaces(spaces, sdk):
     return id_tracker[0]
 
 
-def deploy_space(s, sdk, env, ini, recursive, debug=False):
+def deploy_space(s, sdk, env, ini, recursive, debug=False, target_base=None):
 
     logger.debug("working folder", extra={"working_folder": s})
 
@@ -151,7 +161,7 @@ def deploy_space(s, sdk, env, ini, recursive, debug=False):
     logger.debug("files to process", extra={"looks": look_files, "dashboards": dash_files})
 
     # cut down directory to looker-specific paths
-    a, b, c = s.partition("Shared")  # Hard coded to Shared for now TODO: Change this!
+    a, b, c = s.partition(target_base)
     c = c.rpartition(os.sep)[0]
     logger.debug("partition components", extra={"a": a, "b": b, "c": c})
 
@@ -192,17 +202,17 @@ def deploy_space(s, sdk, env, ini, recursive, debug=False):
     if recursive and space_children:
         logger.info("Attemting Recursion of children folders", extra={"children_folders": space_children})
         for child in space_children:
-            deploy_space(child, sdk, env, ini, recursive, debug)
+            deploy_space(child, sdk, env, ini, recursive, debug, target_base)
     else:
         logger.info("No Recursion specified or empty child list", extra={"children_folders": space_children})
 
 
-def deploy_content(content_type, content, sdk, env, ini, debug=False):
+def deploy_content(content_type, content, sdk, env, ini, debug=False, target_base=None):
     # extract directory path
     dirs = content.rpartition(os.sep)[0] + os.sep
 
     # cut down directory to looker-specific paths
-    a, b, c = dirs.partition("Shared")  # Hard coded to Shared for now TODO: Change this!
+    a, b, c = dirs.partition(target_base)
     c = c.rpartition(os.sep)[0]  # strip trailing slash
 
     # turn into a list of spaces to process
@@ -215,7 +225,7 @@ def deploy_content(content_type, content, sdk, env, ini, debug=False):
 
 
 def send_content(
-    sdk, env, ini, target_folder=None, spaces=None, dashboards=None, looks=None, recursive=False, debug=False
+    sdk, env, ini, target_folder=None, spaces=None, dashboards=None, looks=None, recursive=False, debug=False, target_base=None
 ):
 
     if spaces:
@@ -233,10 +243,10 @@ def send_content(
                     # copy the source space directory tree to target space override
                     shutil.copytree(s, updated_space)
                     # kick off the job from the new space
-                    deploy_space(updated_space, sdk, env, ini, recursive, debug)
+                    deploy_space(updated_space, sdk, env, ini, recursive, debug, target_base)
             # If no target space override, kick off job normally
             else:
-                deploy_space(s, sdk, env, ini, recursive, debug)
+                deploy_space(s, sdk, env, ini, recursive, debug, target_base)
     if dashboards:
         logger.debug("Deploying dashboards", extra={"dashboards": dashboards})
         for dash in dashboards:
@@ -285,11 +295,12 @@ def main(args):
     logger.debug("ini file", extra={"ini": args.ini})
 
     if args.target_folder:
-        # Force any target space override to start from Shared
-        assert args.target_folder.startswith("Shared"), "Target Space MUST begin with 'Shared'"
         # Make sure trailing sep is in place
         if not args.target_folder.endswith(os.sep):
             args.target_folder += os.sep
+        args.target_base = args.target_folder.split('/')[0]
+    else:
+        args.target_base = 'Shared'
 
     sdk = get_client(args.ini, args.env)
     send_content(
@@ -301,5 +312,6 @@ def main(args):
         args.dashboards,
         args.looks,
         args.recursive,
-        args.debug
+        args.debug,
+        args.target_base
     )
