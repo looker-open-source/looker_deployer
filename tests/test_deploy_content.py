@@ -221,7 +221,7 @@ def test_deploy_space_build_call(mocker):
 
     mocker.patch("looker_deployer.commands.deploy_content.build_spaces")
     mocker.patch("looker_deployer.commands.deploy_content.import_content")
-    deploy_content.deploy_space("Foo/Shared/Bar/", "sdk", "env", "ini", False, False, "Shared")
+    deploy_content.deploy_space("Foo/Shared/Bar/", "sdk", "env", "ini", False)
     deploy_content.build_spaces.assert_called_with(["Shared", "Bar"], "sdk")
 
 
@@ -239,7 +239,7 @@ def test_deploy_space_look_call(mocker):
     deploy_content.build_spaces.return_value = "42"
 
     mocker.patch("looker_deployer.commands.deploy_content.import_content")
-    deploy_content.deploy_space("Foo/Shared/Bar", "sdk", "env", "ini", False, False, "Shared")
+    deploy_content.deploy_space("Foo/Shared/Bar", "sdk", "env", "ini", False)
     deploy_content.import_content.assert_called_once_with("look", "Foo/Shared/Bar/Look_test", "42", "env", "ini", False)
 
 
@@ -257,7 +257,7 @@ def test_deploy_space_dashboard_call(mocker):
     deploy_content.build_spaces.return_value = "42"
 
     mocker.patch("looker_deployer.commands.deploy_content.import_content")
-    deploy_content.deploy_space("Foo/Shared/Bar", "sdk", "env", "ini", False, False, "Shared")
+    deploy_content.deploy_space("Foo/Shared/Bar", "sdk", "env", "ini", False, False)
     deploy_content.import_content.assert_called_once_with(
         "dashboard",
         "Foo/Shared/Bar/Dashboard_test",
@@ -272,7 +272,7 @@ def test_deploy_content_build_call(mocker):
 
     mocker.patch("looker_deployer.commands.deploy_content.build_spaces")
     mocker.patch("looker_deployer.commands.deploy_content.import_content")
-    deploy_content.deploy_content("look", "Foo/Shared/Bar/Baz/Dashboard_test.json", "sdk", "env", "ini", False, "Shared")
+    deploy_content.deploy_content("look", "Foo/Shared/Bar/Baz/Dashboard_test.json", "sdk", "env", "ini", False)
     deploy_content.build_spaces.assert_called_with(["Shared", "Bar", "Baz"], "sdk")
 
 
@@ -281,5 +281,5 @@ def test_deploy_content_import_content_call(mocker):
     deploy_content.build_spaces.return_value = "42"
 
     mocker.patch("looker_deployer.commands.deploy_content.import_content")
-    deploy_content.deploy_content("look", "Foo/Shared/Bar/Look_test.json", "sdk", "env", "ini", False, "Shared")
+    deploy_content.deploy_content("look", "Foo/Shared/Bar/Look_test.json", "sdk", "env", "ini", False)
     deploy_content.import_content.assert_called_with("look", "Foo/Shared/Bar/Look_test.json", "42", "env", "ini", False)
