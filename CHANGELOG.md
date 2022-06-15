@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.6](https://github.com/looker-open-source/looker_deployer/compare/looker-deployer-v0.3.5...looker-deployer-v0.3.6) (2022-06-15)
+
+
+### Features
+
+* bump python version to 3.9 ([a566665](https://github.com/looker-open-source/looker_deployer/commit/a5666655dda0f3b26285a67eb6b8c68a4328bedf))
+
 ### [0.3.5](https://www.github.com/looker-open-source/looker_deployer/compare/looker-deployer-v0.3.4...looker-deployer-v0.3.5) (2022-05-20)
 
 
