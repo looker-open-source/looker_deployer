@@ -13,9 +13,11 @@
 # limitations under the License.
 
 import argparse
+# from typing_extensions import Required
 from looker_deployer.commands import deploy_boards, deploy_code, deploy_connections
 from looker_deployer.commands import deploy_content, deploy_content_export
 from looker_deployer.commands import deploy_permission_sets, deploy_model_sets, deploy_roles, deploy_groups, deploy_group_in_group, deploy_role_to_group, deploy_user_attributes
+from looker_deployer.commands import deploy_dashboard_export, deploy_dashboard
 from looker_deployer import version as pkg
 
 loc = "looker.ini"
@@ -37,6 +39,7 @@ def main():
     setup_group_in_group_subparser(subparsers)
     setup_role_to_group_subparser(subparsers)
     setup_user_attributes_subparser(subparsers)
+    setup_dashboard_subparser(subparsers)
     args = parser.parse_args()
     if args.version:
         print(pkg.__version__)
@@ -196,3 +199,28 @@ def setup_user_attributes_subparser(subparsers):
     user_attributes_subparser.add_argument("--delete", action="store_true", help="enables the ability for explicit deletes of user attributes in target")
     user_attributes_subparser.add_argument("--debug", action="store_true", help="set logger to debug for more verbosity")
     user_attributes_subparser.set_defaults(func=deploy_user_attributes.main)
+
+
+def setup_dashboard_subparser(subparsers):
+    dashboard_subparser = subparsers.add_parser("dashboard")
+    import_export_subparsers = dashboard_subparser.add_subparsers()
+    export_subparser = import_export_subparsers.add_parser("export")
+    import_subparser = import_export_subparsers.add_parser("import")
+    export_subparser.add_argument("--dashboard_identifier", required=True, help="What Dashboard ID or Slug you want to export")
+    export_subparser.add_argument("--env", required=True, help="What environment to export from")
+    export_subparser.add_argument("--ini", default=loc, help="ini file to parse for credentials")
+    export_subparser.add_argument("--debug", action="store_true", help="set logger to debug for more verbosity")
+    export_subparser.set_defaults(func=deploy_dashboard_export.main)
+
+    import_subparser.add_argument("--env", required=True, help="What environment to deploy to")
+    import_subparser.add_argument("--ini", default=loc, help="ini file to parse for credentials")
+    import_subparser.add_argument("--debug", action="store_true", help="set logger to debug for more verbosity")
+    import_subparser.add_argument("--file_name", help="LookML Dashboad file to deploy")
+    import_subparser.add_argument("--folder_id", help="Which folder ID to locate the dashboard")
+    import_subparser.set_defaults(func=deploy_dashboard.main)
+    # import_subparser.add_argument("--target-folder", help="override the default target folder with a custom path")
+    # content_group = import_subparser.add_mutually_exclusive_group(required=True)
+    # content_group.add_argument("--folders", nargs="+", help="Folders to fully deploy")
+    # content_group.add_argument("--dashboards", nargs="+", help="Dashboards to deploy")
+    # content_group.add_argument("--looks", nargs="+", help="Looks to deploy")
+    # import_subparser.set_defaults(func=deploy_content.main)
