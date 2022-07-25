@@ -207,7 +207,7 @@ def deploy_space(s, sdk, env, ini, recursive, debug=False, target_base=None):
         logger.info("No Recursion specified or empty child list", extra={"children_folders": space_children})
 
 
-def deploy_content(content_type, content, sdk, env, ini, debug=False, target_base=None):
+def deploy_content(content_type, content, sdk, env, ini, target_base, debug=False):
     # extract directory path
     dirs = content.rpartition(os.sep)[0] + os.sep
 
@@ -243,10 +243,10 @@ def send_content(
                     # copy the source space directory tree to target space override
                     shutil.copytree(s, updated_space)
                     # kick off the job from the new space
-                    deploy_space(updated_space, sdk, env, ini, recursive, debug, target_base)
+                    deploy_space(updated_space, sdk, env, ini, recursive, target_base, debug)
             # If no target space override, kick off job normally
             else:
-                deploy_space(s, sdk, env, ini, recursive, debug, target_base)
+                deploy_space(s, sdk, env, ini, recursive, target_base, debug)
     if dashboards:
         logger.debug("Deploying dashboards", extra={"dashboards": dashboards})
         for dash in dashboards:
@@ -263,9 +263,9 @@ def send_content(
                     shutil.copy(dash, target_dir)
                     new_dash_path = [os.path.join(target_dir, f) for f in os.listdir(target_dir)][0]
                     # kick off the job from the new space
-                    deploy_content("dashboard", new_dash_path, sdk, env, ini, debug)
+                    deploy_content("dashboard", new_dash_path, sdk, env, ini, target_base, debug)
             else:
-                deploy_content("dashboard", dash, sdk, env, ini, debug)
+                deploy_content("dashboard", dash, sdk, env, ini, target_base, debug)
     if looks:
         logger.debug("Deploying looks", extra={"looks": looks})
         for look in looks:
@@ -282,9 +282,9 @@ def send_content(
                     shutil.copy(look, target_dir)
                     new_look_path = [os.path.join(target_dir, f) for f in os.listdir(target_dir)][0]
                     # kick off the job from the new space
-                    deploy_content("look", new_look_path, sdk, env, ini, debug)
+                    deploy_content("look", new_look_path, sdk, env, ini, target_base, debug)
             else:
-                deploy_content("look", look, sdk, env, ini, debug)
+                deploy_content("look", look, sdk, env, ini, target_base, debug)
 
 
 def main(args):
