@@ -149,7 +149,7 @@ def build_spaces(spaces, sdk):
     return id_tracker[0]
 
 
-def deploy_space(s, sdk, env, ini, recursive, debug=False, target_base=None):
+def deploy_space(s, sdk, env, ini, recursive, target_base, debug=False):
 
     logger.debug("working folder", extra={"working_folder": s})
 
@@ -202,7 +202,7 @@ def deploy_space(s, sdk, env, ini, recursive, debug=False, target_base=None):
     if recursive and space_children:
         logger.info("Attemting Recursion of children folders", extra={"children_folders": space_children})
         for child in space_children:
-            deploy_space(child, sdk, env, ini, recursive, debug, target_base)
+            deploy_space(child, sdk, env, ini, recursive, target_base, debug)
     else:
         logger.info("No Recursion specified or empty child list", extra={"children_folders": space_children})
 
