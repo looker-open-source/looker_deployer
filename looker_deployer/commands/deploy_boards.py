@@ -13,7 +13,7 @@
 # limitations under the License.
 
 import logging
-from looker_sdk import models
+from looker_sdk import models40 as models
 from looker_deployer.utils import deploy_logging
 from looker_deployer.utils.get_client import get_client
 

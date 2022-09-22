@@ -19,28 +19,36 @@ import logging
 import tempfile
 import shutil
 import threading
+import json
 from concurrent.futures import ThreadPoolExecutor
 from itertools import repeat
 from looker_deployer.utils import deploy_logging
 from looker_deployer.utils import parse_ini
 from looker_deployer.utils.get_client import get_client
-from looker_sdk import models
+from looker_sdk import models40 as models
 
 
 logger = deploy_logging.get_logger(__name__)
+
+def alert_cleanup(sdk):
+    logger.debug("cleaning up orphaned alerts")
+    disabled_alerts = sdk.search_alerts(disabled="true")
+    for alert in disabled_alerts:
+        if alert['disabled_reason'] == "Dashboard element has been removed.":
+            sdk.delete_alert(alert['id'])
 
 
 def get_space_ids_from_name(space_name, parent_id, sdk):
     if (space_name == "Shared" and parent_id == "0"):
         return ["1"]
     elif (space_name == "Embed Groups" and parent_id == "0"):
-        return sdk.search_spaces(name=space_name, parent_id=None)[0].id
+        return sdk.search_folders(name=space_name, parent_id=None)[0].id
     elif (space_name == "Users" and parent_id == "0"):
-        return sdk.search_spaces(name=space_name, parent_id=None)[0].id
+        return sdk.search_folders(name=space_name, parent_id=None)[0].id
     elif (space_name == "Embed Users" and parent_id == "0"):
-        return sdk.search_spaces(name=space_name, parent_id=None)[0].id
+        return sdk.search_folders(name=space_name, parent_id=None)[0].id
     logger.debug("space info", extra={"space_name": space_name, "parent_id": parent_id})
-    space_list = sdk.search_spaces(name=space_name, parent_id=parent_id)
+    space_list = sdk.search_folders(name=space_name, parent_id=parent_id)
     id_list = [i.id for i in space_list]
 
     return id_list
@@ -61,8 +69,8 @@ def create_or_return_space(space_name, parent_id, sdk):
             raise e
         else:
             logger.warning("No folders found. Creating folder now")
-            new_space = models.CreateSpace(name=space_name, parent_id=parent_id)
-            res = sdk.create_space(new_space)
+            new_space = models.CreateFolder(name=space_name, parent_id=parent_id)
+            res = sdk.create_folder(new_space)
             return res.id
 
     logger.info("Found Space ID", extra={"id": target_id})
@@ -125,8 +133,56 @@ def import_content(content_type, content_json, space_id, env, ini, debug=False):
         win_exec = ["cmd.exe", "/c"]
         gzr_command = win_exec + gzr_command
 
+    is_new_dash = "false"
+    existing_dash_alerts = []
+    existing_elements_w_alerts = []
+
+    if content_type == "dashboard":  ## only run for dashboards, looks can't have alerts
+        sdk = get_client(ini, env)  ## should we update the function def and pass sdk?
+        with open(content_json) as file:
+            json_dash = json.load(file)
+        existing_dash = sdk.search_dashboards(slug=json_dash['slug'])  ## search with slug first, fall back to name + folder
+        if len(existing_dash) < 1:
+            existing_dash = sdk.search_dashboards(title=json_dash['title'],folder_id=space_id)
+            if len(existing_dash) < 1:
+                is_new_dash = "true"
+        if is_new_dash == "false": ## if it's an existing dashboard, save the alerts and elements
+            for element in existing_dash[0]['dashboard_elements']:
+                start = len(existing_dash_alerts)
+                alerts = list(filter(lambda alert: alert['dashboard_element_id'] == element['id'], enabled_alerts))
+                if len(alerts) > 0:
+                    existing_dash_alerts.extend(alerts)
+                if len(existing_dash_alerts) > start:
+                    if element not in existing_elements_w_alerts:
+                        existing_elements_w_alerts.append(element)
+
+
+    #logger.debug("space info", extra={"space_name": space_name, "parent_id": parent_id})
     subprocess.run(gzr_command)
 
+    
+    if is_new_dash == "false" and content_type == "dashboard" and len(existing_dash_alerts) > 0:  ## get the new dashboard
+        updated_dash = sdk.search_dashboards(slug=json_dash['slug'])
+        if len(updated_dash) < 1:
+            updated_dash = sdk.search_dashboards(title=json_dash['title'],folder_id=space_id)
+        old_to_new_ids = {}
+        for element in existing_elements_w_alerts:  ## match old element ids to new element ids
+            updated_dash_element = list(filter(lambda item: item['title'] == element['title'] and item['query_id'] == element['query_id'], updated_dash[0]['dashboard_elements']))
+            if len(updated_dash_element) == 1:  ## what should we do if more than one match?
+                old_to_new_ids[element['id']] = updated_dash_element[0]['id']
+        for alert in existing_dash_alerts:  ## create new alerts
+            logger.debug('processing alert for element', extra={"element_id": alert['dashboard_element_id']})
+            new_alert = {}
+            for key in alert.keys():
+                new_alert[key] = alert[key]                
+            if alert['dashboard_element_id'] in old_to_new_ids.keys():
+                logger.debug("creating alert", extra={"old_element_id": alert['dashboard_element_id'], "new_element_id": old_to_new_ids[alert['dashboard_element_id']]})
+                new_alert['dashboard_element_id'] = old_to_new_ids[alert['dashboard_element_id']]
+                try:
+                    sdk.create_alert(new_alert)
+                except Exception as e:
+                    print(e)
+        
 
 def build_spaces(spaces, sdk):
     # seeding initial value of parent id to Shared
@@ -303,6 +359,8 @@ def main(args):
         args.target_base = 'Shared'
 
     sdk = get_client(args.ini, args.env)
+    global enabled_alerts
+    enabled_alerts = sdk.search_alerts(disabled="false")
     send_content(
         sdk,
         args.env,
@@ -315,3 +373,6 @@ def main(args):
         args.debug,
         args.target_base
     )
+
+    alert_cleanup(sdk)
+
