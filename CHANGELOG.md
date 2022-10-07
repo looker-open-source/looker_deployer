@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.8](https://github.com/looker-open-source/looker_deployer/compare/looker-deployer-v0.3.7...looker-deployer-v0.3.8) (2022-10-07)
+
+
+### Bug Fixes
+
+* target_base added to deploy_space and deploy_content ([9e73a31](https://github.com/looker-open-source/looker_deployer/commit/9e73a31dbc3e6442da8bf475ac6e1ed204367d2d))
+
 ## [0.3.7](https://github.com/looker-open-source/looker_deployer/compare/looker-deployer-v0.3.6...looker-deployer-v0.3.7) (2022-06-15)
 
 

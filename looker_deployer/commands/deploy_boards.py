@@ -198,7 +198,7 @@ def board_content_lists(board_object):
             if j.look_id:
                 look_list.append(j.look_id)
 
-    return(dash_list, look_list)
+    return (dash_list, look_list)
 
 
 def audit_board_content(board_object, source_sdk, target_sdk):
