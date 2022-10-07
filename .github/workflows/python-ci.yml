@@ -29,10 +29,9 @@ jobs:
         os:
           - ubuntu
         python-version:
-          - '3.6'
-          - '3.7'
-          - '3.8'
-          - '3.9'
+          - "3.7"
+          - "3.8"
+          - "3.9"
 
     steps:
       - name: Repo Checkout
@@ -115,5 +114,5 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           report_individual_runs: true
           hide_comments: orphaned commits
-          check_run_annotations_branch: '*'
-          files: 'artifacts/python-test-results/*.xml'
+          check_run_annotations_branch: "*"
+          files: "artifacts/python-test-results/*.xml"
