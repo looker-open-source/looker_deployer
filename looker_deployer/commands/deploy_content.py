@@ -149,7 +149,7 @@ def import_content(content_type, content_json, space_id, env, ini, debug=False):
         if is_new_dash == "false": ## if it's an existing dashboard, save the alerts and elements
             for element in existing_dash[0]['dashboard_elements']:
                 start = len(existing_dash_alerts)
-                alerts = list(filter(lambda alert: alert['dashboard_element_id'] == element['id'], enabled_alerts))
+                alerts = list(filter(lambda alert: str(alert['dashboard_element_id']) == str(element['id']), enabled_alerts))
                 if len(alerts) > 0:
                     existing_dash_alerts.extend(alerts)
                 if len(existing_dash_alerts) > start:
