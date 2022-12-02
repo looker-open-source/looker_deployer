@@ -360,7 +360,7 @@ def main(args):
 
     sdk = get_client(args.ini, args.env)
     global enabled_alerts
-    enabled_alerts = sdk.search_alerts(disabled="false")
+    enabled_alerts = sdk.search_alerts(disabled="false", all_owners=True)
     send_content(
         sdk,
         args.env,
