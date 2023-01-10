@@ -183,7 +183,7 @@ def import_content(content_type, content_json, space_id, env, ini, debug=False):
                 new_alert['dashboard_element_id'] = old_to_new_ids[alert['dashboard_element_id']]
                 try:
                     created_alert = sdk.create_alert(new_alert)
-                    sdk.updated_alert(created_alert['id'], update_owner)
+                    sdk.update_alert_field(created_alert['id'], update_owner) #update new alert to correct owner
                 except Exception as e:
                     print(e)
         
