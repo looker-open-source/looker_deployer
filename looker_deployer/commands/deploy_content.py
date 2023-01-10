@@ -36,6 +36,7 @@ def alert_cleanup(sdk):
     for alert in disabled_alerts:
         if alert['disabled_reason'] == "Dashboard element has been removed.":
             sdk.delete_alert(alert['id'])
+            logger.info("Alert removed", extra={"alert title": alert['title']})
 
 
 def get_space_ids_from_name(space_name, parent_id, sdk):
