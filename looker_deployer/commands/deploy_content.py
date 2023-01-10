@@ -174,13 +174,16 @@ def import_content(content_type, content_json, space_id, env, ini, debug=False):
         for alert in existing_dash_alerts:  ## create new alerts
             logger.debug('processing alert for element', extra={"element_id": alert['dashboard_element_id']})
             new_alert = {}
+            update_owner = {} #alerts are assigned to creator, need to update after
+            update_owner['owner_id'] = alert['owner_id']
             for key in alert.keys():
                 new_alert[key] = alert[key]                
             if alert['dashboard_element_id'] in old_to_new_ids.keys():
                 logger.debug("creating alert", extra={"old_element_id": alert['dashboard_element_id'], "new_element_id": old_to_new_ids[alert['dashboard_element_id']]})
                 new_alert['dashboard_element_id'] = old_to_new_ids[alert['dashboard_element_id']]
                 try:
-                    sdk.create_alert(new_alert)
+                    created_alert = sdk.create_alert(new_alert)
+                    sdk.updated_alert(created_alert['id'], update_owner)
                 except Exception as e:
                     print(e)
         
