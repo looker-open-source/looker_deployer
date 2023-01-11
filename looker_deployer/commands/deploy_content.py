@@ -184,6 +184,7 @@ def import_content(content_type, content_json, space_id, env, ini, debug=False):
                 try:
                     created_alert = sdk.create_alert(new_alert)
                     sdk.update_alert_field(created_alert['id'], update_owner) #update new alert to correct owner
+                    sdk.delete_alert(alert['id'])
                 except Exception as e:
                     print(e)
         
