@@ -107,8 +107,11 @@ def setup_content_subparser(subparsers):
     export_subparser.add_argument("--env", required=True, help="What environment to deploy to")
     export_subparser.add_argument("--ini", default=loc, help="ini file to parse for credentials")
     export_subparser.add_argument("--debug", action="store_true", help="set logger to debug for more verbosity")
-    export_subparser.add_argument("--folders", nargs="+", required=True, help="What folders to export content from")
     export_subparser.add_argument("--local-target", required=True, help="Local directory to store content")
+    export_content_group = export_subparser.add_argument_group()
+    export_content_group.add_argument("--folders", nargs="+", help="Folders to fully export")
+    export_content_group.add_argument("--dashboards", nargs="+", help="Dashboards to export")
+    export_content_group.add_argument("--looks", nargs="+", help="Looks to export")
     export_subparser.set_defaults(func=deploy_content_export.main)
 
     import_subparser.add_argument("--env", required=True, help="What environment to deploy to")
@@ -116,10 +119,10 @@ def setup_content_subparser(subparsers):
     import_subparser.add_argument("--debug", action="store_true", help="set logger to debug for more verbosity")
     import_subparser.add_argument("--recursive", action="store_true", help="Should folders deploy recursively")
     import_subparser.add_argument("--target-folder", help="override the default target folder with a custom path")
-    content_group = import_subparser.add_mutually_exclusive_group(required=True)
-    content_group.add_argument("--folders", nargs="+", help="Folders to fully deploy")
-    content_group.add_argument("--dashboards", nargs="+", help="Dashboards to deploy")
-    content_group.add_argument("--looks", nargs="+", help="Looks to deploy")
+    import_content_group = import_subparser.add_mutually_exclusive_group(required=True)
+    import_content_group.add_argument("--folders", nargs="+", help="Folders to fully deploy")
+    import_content_group.add_argument("--dashboards", nargs="+", help="Dashboards to deploy")
+    import_content_group.add_argument("--looks", nargs="+", help="Looks to deploy")
     import_subparser.set_defaults(func=deploy_content.main)
 
 
