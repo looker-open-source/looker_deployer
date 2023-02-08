@@ -58,6 +58,7 @@ def test_export_space(mocker):
         "xyz"
     ])
 
+
 def test_export_space_debug(mocker):
     mocker.patch("looker_deployer.commands.deploy_content_export.get_gzr_creds")
     deploy_content_export.get_gzr_creds.return_value = ("foobar.com", "1234", "abc", "xyz", "True")

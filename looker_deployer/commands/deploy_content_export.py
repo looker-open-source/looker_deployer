@@ -57,6 +57,7 @@ def export_spaces(folder_id, env, ini, path, debug=False):
 
     subprocess.run(gzr_command)
 
+
 def export_content(content_type, content_id, env, ini, path, debug=False):
     host, port, client_id, client_secret, verify_ssl = get_gzr_creds(ini, env)
 
@@ -89,6 +90,7 @@ def export_content(content_type, content_id, env, ini, path, debug=False):
     filename = Path(path) / f"{content_type}_{content_id}.json"
     with open(filename, "w") as outfile:
         subprocess.run(gzr_command, stdout=outfile)
+
 
 def recurse_folders(folder_id, folder_list, sdk, debug=False):
     space = sdk.space(str(folder_id))
@@ -145,6 +147,7 @@ def send_export(
 
         # export the look
         export_content("look", lid, env, ini, str(path), debug)
+
 
 def main(args):
 
