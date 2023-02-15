@@ -177,7 +177,14 @@ def import_content(content_type, content_json, space_id, env, ini, debug=False):
             update_owner = {} #alerts are assigned to creator, need to update after
             update_owner['owner_id'] = alert['owner_id']
             for key in alert.keys():
-                new_alert[key] = alert[key]                
+                new_alert[key] = alert[key]
+            new_alert['applied_dashboard_filters'] = []
+            new_filter = {}
+            for old_filter in alert['applied_dashboard_filters']:
+                new_filter = old_filter.__dict__
+                if new_filter['filter_value'] == 'None':
+                    new_filter['filter_value'] = ""
+                new_alert['applied_dashboard_filters'].append(new_filter)
             if alert['dashboard_element_id'] in old_to_new_ids.keys():
                 logger.debug("creating alert", extra={"old_element_id": alert['dashboard_element_id'], "new_element_id": old_to_new_ids[alert['dashboard_element_id']]})
                 new_alert['dashboard_element_id'] = old_to_new_ids[alert['dashboard_element_id']]
