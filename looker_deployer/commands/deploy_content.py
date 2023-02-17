@@ -191,6 +191,9 @@ def import_content(content_type, content_json, space_id, env, ini, debug=False):
                 try:
                     created_alert = sdk.create_alert(new_alert)
                     sdk.update_alert_field(created_alert['id'], update_owner) #update new alert to correct owner
+                    update_owner['owner_id'] = sdk.me()['id'] #get id of current user
+                    if alert['id'] != update_owner['owner_id']:
+                        sdk.update_alert_field(alert['id'], update_owner) #update old alert to current user to prevent errors when deleting
                     sdk.delete_alert(alert['id'])
                 except Exception as e:
                     print(e)
