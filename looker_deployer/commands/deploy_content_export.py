@@ -58,6 +58,40 @@ def export_spaces(folder_id, env, ini, path, debug=False):
     subprocess.run(gzr_command)
 
 
+def export_content(content_type, content_id, env, ini, path, debug=False):
+    host, port, client_id, client_secret, verify_ssl = get_gzr_creds(ini, env)
+
+    gzr_command = [
+        "gzr",
+        content_type,
+        "cat",
+        content_id,
+        "--host",
+        host,
+        "--port",
+        port,
+        "--client-id",
+        client_id,
+        "--client-secret",
+        client_secret
+    ]
+
+    # config parser returns a string - easier to parse that than convert to a bool
+    if verify_ssl == "False":
+        gzr_command.append("--no-verify-ssl")
+    if debug:
+        gzr_command.append("--debug")
+
+    # if we're running on windows we need to appropriately call the command-line arg"
+    if os.name == "nt":
+        win_exec = ["cmd.exe", "/c"]
+        gzr_command = win_exec + gzr_command
+
+    filename = Path(path) / f"{content_type}_{content_id}.json"
+    with open(filename, "w") as outfile:
+        subprocess.run(gzr_command, stdout=outfile)
+
+
 def recurse_folders(folder_id, folder_list, sdk, debug=False):
     space = sdk.space(str(folder_id))
     folder_list.append(space.name)
@@ -72,8 +106,10 @@ def recurse_folders(folder_id, folder_list, sdk, debug=False):
     return folder_list
 
 
-def send_export(folder_ids, local_target, env, ini, sdk, debug=False):
-    for fid in folder_ids:
+def send_export(
+    sdk, env, ini, local_target, folders=None, dashboards=None, looks=None, debug=False
+):
+    for fid in folders or []:
 
         # generate the list of folders
         folder_list = []
@@ -90,6 +126,28 @@ def send_export(folder_ids, local_target, env, ini, sdk, debug=False):
         # export the folder
         export_spaces(fid, env, ini, str(path), debug)
 
+    for did in dashboards or []:
+
+        logger.debug("dashboard_list", extra={"dashboards": dashboards})
+
+        # create the target directory
+        path = Path(local_target)
+        path.mkdir(parents=True, exist_ok=True)
+
+        # export the dashboard
+        export_content("dashboard", did, env, ini, str(path), debug)
+
+    for lid in looks or []:
+
+        logger.debug("look_list", extra={"looks": looks})
+
+        # create the target directory
+        path = Path(local_target)
+        path.mkdir(parents=True, exist_ok=True)
+
+        # export the look
+        export_content("look", lid, env, ini, str(path), debug)
+
 
 def main(args):
 
@@ -100,7 +158,16 @@ def main(args):
 
     logger.info(
         "Exporting content",
-        extra={"env": args.env, "folders": args.folders, "local_target": args.local_target}
+        extra={"env": args.env, "folders": args.folders, "dashboards": args.dashboards, "looks": args.looks, "local_target": args.local_target}
     )
     sdk = get_client(args.ini, args.env)
-    send_export(args.folders, args.local_target, args.env, args.ini, sdk, args.debug)
+    send_export(
+        sdk,
+        args.env,
+        args.ini,
+        args.local_target,
+        args.folders,
+        args.dashboards,
+        args.looks,
+        args.debug
+    )
