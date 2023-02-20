@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.3.9](https://github.com/looker-open-source/looker_deployer/compare/looker-deployer-v0.3.8...looker-deployer-v0.3.9) (2023-02-20)
+
+
+### Features
+
+* Add content export for dashboard and look only ([6890d04](https://github.com/looker-open-source/looker_deployer/commit/6890d044745f7becd199715b58c4be6f5e312ba1))
+
+
+### Bug Fixes
+
+* build(deps): bump cryptography from 38.0.4 to 39.0.1 ([644c0ba](https://github.com/looker-open-source/looker_deployer/commit/644c0ba20b5853b355dacbf018ed03402d53504c))
+* bump setuptools from 60.10.0 to 65.5.1 ([ee32c84](https://github.com/looker-open-source/looker_deployer/commit/ee32c84f622fa8938131bf69e2cfb61bc9bad919))
+
 ## [0.3.8](https://github.com/looker-open-source/looker_deployer/compare/looker-deployer-v0.3.7...looker-deployer-v0.3.8) (2022-10-07)
 
 
