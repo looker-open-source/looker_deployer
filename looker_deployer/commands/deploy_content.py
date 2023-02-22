@@ -191,9 +191,12 @@ def import_content(content_type, content_json, space_id, env, ini, debug=False):
                 try:
                     created_alert = sdk.create_alert(new_alert)
                     sdk.update_alert_field(created_alert['id'], update_owner) #update new alert to correct owner
-                    update_owner['owner_id'] = sdk.me()['id'] #get id of current user
+                    update_fields = []
+                    update_fields['owner_id'] = sdk.me()['id'] #get id of current user
+                    update_fields['is_disabled'] = "true"
+                    update_fields['disabled_reason'] = "dashboard update"
                     if alert['id'] != update_owner['owner_id']:
-                        sdk.update_alert_field(alert['id'], update_owner) #update old alert to current user to prevent errors when deleting
+                        sdk.update_alert_field(alert['id'], update_fields) #update old alert to current user to prevent errors when deleting
                     sdk.delete_alert(alert['id'])
                 except Exception as e:
                     print(e)
