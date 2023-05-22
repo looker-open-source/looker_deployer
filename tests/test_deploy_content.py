@@ -15,7 +15,7 @@
 import pytest
 import os
 import subprocess
-from looker_sdk import methods, models
+from looker_sdk import methods40 as methods, models40 as models
 from looker_deployer.commands import deploy_content
 from looker_deployer.utils import parse_ini
 
@@ -28,7 +28,7 @@ class mockAuth:
     settings = mockSettings()
 
 
-sdk = methods.LookerSDK(mockAuth(), "bar", "baz", "bosh", "bizz")
+sdk = methods.Looker40SDK(mockAuth(), "bar", "baz", "bosh", "bizz")
 
 TRUE_INI = {
     "taco": {
@@ -50,14 +50,14 @@ FALSE_INI = {
 
 
 def test_get_space_ids_from_name_shared(mocker):
-    mocker.patch.object(sdk, "search_spaces")
+    mocker.patch.object(sdk, "search_folders")
     id_list = deploy_content.get_space_ids_from_name("Shared", "0", sdk)
     assert id_list == ["1"]
 
 
 def test_get_space_ids_from_name_not_shared(mocker):
-    mocker.patch.object(sdk, "search_spaces")
-    sdk.search_spaces.return_value = [models.Space(name="Foo", parent_id="1", id="42")]
+    mocker.patch.object(sdk, "search_folders")
+    sdk.search_folders.return_value = [models.Folder(name="Foo", parent_id="1", id="42")]
     id_list = deploy_content.get_space_ids_from_name("foo", "0", sdk)
     assert id_list == ["42"]
 
@@ -77,9 +77,9 @@ def test_create_or_return_space_multi_found(mocker):
 
 
 def test_create_or_return_space_none_found(mocker):
-    mocker.patch.object(sdk, "create_space")
+    mocker.patch.object(sdk, "create_folder")
     mocker.patch("looker_deployer.commands.deploy_content.get_space_ids_from_name")
-    sdk.create_space.return_value = models.Space(name="Foo", parent_id="1", id="42")
+    sdk.create_folder.return_value = models.Folder(name="Foo", parent_id="1", id="42")
     deploy_content.get_space_ids_from_name.return_value = []
 
     target_id = deploy_content.create_or_return_space("foo", "5", sdk)

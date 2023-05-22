@@ -1,5 +1,5 @@
 from looker_deployer.commands import deploy_group_in_group
-from looker_sdk import methods, models
+from looker_sdk import methods40 as methods, models40 as models
 
 
 class mockSettings:
@@ -15,9 +15,9 @@ def mock_responses(responses, default_response=None):
         if input in responses else default_response
 
 
-sdk = methods.LookerSDK(mockAuth(), "bar", "baz", "bosh", "bizz")
-source_sdk = methods.LookerSDK(mockAuth(), "bar", "baz", "bosh", "bizz")
-target_sdk = methods.LookerSDK(mockAuth(), "bar", "baz", "bosh", "bizz")
+sdk = methods.Looker40SDK(mockAuth(), "bar", "baz", "bosh", "bizz")
+source_sdk = methods.Looker40SDK(mockAuth(), "bar", "baz", "bosh", "bizz")
+target_sdk = methods.Looker40SDK(mockAuth(), "bar", "baz", "bosh", "bizz")
 
 
 def test_get_filtered_groups(mocker):

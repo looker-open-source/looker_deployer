@@ -15,7 +15,7 @@
 from unittest.mock import patch, mock_open
 from pathlib import Path
 import subprocess
-from looker_sdk import methods
+from looker_sdk import methods40 as methods
 from looker_deployer.commands import deploy_content_export
 
 
@@ -32,7 +32,7 @@ class mockAuth:
     settings = mockSettings()
 
 
-sdk = methods.LookerSDK(mockAuth(), "bar", "baz", "bosh", "bizz")
+sdk = methods.Looker40SDK(mockAuth(), "bar", "baz", "bosh", "bizz")
 
 
 def test_export_space(mocker):
@@ -138,8 +138,8 @@ def test_export_space_win(mocker):
 
 
 def test_recurse_folders(mocker):
-    mocker.patch.object(sdk, "space")
-    sdk.space.return_value = mockSpace()
+    mocker.patch.object(sdk, "folder")
+    sdk.folder.return_value = mockSpace()
 
     folder = deploy_content_export.recurse_folders("1", [], sdk, False)
     assert folder == ["foo"]

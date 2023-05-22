@@ -13,7 +13,7 @@
 # limitations under the License.
 
 import logging
-from looker_sdk import models
+from looker_sdk import models40 as models
 from looker_deployer.utils import deploy_logging
 from looker_deployer.utils.get_client import get_client
 
@@ -79,7 +79,7 @@ def match_look_id(source_look_id, source_sdk, target_sdk):
 
 def return_board(board_name, source_sdk):
     logger.debug("Searching boards", extra={"title": board_name})
-    board_list = source_sdk.search_homepages(title=board_name)
+    board_list = source_sdk.search_boards(title=board_name)
 
     if len(board_list) > 1:
         raise MultipleAssetsFoundError(board_name)
@@ -94,7 +94,7 @@ def create_or_update_board(source_board_object, target_sdk, title_override=None)
 
     # Determine if board already exists in target environment
     search_title = title_override or source_board_object.title
-    search_res = target_sdk.search_homepages(title=search_title)
+    search_res = target_sdk.search_boards(title=search_title)
     assert len(search_res) < 2, "More than one board found! Refine your search or remove duplicate names."
 
     try:
@@ -107,12 +107,12 @@ def create_or_update_board(source_board_object, target_sdk, title_override=None)
             extra={"title": search_title}
         )
 
-        new_board = models.WriteHomepage(
+        new_board = models.WriteBoard(
             title=source_board_object.title,
             description=source_board_object.description
         )
 
-        resp = target_sdk.create_homepage(new_board)
+        resp = target_sdk.create_board(new_board)
         logger.info("Board created", extra={"id": resp.id})
         return resp.id
 
@@ -125,33 +125,33 @@ def create_or_update_board(source_board_object, target_sdk, title_override=None)
     target_board = search_res[0]
 
     # Clear out existing sections
-    section_list = [i.id for i in target_board.homepage_sections]
+    section_list = [i.id for i in target_board.board_sections]
     logger.debug("Found sections to clear", extra={"section_list": section_list})
 
     for section in section_list:
         logger.debug("Clearing section for refresh", extra={"section_id": section})
-        target_sdk.delete_homepage_section(section)
+        target_sdk.delete_board_section(section)
 
     # Update
-    update_board = models.WriteHomepage(
+    update_board = models.WriteBoard(
         title=source_board_object.title,
         description=source_board_object.description
     )
 
-    resp = target_sdk.update_homepage(target_board.id, update_board)
+    resp = target_sdk.update_board(target_board.id, update_board)
     logger.info("Board updated", extra={"id": resp.id})
     return resp.id
 
 
 def create_board_section(source_board_section_object, target_board_id, target_sdk):
-    new_board_section = models.WriteHomepageSection(
+    new_board_section = models.WriteBoardSection(
         title=source_board_section_object.title,
         description=source_board_section_object.description,
-        homepage_id=target_board_id
+        board_id=target_board_id
     )
 
     logger.info("Creating Section", extra={"board_id": target_board_id, "section_title": new_board_section.title})
-    resp = target_sdk.create_homepage_section(new_board_section)
+    resp = target_sdk.create_board_section(new_board_section)
     logger.info("Section created", extra={"section_id": resp.id})
     return resp.id
 
@@ -166,22 +166,22 @@ def create_board_item(source_board_item_object, target_board_section_id, source_
     if source_board_item_object.look_id:
         look_id = match_look_id(source_board_item_object.look_id, source_sdk, target_sdk)
 
-    new_board_item = models.WriteHomepageItem()
+    new_board_item = models.WriteBoardItem()
     new_board_item.__dict__.update(source_board_item_object.__dict__)
     new_board_item.dashboard_id = dashboard_id
     new_board_item.look_id = look_id
-    new_board_item.homepage_section_id = target_board_section_id
+    new_board_item.board_section_id = target_board_section_id
 
     logger.info(
         "Creating item",
         extra={
-            "section_id": new_board_item.homepage_section_id,
+            "section_id": new_board_item.board_section_id,
             "dashboard_id": new_board_item.dashboard_id,
             "look_id": new_board_item.look_id,
             "url": new_board_item.url
         }
     )
-    resp = target_sdk.create_homepage_item(new_board_item)
+    resp = target_sdk.create_board_item(new_board_item)
     logger.info("Item created", extra={"id": resp.id})
 
     return resp
@@ -191,8 +191,8 @@ def board_content_lists(board_object):
     dash_list = []
     look_list = []
 
-    for i in board_object.homepage_sections:
-        for j in i.homepage_items:
+    for i in board_object.board_sections:
+        for j in i.board_items:
             if j.dashboard_id:
                 dash_list.append(j.dashboard_id)
             if j.look_id:
@@ -244,10 +244,10 @@ def send_boards(board_name, source_sdk, target_sdk, title_override=None, allow_p
 
     target_board_id = create_or_update_board(source_board, target_sdk, title_override)
 
-    for section in source_board.homepage_sections:
+    for section in source_board.board_sections:
         target_section_id = create_board_section(section, target_board_id, target_sdk)
 
-        for item in section.homepage_items:
+        for item in section.board_items:
             try:
                 create_board_item(item, target_section_id, source_sdk, target_sdk)
             except AssertionError:

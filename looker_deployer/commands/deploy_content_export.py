@@ -93,7 +93,7 @@ def export_content(content_type, content_id, env, ini, path, debug=False):
 
 
 def recurse_folders(folder_id, folder_list, sdk, debug=False):
-    space = sdk.space(str(folder_id))
+    space = sdk.folder(str(folder_id))
     folder_list.append(space.name)
     logger.debug(
         "recursive folder crawl status",
