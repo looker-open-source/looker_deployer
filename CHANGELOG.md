@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.10](https://github.com/looker-open-source/looker_deployer/compare/looker-deployer-v0.3.9...looker-deployer-v0.3.10) (2023-05-22)
+
+
+### Features
+
+* Upgraded to use API 4.0 ([4f869a9](https://github.com/looker-open-source/looker_deployer/commit/4f869a9bf89d42cbedc2e902772499ca25521d7f))
+
 ## [0.3.9](https://github.com/looker-open-source/looker_deployer/compare/looker-deployer-v0.3.8...looker-deployer-v0.3.9) (2023-02-20)
 
 
