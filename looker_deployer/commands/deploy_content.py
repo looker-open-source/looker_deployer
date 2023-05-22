@@ -24,7 +24,7 @@ from itertools import repeat
 from looker_deployer.utils import deploy_logging
 from looker_deployer.utils import parse_ini
 from looker_deployer.utils.get_client import get_client
-from looker_sdk import models
+from looker_sdk import models40 as models
 
 
 logger = deploy_logging.get_logger(__name__)
@@ -34,13 +34,13 @@ def get_space_ids_from_name(space_name, parent_id, sdk):
     if (space_name == "Shared" and parent_id == "0"):
         return ["1"]
     elif (space_name == "Embed Groups" and parent_id == "0"):
-        return sdk.search_spaces(name=space_name, parent_id=None)[0].id
+        return sdk.search_folders(name=space_name, parent_id=None)[0].id
     elif (space_name == "Users" and parent_id == "0"):
-        return sdk.search_spaces(name=space_name, parent_id=None)[0].id
+        return sdk.search_folders(name=space_name, parent_id=None)[0].id
     elif (space_name == "Embed Users" and parent_id == "0"):
-        return sdk.search_spaces(name=space_name, parent_id=None)[0].id
+        return sdk.search_folders(name=space_name, parent_id=None)[0].id
     logger.debug("space info", extra={"space_name": space_name, "parent_id": parent_id})
-    space_list = sdk.search_spaces(name=space_name, parent_id=parent_id)
+    space_list = sdk.search_folders(name=space_name, parent_id=parent_id)
     id_list = [i.id for i in space_list]
 
     return id_list
@@ -61,8 +61,8 @@ def create_or_return_space(space_name, parent_id, sdk):
             raise e
         else:
             logger.warning("No folders found. Creating folder now")
-            new_space = models.CreateSpace(name=space_name, parent_id=parent_id)
-            res = sdk.create_space(new_space)
+            new_space = models.CreateFolder(name=space_name, parent_id=parent_id)
+            res = sdk.create_folder(new_space)
             return res.id
 
     logger.info("Found Space ID", extra={"id": target_id})

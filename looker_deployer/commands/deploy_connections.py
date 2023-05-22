@@ -14,7 +14,7 @@
 
 import logging
 import re
-from looker_sdk import models, error
+from looker_sdk import models40 as models, error
 from looker_deployer.utils import deploy_logging
 from looker_deployer.utils import parse_ini
 from looker_deployer.utils.get_client import get_client

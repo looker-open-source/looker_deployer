@@ -1,5 +1,5 @@
 from looker_deployer.commands import deploy_roles
-from looker_sdk import methods, models
+from looker_sdk import methods40 as methods, models40 as models
 
 
 class mockSettings:
@@ -10,7 +10,7 @@ class mockAuth:
     settings = mockSettings()
 
 
-sdk = methods.LookerSDK(mockAuth(), "bar", "baz", "bosh", "bizz")
+sdk = methods.Looker40SDK(mockAuth(), "bar", "baz", "bosh", "bizz")
 
 
 def test_get_filtered_roles(mocker):
