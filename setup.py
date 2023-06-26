@@ -31,6 +31,6 @@ setup(
     name=NAME,
     packages=["looker_deployer", "looker_deployer/commands", "looker_deployer/utils"],
     entry_points={"console_scripts": ["ldeploy=looker_deployer.cli:main"]},
-    python_requires=">=3.6.0, <3.10",
+    python_requires=">=3.6.0, <3.11",
     version=VERSION
 )

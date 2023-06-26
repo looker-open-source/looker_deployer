@@ -77,7 +77,7 @@ def write_user_attributes(source_sdk, target_sdk,
     # and Update Group Values if set
     for user_attribute in user_attributes:
         # INFO: Create user attribute
-        new_user_attribute = models.WriteUserAttribute()
+        new_user_attribute = models.WriteUserAttribute(name="", label="", type="")
         new_user_attribute.__dict__.update(user_attribute.__dict__)
 
         # INFO: Test if user attribute is already in target

@@ -12,8 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from unittest.mock import patch, mock_open
+from pathlib import Path
 import subprocess
-from looker_sdk import methods
+from looker_sdk import methods40 as methods
 from looker_deployer.commands import deploy_content_export
 
 
@@ -30,7 +32,7 @@ class mockAuth:
     settings = mockSettings()
 
 
-sdk = methods.LookerSDK(mockAuth(), "bar", "baz", "bosh", "bizz")
+sdk = methods.Looker40SDK(mockAuth(), "bar", "baz", "bosh", "bizz")
 
 
 def test_export_space(mocker):
@@ -136,8 +138,8 @@ def test_export_space_win(mocker):
 
 
 def test_recurse_folders(mocker):
-    mocker.patch.object(sdk, "space")
-    sdk.space.return_value = mockSpace()
+    mocker.patch.object(sdk, "folder")
+    sdk.folder.return_value = mockSpace()
 
     folder = deploy_content_export.recurse_folders("1", [], sdk, False)
     assert folder == ["foo"]
@@ -150,5 +152,31 @@ def test_send_export(mocker):
     mocker.patch("pathlib.Path.mkdir")
 
     mocker.patch("looker_deployer.commands.deploy_content_export.export_spaces")
-    deploy_content_export.send_export("1", "./foo/bar", "env", "ini", "sdk", False)
+    deploy_content_export.send_export("sdk", "env", "ini", "./foo/bar", folders="1", debug=False)
     deploy_content_export.export_spaces.assert_called_with("1", "env", "ini", "foo/bar/Shared/bosh", False)
+
+
+def test_export_dashboard(mocker):
+    mocker.patch("looker_deployer.commands.deploy_content_export.get_gzr_creds")
+    deploy_content_export.get_gzr_creds.return_value = ("foobar.com", "1234", "abc", "xyz", "True")
+
+    fake_file_path = Path("foo/bar/dashboard_1.json")
+    with patch('looker_deployer.commands.deploy_content_export.open', mock_open()) as mocked_file:
+        mocker.patch("subprocess.run")
+        deploy_content_export.export_content("dashboard", "1", "env", "ini", "foo/bar", False)
+
+        # assert "foo/bar/dashboard_1.json" opened and on write mode 'w'
+        mocked_file.assert_called_once_with(fake_file_path, 'w')
+
+
+def test_export_look(mocker):
+    mocker.patch("looker_deployer.commands.deploy_content_export.get_gzr_creds")
+    deploy_content_export.get_gzr_creds.return_value = ("foobar.com", "1234", "abc", "xyz", "True")
+
+    fake_file_path = Path("foo/bar/look_1.json")
+    with patch('looker_deployer.commands.deploy_content_export.open', mock_open()) as mocked_file:
+        mocker.patch("subprocess.run")
+        deploy_content_export.export_content("look", "1", "env", "ini", "foo/bar", False)
+
+        # assert "foo/bar/look_1.json" opened and on write mode 'w'
+        mocked_file.assert_called_once_with(fake_file_path, 'w')
