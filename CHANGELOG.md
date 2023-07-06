@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.3.11](https://github.com/looker-open-source/looker_deployer/compare/looker-deployer-v0.3.10...looker-deployer-v0.3.11) (2023-07-06)
+
+
+### Bug Fixes
+
+* deploy code response changed ([cc66c25](https://github.com/looker-open-source/looker_deployer/commit/cc66c25f423fcb20027ebe59ecf00c709bb7341e))
+
+
+### Documentation
+
+* Update README.md ([ef6d598](https://github.com/looker-open-source/looker_deployer/commit/ef6d5989fa4fe35cf9aa6b72972993ba13ac39dd))
+* Update README.md for volume mounts in docker ([c63ae8c](https://github.com/looker-open-source/looker_deployer/commit/c63ae8c9fbc0e59d83ba12527b4f579a73ea87c5))
+
 ## [0.3.10](https://github.com/looker-open-source/looker_deployer/compare/looker-deployer-v0.3.9...looker-deployer-v0.3.10) (2023-05-22)
 
 
