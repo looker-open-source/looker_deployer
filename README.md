@@ -86,7 +86,7 @@ docker run \
   -v /local/path/to/ldeploy/settings:/ldeploy_settings \
   -v /local/path/to/ldeploy/output:/ldeploy_output \
   ldeploy content export \
-    --ini /ldeploy_settins/looker.ini \
+    --ini /ldeploy_settings/looker.ini \
     --local-target /ldeploy_output \
     <additional parameters>
 ```
