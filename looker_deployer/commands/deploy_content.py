@@ -50,6 +50,10 @@ def create_or_return_space(space_name, parent_id, sdk):
 
     try:
         target_id = get_space_ids_from_name(space_name, parent_id, sdk)
+        if len(target_id) == 0 and "/" in space_name:
+            # If the folder name contains slashes then also check if it was previously imported with
+            # the slashes replaced with division slashes (Unicode character 2215) prior to PR #152.
+            target_id = get_space_ids_from_name(space_name.replace("/", "\u2215"), parent_id, sdk)
         logger.debug("Space ID from name", extra={"id": target_id})
         assert len(target_id) == 1
     except AssertionError as e:
@@ -134,6 +138,9 @@ def build_spaces(spaces, sdk):
     id_tracker = ["0"]
 
     for space in spaces:
+        # Gazer replaces slashes in folder names with division slashes (Unicode character 2215), so undo that.
+        space = space.replace("\u2215", "/")
+
         logger.debug("parent_id to use", extra={"id_tracker": id_tracker})
         # Pull last value from id_tracker
         space_parent = id_tracker.pop()
