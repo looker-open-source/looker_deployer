@@ -52,7 +52,7 @@ def create_or_return_space(space_name, parent_id, sdk):
         target_id = get_space_ids_from_name(space_name, parent_id, sdk)
         if len(target_id) == 0 and "/" in space_name:
             # If the folder name contains slashes then also check if it was previously imported with
-            # the slashes replaced with division slashes (Unicode character 2215) prior to PR #152.
+            # the slashes replaced with division slashes (Unicode character 2215) prior to PR #153.
             target_id = get_space_ids_from_name(space_name.replace("/", "\u2215"), parent_id, sdk)
         logger.debug("Space ID from name", extra={"id": target_id})
         assert len(target_id) == 1
