@@ -17,6 +17,7 @@ oyaml = "*"
 python-json-logger = "*"
 e1839a8 = {editable = true,path = "."}
 looker-deployer = {editable = true,path = "."}
+certifi = "==2023.7.22"
 
 [requires]
 python_version = "3.7"
