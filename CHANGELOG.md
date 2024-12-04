@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.12](https://github.com/looker-open-source/looker_deployer/compare/looker-deployer-v0.3.11...looker-deployer-v0.3.12) (2024-12-04)
+
+
+### Bug Fixes
+
+* Use slashes in folder names instead of division slashes added by Gazer ([#155](https://github.com/looker-open-source/looker_deployer/issues/155)) ([4af55da](https://github.com/looker-open-source/looker_deployer/commit/4af55da8712e50f8997dd4bdc6681f2b72c78d52))
+
 ## [0.3.11](https://github.com/looker-open-source/looker_deployer/compare/looker-deployer-v0.3.10...looker-deployer-v0.3.11) (2023-07-06)
 
 
