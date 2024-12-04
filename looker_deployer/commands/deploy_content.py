@@ -134,6 +134,9 @@ def build_spaces(spaces, sdk):
     id_tracker = ["0"]
 
     for space in spaces:
+        # Gazer replaces slashes in folder names with division slashes (Unicode character 2215), so undo that.
+        space = space.replace("\u2215", "/")
+
         logger.debug("parent_id to use", extra={"id_tracker": id_tracker})
         # Pull last value from id_tracker
         space_parent = id_tracker.pop()
