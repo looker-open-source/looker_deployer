@@ -14,31 +14,45 @@
 
 import logging
 import re
-from looker_sdk import models40 as models, error
+import os
+import subprocess  # noqa: F401
+import json
+import tempfile
+import configparser
 from looker_deployer.utils import deploy_logging
 from looker_deployer.utils import parse_ini
-from looker_deployer.utils.get_client import get_client
+from looker_deployer.utils.cli import run_cli_command
+from looker_deployer.utils.exceptions import LookerCLIError
 
 logger = deploy_logging.get_logger(__name__)
 
 
-def get_filtered_connections(source_sdk, pattern=None):
-    connections = source_sdk.all_connections()
+def get_filtered_connections(source_creds, pattern=None):
+    cmd = ["looker-cli", "api", "connection", "all_connections"]
+
+    result = run_cli_command(
+        cmd,
+        creds=source_creds,
+        capture_output=True,
+        text=True,
+        check=True
+    )
+    connections = json.loads(result.stdout)
 
     logger.debug(
         "Connections pulled",
         extra={
-            "connection_names": [i.name for i in connections]
+            "connection_names": [i["name"] for i in connections]
         }
     )
 
     if pattern:
         compiled_pattern = re.compile(pattern)
-        connections = [i for i in connections if compiled_pattern.search(i.name)]
+        connections = [i for i in connections if compiled_pattern.search(i["name"])]
         logger.debug(
             "Connections filtered",
             extra={
-                "filtered_connections": [i.name for i in connections],
+                "filtered_connections": [i["name"] for i in connections],
                 "pattern": pattern
             }
         )
@@ -46,38 +60,36 @@ def get_filtered_connections(source_sdk, pattern=None):
     return connections
 
 
-def write_connections(connections, target_sdk, db_config=None):
+def write_connections(connections, target_creds, db_config=None):
     for conn in connections:
-        # Create a DB Write Object from each connection
-        new_conn = models.WriteDBConnection()
-        new_conn.__dict__.update(conn.__dict__)
+        if db_config and conn["name"] in db_config:
+            logger.debug("Attempting password update", extra={"connection": conn["name"]})
+            conn["password"] = db_config[conn["name"]]
 
-        conn_exists = True
+        temp_file_name = None
         try:
-            target_sdk.connection(new_conn.name)
-        except error.SDKError:
-            conn_exists = False
+            with tempfile.NamedTemporaryFile(mode="w", delete=False) as f:
+                temp_file_name = f.name
+                json.dump(conn, f)
 
-        if db_config:
-            logger.debug("Attempting password update", extra={"connection": new_conn.name})
-            db_pass = db_config[conn.name]
-            new_conn.password = db_pass
+            cmd = ["looker-cli", "connection", "import", temp_file_name]
 
-        if not conn_exists:
-            logger.debug("No existing connection found. Creating...")
-            logger.info("Deploying connection", extra={"connection": new_conn.name})
-            target_sdk.create_connection(new_conn)
-            logger.info("Deployment complete", extra={"connection": new_conn.name})
-        else:
-            logger.debug("Existing connection found. Updating...")
-            logger.info("Deploying connection", extra={"connection": new_conn.name})
-            target_sdk.update_connection(new_conn.name, new_conn)
-            logger.info("Deployment complete", extra={"connection": new_conn.name})
+            run_cli_command(
+                cmd,
+                creds=target_creds,
+                check=True
+            )
+        finally:
+            if temp_file_name is not None:
+                try:
+                    os.remove(temp_file_name)
+                except OSError:
+                    pass
 
 
-def send_connections(source_sdk, target_sdk, pattern=None, db_config=None):
-    connections = get_filtered_connections(source_sdk, pattern)
-    write_connections(connections, target_sdk, db_config)
+def send_connections(source_creds, target_creds, pattern=None, db_config=None):
+    connections = get_filtered_connections(source_creds, pattern)
+    write_connections(connections, target_creds, db_config)
 
 
 def main(args):
@@ -90,9 +102,12 @@ def main(args):
     else:
         db_config = None
 
-    source_sdk = get_client(args.ini, args.source)
+    try:
+        source_creds = parse_ini.build_creds(args.ini, args.source)
 
-    for t in args.target:
-        target_sdk = get_client(args.ini, t)
-
-        send_connections(source_sdk, target_sdk, args.pattern, db_config)
+        for t in args.target:
+            target_creds = parse_ini.build_creds(args.ini, t)
+            send_connections(source_creds, target_creds, args.pattern, db_config)
+    except LookerCLIError as e:
+        logger.error("Deployment failed", extra={"error": str(e)})
+        raise RuntimeError("Deployment failed due to CLI error") from e

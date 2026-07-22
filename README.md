@@ -16,8 +16,8 @@ As of 2023, Looker Deployer is supported, but not warrantied by Google.  Issues 
 In order for these commands to correctly work a few assumptions/requirements are needed for your environment:
 
 > - **Python** Looker Deployer requires Python 3.6-3.9
-> - **Gazer** The content deployment command makes use of [gzr](https://github.com/looker-open-source/gzr) to automate content deployment, so you will need to have that
->   installed and configured properly. Gazer requires an up-to-date version of ruby.
+> - **Looker-CLI** The content deployment command makes use of [looker-cli](https://github.com/looker-open-source/looker-cli) to automate content deployment, so you will need to have that
+>   installed and configured properly.
 
 
 ### Authentication and Configuration
@@ -57,8 +57,9 @@ To do this, create a directory with an `looker.ini` file and a `Dockerfile` with
 FROM python:3.9-slim
 
 RUN apt update
-RUN apt -y install ruby ruby-dev
-RUN gem install gazer
+RUN apt -y install wget
+RUN wget https://github.com/looker-open-source/looker-cli/releases/latest/download/looker-cli_linux_amd64.tar.gz
+RUN tar -xzf looker-cli_linux_amd64.tar.gz && mv looker-cli /usr/local/bin/
 
 RUN apt -y install git 
 RUN git clone https://github.com/looker-open-source/looker_deployer.git
@@ -131,7 +132,7 @@ argument. For example:
 
 ## Content Deployment
 
-This command makes use of `gazer` to either pull content from your dev Looker instance to a directory structure on your
+This command makes use of `looker-cli` to either pull content from your dev Looker instance to a directory structure on your
 local machine or deploy content from said directory structure to a specified Looker instance. The command can work for
 specific sets of Looks or Dashboards or can work on entire folders - and will correctly create any folder it doesn't find
 in the target instance.

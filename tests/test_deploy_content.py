@@ -13,266 +13,226 @@
 # limitations under the License.
 
 import pytest
-import os
-import subprocess
-from looker_sdk import methods40 as methods, models40 as models
+from unittest.mock import MagicMock
 from looker_deployer.commands import deploy_content
-from looker_deployer.utils import parse_ini
+from looker_deployer.utils.exceptions import LookerCLIError
 
 
-class mockSettings:
-    base_url = "taco"
+@pytest.fixture
+def mock_run_cli_command(mocker):
+    return mocker.patch("looker_deployer.commands.deploy_content.run_cli_command")
 
 
-class mockAuth:
-    settings = mockSettings()
-
-
-sdk = methods.Looker40SDK(mockAuth(), "bar", "baz", "bosh", "bizz")
-
-TRUE_INI = {
-    "taco": {
-        "base_url": "https://phoobarbaz.com:1234",
-        "client_id": "abc",
-        "client_secret": "xyz",
-        "verify_ssl": "True"
-    }
-}
-
-FALSE_INI = {
-    "taco": {
-        "base_url": "https://phoobarbaz.com:1234",
-        "client_id": "abc",
-        "client_secret": "xyz",
-        "verify_ssl": "False"
-    }
-}
-
-
-def test_get_space_ids_from_name_shared(mocker):
-    mocker.patch.object(sdk, "search_folders")
-    id_list = deploy_content.get_space_ids_from_name("Shared", "0", sdk)
+def test_get_space_ids_from_name_shared():
+    creds = {"base_url": "test"}
+    id_list = deploy_content.get_space_ids_from_name("Shared", "0", creds, False)
     assert id_list == ["1"]
 
 
-def test_get_space_ids_from_name_not_shared(mocker):
-    mocker.patch.object(sdk, "search_folders")
-    sdk.search_folders.return_value = [models.Folder(name="Foo", parent_id="1", id="42")]
-    id_list = deploy_content.get_space_ids_from_name("foo", "0", sdk)
+def test_get_space_ids_from_name_not_shared(mock_run_cli_command):
+    mock_res = MagicMock()
+    mock_res.stdout = '[{"id": 42}]'
+    mock_run_cli_command.return_value = mock_res
+
+    creds = {"base_url": "test"}
+    id_list = deploy_content.get_space_ids_from_name("foo", "0", creds, False)
     assert id_list == ["42"]
+    mock_run_cli_command.assert_called_with(
+        ["looker-cli", "api", "folder", "search_folders", "--name", "foo", "--parent_id", "0"],
+        creds=creds,
+        check=True,
+        capture_output=True,
+        text=True
+    )
 
 
 def test_create_or_return_space_one_found(mocker):
-    mocker.patch("looker_deployer.commands.deploy_content.get_space_ids_from_name")
-    deploy_content.get_space_ids_from_name.return_value = ["42"]
-    target_id = deploy_content.create_or_return_space("foo", "bar", "baz")
+    mocker.patch("looker_deployer.commands.deploy_content.get_space_ids_from_name", return_value=["42"])
+    creds = {"base_url": "test"}
+    target_id = deploy_content.create_or_return_space("foo", "bar", creds)
     assert target_id == "42"
 
 
 def test_create_or_return_space_multi_found(mocker):
-    mocker.patch("looker_deployer.commands.deploy_content.get_space_ids_from_name")
-    deploy_content.get_space_ids_from_name.return_value = ["42", "13"]
+    mocker.patch("looker_deployer.commands.deploy_content.get_space_ids_from_name", return_value=["42", "13"])
+    creds = {"base_url": "test"}
     with pytest.raises(AssertionError):
-        deploy_content.create_or_return_space("foo", "bar", "baz")
+        deploy_content.create_or_return_space("foo", "bar", creds)
 
 
-def test_create_or_return_space_none_found(mocker):
-    mocker.patch.object(sdk, "create_folder")
-    mocker.patch("looker_deployer.commands.deploy_content.get_space_ids_from_name")
-    sdk.create_folder.return_value = models.Folder(name="Foo", parent_id="1", id="42")
-    deploy_content.get_space_ids_from_name.return_value = []
+def test_create_or_return_space_none_found(mock_run_cli_command, mocker):
+    mock_res = MagicMock()
+    mock_res.stdout = '{"id": 42}'
+    mock_run_cli_command.return_value = mock_res
+    mocker.patch("looker_deployer.commands.deploy_content.get_space_ids_from_name", return_value=[])
 
-    target_id = deploy_content.create_or_return_space("foo", "5", sdk)
+    creds = {"base_url": "test"}
+    target_id = deploy_content.create_or_return_space("foo", "5", creds, False)
     assert target_id == "42"
+    mock_run_cli_command.assert_called_with(
+        ["looker-cli", "api", "folder", "create_folder", "-"],
+        input='{"name": "foo", "parent_id": "5"}',
+        creds=creds,
+        check=True,
+        capture_output=True,
+        text=True
+    )
 
 
-def test_get_gzr_creds_true(mocker):
-    mocker.patch("looker_deployer.utils.parse_ini.read_ini")
-    parse_ini.read_ini.return_value = TRUE_INI
-    tup = deploy_content.get_gzr_creds("foo", "taco")
-    assert tup == ("phoobarbaz.com", "1234", "abc", "xyz", "True")
-
-
-def test_get_gzr_creds_false(mocker):
-    mocker.patch("looker_deployer.utils.parse_ini.read_ini")
-    parse_ini.read_ini.return_value = FALSE_INI
-    tup = deploy_content.get_gzr_creds("foo", "taco")
-    assert tup == ("phoobarbaz.com", "1234", "abc", "xyz", "False")
-
-
-def test_import_content(mocker):
-    mocker.patch("looker_deployer.commands.deploy_content.get_gzr_creds")
-    deploy_content.get_gzr_creds.return_value = ("foobar.com", "1234", "abc", "xyz", "True")
-
-    mocker.patch("subprocess.run")
-    deploy_content.import_content("dashboard", "tacocat.json", "42", "env", "ini", False)
-    subprocess.run.assert_called_with([
-        "gzr",
+def test_import_content(mock_run_cli_command):
+    creds = {"base_url": "test"}
+    deploy_content.import_content("dashboard", "tacocat.json", "42", creds, False)
+    mock_run_cli_command.assert_called_once_with([
+        "looker-cli",
         "dashboard",
         "import",
         "tacocat.json",
         "42",
-        "--host",
-        "foobar.com",
-        "--port",
-        "1234",
-        "--client-id",
-        "abc",
-        "--client-secret",
-        "xyz",
         "--force"
-    ])
+    ], creds=creds, check=True, capture_output=True, text=True)
 
 
-def test_import_content_debug(mocker):
-    mocker.patch("looker_deployer.commands.deploy_content.get_gzr_creds")
-    deploy_content.get_gzr_creds.return_value = ("foobar.com", "1234", "abc", "xyz", "True")
-
-    mocker.patch("subprocess.run")
-    deploy_content.import_content("dashboard", "tacocat.json", "42", "env", "ini", True)
-    subprocess.run.assert_called_with([
-        "gzr",
+def test_import_content_debug(mock_run_cli_command):
+    creds = {"base_url": "test"}
+    deploy_content.import_content("dashboard", "tacocat.json", "42", creds, True)
+    mock_run_cli_command.assert_called_once_with([
+        "looker-cli",
         "dashboard",
         "import",
         "tacocat.json",
         "42",
-        "--host",
-        "foobar.com",
-        "--port",
-        "1234",
-        "--client-id",
-        "abc",
-        "--client-secret",
-        "xyz",
-        "--force",
-        "--debug"
-    ])
-
-
-def test_import_content_no_verify_ssl(mocker):
-    mocker.patch("looker_deployer.commands.deploy_content.get_gzr_creds")
-    deploy_content.get_gzr_creds.return_value = ("foobar.com", "1234", "abc", "xyz", "False")
-
-    mocker.patch("subprocess.run")
-    deploy_content.import_content("dashboard", "tacocat.json", "42", "env", "ini", False)
-    subprocess.run.assert_called_with([
-        "gzr",
-        "dashboard",
-        "import",
-        "tacocat.json",
-        "42",
-        "--host",
-        "foobar.com",
-        "--port",
-        "1234",
-        "--client-id",
-        "abc",
-        "--client-secret",
-        "xyz",
-        "--force",
-        "--no-verify-ssl"
-    ])
-
-
-def test_import_content_win(mocker):
-    mocker.patch("looker_deployer.commands.deploy_content.get_gzr_creds")
-    deploy_content.get_gzr_creds.return_value = ("foobar.com", "1234", "abc", "xyz", "True")
-
-    mocker.patch("os.name", "nt")
-
-    mocker.patch("subprocess.run")
-    deploy_content.import_content("dashboard", "tacocat.json", "42", "env", "ini", False)
-    subprocess.run.assert_called_with([
-        "cmd.exe",
-        "/c",
-        "gzr",
-        "dashboard",
-        "import",
-        "tacocat.json",
-        "42",
-        "--host",
-        "foobar.com",
-        "--port",
-        "1234",
-        "--client-id",
-        "abc",
-        "--client-secret",
-        "xyz",
         "--force"
-    ])
+    ], creds=creds, check=True, capture_output=True, text=True)
 
 
 def test_build_spaces(mocker):
-    mocker.patch("looker_deployer.commands.deploy_content.create_or_return_space")
-    deploy_content.create_or_return_space.return_value = "42"
-    space_id = deploy_content.build_spaces(["taco"], sdk)
+    mocker.patch("looker_deployer.commands.deploy_content.create_or_return_space", return_value="42")
+    creds = {"base_url": "test"}
+    space_id = deploy_content.build_spaces(["taco"], creds, False)
     assert space_id == "42"
 
 
 def test_deploy_space_build_call(mocker):
-
-    mocker.patch("os.listdir")
-    mocker.patch("os.path.isfile")
-    mocker.patch("os.path.isdir")
-
-    os.listdir.return_value = ["Dashboard", "Look"]
-    os.path.isfile.return_value = True
-    os.path.isdir.return_value = True
-
+    mocker.patch("os.listdir", return_value=["Dashboard", "Look"])
+    mocker.patch("os.path.isfile", return_value=True)
+    mocker.patch("os.path.isdir", return_value=True)
     mocker.patch("looker_deployer.commands.deploy_content.build_spaces")
     mocker.patch("looker_deployer.commands.deploy_content.import_content")
-    deploy_content.deploy_space("Foo/Shared/Bar/", "sdk", "env", "ini", False, "Shared", False)
-    deploy_content.build_spaces.assert_called_with(["Shared", "Bar"], "sdk")
+
+    creds = {"base_url": "test"}
+    deploy_content.deploy_space("Foo/Shared/Bar/", creds, False, "Shared", False)
+    deploy_content.build_spaces.assert_called_with(["Shared", "Bar"], creds, False)
 
 
 def test_deploy_space_look_call(mocker):
-
-    mocker.patch("os.listdir")
-    mocker.patch("os.path.isfile")
-    mocker.patch("os.path.isdir")
-
-    os.listdir.return_value = ["Look_test"]
-    os.path.isfile.return_value = True
-    os.path.isdir.return_value = True
-
-    mocker.patch("looker_deployer.commands.deploy_content.build_spaces")
-    deploy_content.build_spaces.return_value = "42"
-
+    mocker.patch("os.listdir", return_value=["Look_test"])
+    mocker.patch("os.path.isfile", return_value=True)
+    mocker.patch("os.path.isdir", return_value=True)
+    mocker.patch("looker_deployer.commands.deploy_content.build_spaces", return_value="42")
     mocker.patch("looker_deployer.commands.deploy_content.import_content")
-    deploy_content.deploy_space("Foo/Shared/Bar", "sdk", "env", "ini", False, "Shared", False)
-    deploy_content.import_content.assert_called_once_with("look", "Foo/Shared/Bar/Look_test", "42", "env", "ini", False)
+
+    creds = {"base_url": "test"}
+    deploy_content.deploy_space("Foo/Shared/Bar", creds, False, "Shared", False)
+    deploy_content.import_content.assert_called_once_with("look", "Foo/Shared/Bar/Look_test", "42", creds, False)
 
 
 def test_deploy_space_dashboard_call(mocker):
-
-    mocker.patch("os.listdir")
-    mocker.patch("os.path.isfile")
-    mocker.patch("os.path.isdir")
-
-    os.listdir.return_value = ["Dashboard_test"]
-    os.path.isfile.return_value = True
-    os.path.isdir.return_value = True
-
-    mocker.patch("looker_deployer.commands.deploy_content.build_spaces")
-    deploy_content.build_spaces.return_value = "42"
-
+    mocker.patch("os.listdir", return_value=["Dashboard_test"])
+    mocker.patch("os.path.isfile", return_value=True)
+    mocker.patch("os.path.isdir", return_value=True)
+    mocker.patch("looker_deployer.commands.deploy_content.build_spaces", return_value="42")
     mocker.patch("looker_deployer.commands.deploy_content.import_content")
-    deploy_content.deploy_space("Foo/Shared/Bar", "sdk", "env", "ini", False, "Shared", False)
-    deploy_content.import_content.assert_called_once_with("dashboard", "Foo/Shared/Bar/Dashboard_test", "42", "env", "ini", False)
+
+    creds = {"base_url": "test"}
+    deploy_content.deploy_space("Foo/Shared/Bar", creds, False, "Shared", False)
+    deploy_content.import_content.assert_called_once_with("dashboard", "Foo/Shared/Bar/Dashboard_test", "42", creds, False)
 
 
 def test_deploy_content_build_call(mocker):
-
     mocker.patch("looker_deployer.commands.deploy_content.build_spaces")
     mocker.patch("looker_deployer.commands.deploy_content.import_content")
-    deploy_content.deploy_content("look", "Foo/Shared/Bar/Baz/Dashboard_test.json", "sdk", "env", "ini", "Shared")
-    deploy_content.build_spaces.assert_called_with(["Shared", "Bar", "Baz"], "sdk")
+
+    creds = {"base_url": "test"}
+    deploy_content.deploy_content("look", "Foo/Shared/Bar/Baz/Dashboard_test.json", creds, "Shared", False)
+    deploy_content.build_spaces.assert_called_with(["Shared", "Bar", "Baz"], creds, False)
 
 
 def test_deploy_content_import_content_call(mocker):
-    mocker.patch("looker_deployer.commands.deploy_content.build_spaces")
-    deploy_content.build_spaces.return_value = "42"
-
+    mocker.patch("looker_deployer.commands.deploy_content.build_spaces", return_value="42")
     mocker.patch("looker_deployer.commands.deploy_content.import_content")
-    deploy_content.deploy_content("look", "Foo/Shared/Bar/Look_test.json", "sdk", "env", "ini", "Shared")
-    deploy_content.import_content.assert_called_with("look", "Foo/Shared/Bar/Look_test.json", "42", "env", "ini", False)
+
+    creds = {"base_url": "test"}
+    deploy_content.deploy_content("look", "Foo/Shared/Bar/Look_test.json", creds, "Shared", False)
+    deploy_content.import_content.assert_called_with("look", "Foo/Shared/Bar/Look_test.json", "42", creds, False)
+
+
+def test_import_content_called_process_error(mock_run_cli_command, mocker):
+    mock_run_cli_command.side_effect = LookerCLIError("cmd", 1, "fake stdout", "fake stderr")
+    mock_logger = mocker.patch("looker_deployer.commands.deploy_content.logger")
+
+    creds = {"base_url": "test"}
+    with pytest.raises(LookerCLIError):
+        deploy_content.import_content("dashboard", "tacocat.json", "42", creds, False)
+
+    mock_logger.error.assert_called_once_with(
+        "looker-cli import failed",
+        extra={"stdout": "fake stdout", "stderr": "fake stderr"}
+    )
+
+
+def test_import_content_called_process_error_none_outputs(mock_run_cli_command, mocker):
+    mock_run_cli_command.side_effect = LookerCLIError("cmd", 1, None, None)
+    mock_logger = mocker.patch("looker_deployer.commands.deploy_content.logger")
+
+    creds = {"base_url": "test"}
+    with pytest.raises(LookerCLIError):
+        deploy_content.import_content("dashboard", "tacocat.json", "42", creds, False)
+
+    mock_logger.error.assert_called_once_with(
+        "looker-cli import failed",
+        extra={"stdout": None, "stderr": None}
+    )
+
+
+def test_import_content_called_process_error_empty_outputs(mock_run_cli_command, mocker):
+    mock_run_cli_command.side_effect = LookerCLIError("cmd", 1, "", "")
+    mock_logger = mocker.patch("looker_deployer.commands.deploy_content.logger")
+
+    creds = {"base_url": "test"}
+    with pytest.raises(LookerCLIError):
+        deploy_content.import_content("dashboard", "tacocat.json", "42", creds, False)
+
+    mock_logger.error.assert_called_once_with(
+        "looker-cli import failed",
+        extra={"stdout": "", "stderr": ""}
+    )
+
+
+def test_create_or_return_space_called_process_error(mock_run_cli_command, mocker):
+    mocker.patch("looker_deployer.commands.deploy_content.get_space_ids_from_name", return_value=[])
+    mock_run_cli_command.side_effect = LookerCLIError("cmd", 1, "fake stdout", "fake stderr")
+    mock_logger = mocker.patch("looker_deployer.commands.deploy_content.logger")
+
+    creds = {"base_url": "test"}
+    with pytest.raises(LookerCLIError):
+        deploy_content.create_or_return_space("foo", "5", creds, False)
+
+    mock_logger.error.assert_called_once_with(
+        "looker-cli api folder create_folder failed",
+        extra={"stdout": "fake stdout", "stderr": "fake stderr"}
+    )
+
+
+def test_create_or_return_space_called_process_error_none_outputs(mock_run_cli_command, mocker):
+    mocker.patch("looker_deployer.commands.deploy_content.get_space_ids_from_name", return_value=[])
+    mock_run_cli_command.side_effect = LookerCLIError("cmd", 1, None, None)
+    mock_logger = mocker.patch("looker_deployer.commands.deploy_content.logger")
+
+    creds = {"base_url": "test"}
+    with pytest.raises(LookerCLIError):
+        deploy_content.create_or_return_space("foo", "5", creds, False)
+
+    mock_logger.error.assert_called_once_with(
+        "looker-cli api folder create_folder failed",
+        extra={"stdout": None, "stderr": None}
+    )

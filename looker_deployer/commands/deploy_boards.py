@@ -12,10 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import json
 import logging
-from looker_sdk import models40 as models
+import subprocess  # noqa: F401
+from types import SimpleNamespace
 from looker_deployer.utils import deploy_logging
-from looker_deployer.utils.get_client import get_client
+from looker_deployer.utils.cli import run_cli_command as run_subprocess_command
+from looker_deployer.utils.parse_ini import build_creds
+from looker_deployer.utils.exceptions import LookerCLIError
 
 logger = deploy_logging.get_logger(__name__)
 
@@ -45,10 +49,27 @@ class TargetContentNotFound(Exception):
         return f"{self.message} -> dashes: {self.missing_dashes}, looks: {self.missing_looks}"
 
 
-def match_dashboard_id(source_dashboard_id, source_sdk, target_sdk):
-    source = source_sdk.dashboard(str(source_dashboard_id))
+def run_cli_command(creds, args, input_str=None):
+    cmd = ["looker-cli"] + args
+    logger.debug("Running CLI command", extra={"cmd": cmd})
+    result = run_subprocess_command(cmd, creds=creds, text=True, input=input_str)
+
+    stdout = result.stdout.strip()
+    if stdout:
+        try:
+            return json.loads(stdout, object_hook=lambda d: SimpleNamespace(**d))
+        except json.JSONDecodeError as e:
+            raise Exception(f"Failed to parse CLI output as JSON. Raw output: {stdout}") from e
+
+    if any(x in args for x in ["search", "list", "all_boards"]):
+        return []
+    return None
+
+
+def match_dashboard_id(source_dashboard_id, source_creds, target_creds):
+    source = run_cli_command(source_creds, ["api", "dashboard", "dashboard", str(source_dashboard_id)])
     logger.debug("Attempting dashboard match", extra={"title": source.title, "slug": source.slug, "id": source.id})
-    target_dash = target_sdk.search_dashboards(slug=source.slug)
+    target_dash = run_cli_command(target_creds, ["api", "dashboard", "search_dashboards", "-"], input_str=json.dumps({"slug": source.slug}))
 
     if len(target_dash) > 1:
         raise MultipleAssetsFoundError(source.title)
@@ -61,10 +82,10 @@ def match_dashboard_id(source_dashboard_id, source_sdk, target_sdk):
     return target_id
 
 
-def match_look_id(source_look_id, source_sdk, target_sdk):
-    source = source_sdk.look(source_look_id)
+def match_look_id(source_look_id, source_creds, target_creds):
+    source = run_cli_command(source_creds, ["api", "look", "look", str(source_look_id)])
     logger.debug("Attempting look match", extra={"title": source.title, "id": source.id})
-    target_look = target_sdk.search_looks(title=source.title)
+    target_look = run_cli_command(target_creds, ["api", "look", "search_looks", "-"], input_str=json.dumps({"title": source.title}))
 
     if len(target_look) > 1:
         raise MultipleAssetsFoundError(source.title)
@@ -77,9 +98,10 @@ def match_look_id(source_look_id, source_sdk, target_sdk):
     return target_id
 
 
-def return_board(board_name, source_sdk):
+def return_board(board_name, source_creds):
     logger.debug("Searching boards", extra={"title": board_name})
-    board_list = source_sdk.search_boards(title=board_name)
+    boards = run_cli_command(source_creds, ["api", "board", "all_boards"])
+    board_list = [b for b in boards if getattr(b, "title", None) == board_name]
 
     if len(board_list) > 1:
         raise MultipleAssetsFoundError(board_name)
@@ -90,33 +112,30 @@ def return_board(board_name, source_sdk):
     return board_list[0]
 
 
-def create_or_update_board(source_board_object, target_sdk, title_override=None):
-
-    # Determine if board already exists in target environment
+def create_or_update_board(source_board_object, target_creds, title_override=None):
     search_title = title_override or source_board_object.title
-    search_res = target_sdk.search_boards(title=search_title)
+    boards = run_cli_command(target_creds, ["api", "board", "all_boards"])
+    search_res = [b for b in boards if getattr(b, "title", None) == search_title]
+
     assert len(search_res) < 2, "More than one board found! Refine your search or remove duplicate names."
 
     try:
         assert len(search_res) == 1
 
-    # If board does not exist then create
     except AssertionError:
         logger.info(
             "No pre-existing board found. Creating new board in target environment",
             extra={"title": search_title}
         )
 
-        new_board = models.WriteBoard(
-            title=source_board_object.title,
-            description=source_board_object.description
-        )
+        payload = {"title": source_board_object.title}
+        if getattr(source_board_object, "description", None):
+            payload["description"] = source_board_object.description
 
-        resp = target_sdk.create_board(new_board)
+        resp = run_cli_command(target_creds, ["api", "board", "create_board", "-"], input_str=json.dumps(payload))
         logger.info("Board created", extra={"id": resp.id})
         return resp.id
 
-    # If board already exists, clear out sections and update
     logger.info(
         "Found board in target instance. Updating and rebuilding content",
         extra={"title": search_title}
@@ -125,64 +144,88 @@ def create_or_update_board(source_board_object, target_sdk, title_override=None)
     target_board = search_res[0]
 
     # Clear out existing sections
-    section_list = [i.id for i in target_board.board_sections]
+    section_list = [i.id for i in getattr(target_board, "board_sections", [])]
     logger.debug("Found sections to clear", extra={"section_list": section_list})
 
     for section in section_list:
         logger.debug("Clearing section for refresh", extra={"section_id": section})
-        target_sdk.delete_board_section(section)
+        run_cli_command(target_creds, ["api", "board", "delete_board_section", str(section)])
 
     # Update
-    update_board = models.WriteBoard(
-        title=source_board_object.title,
-        description=source_board_object.description
-    )
+    payload = {"title": source_board_object.title}
+    if getattr(source_board_object, "description", None):
+        payload["description"] = source_board_object.description
 
-    resp = target_sdk.update_board(target_board.id, update_board)
+    resp = run_cli_command(target_creds, ["api", "board", "update_board", str(target_board.id), "-"], input_str=json.dumps(payload))
     logger.info("Board updated", extra={"id": resp.id})
     return resp.id
 
 
-def create_board_section(source_board_section_object, target_board_id, target_sdk):
-    new_board_section = models.WriteBoardSection(
-        title=source_board_section_object.title,
-        description=source_board_section_object.description,
-        board_id=target_board_id
-    )
+def create_board_section(source_board_section_object, target_board_id, target_creds):
+    payload = {
+        "board_id": str(target_board_id),
+        "title": source_board_section_object.title
+    }
+    if getattr(source_board_section_object, "description", None):
+        payload["description"] = source_board_section_object.description
 
-    logger.info("Creating Section", extra={"board_id": target_board_id, "section_title": new_board_section.title})
-    resp = target_sdk.create_board_section(new_board_section)
+    logger.info("Creating Section", extra={"board_id": target_board_id, "section_title": source_board_section_object.title})
+    resp = run_cli_command(target_creds, ["api", "board", "create_board_section", "-"], input_str=json.dumps(payload))
     logger.info("Section created", extra={"section_id": resp.id})
     return resp.id
 
 
-def create_board_item(source_board_item_object, target_board_section_id, source_sdk, target_sdk):
+def create_board_item(source_board_item_object, target_board_section_id, source_creds, target_creds):
 
     dashboard_id = None
     look_id = None
 
-    if source_board_item_object.dashboard_id:
-        dashboard_id = match_dashboard_id(source_board_item_object.dashboard_id, source_sdk, target_sdk)
-    if source_board_item_object.look_id:
-        look_id = match_look_id(source_board_item_object.look_id, source_sdk, target_sdk)
+    if getattr(source_board_item_object, "dashboard_id", None):
+        dashboard_id = match_dashboard_id(source_board_item_object.dashboard_id, source_creds, target_creds)
+    if getattr(source_board_item_object, "look_id", None):
+        look_id = match_look_id(source_board_item_object.look_id, source_creds, target_creds)
 
-    new_board_item = models.WriteBoardItem()
-    new_board_item.__dict__.update(source_board_item_object.__dict__)
-    new_board_item.dashboard_id = dashboard_id
-    new_board_item.look_id = look_id
-    new_board_item.board_section_id = target_board_section_id
+    payload = {"board_section_id": str(target_board_section_id)}
+
+    if dashboard_id is not None:
+        payload["dashboard_id"] = str(dashboard_id)
+    if look_id is not None:
+        payload["look_id"] = str(look_id)
+
+    allowed_props = (
+        "title",
+        "description",
+        "url",
+        "custom_title",
+        "custom_description",
+        "custom_url",
+        "order",
+        "use_custom_image",
+        "lookml_dashboard_id"
+    )
+
+    for prop in allowed_props:
+        val = getattr(source_board_item_object, prop, None)
+        if val is None:
+            continue
+        if isinstance(val, SimpleNamespace):
+            payload[prop] = vars(val)
+        else:
+            payload[prop] = val
+
+    url = getattr(source_board_item_object, "url", None)
 
     logger.info(
         "Creating item",
         extra={
-            "section_id": new_board_item.board_section_id,
-            "dashboard_id": new_board_item.dashboard_id,
-            "look_id": new_board_item.look_id,
-            "url": new_board_item.url
+            "section_id": target_board_section_id,
+            "dashboard_id": dashboard_id,
+            "look_id": look_id,
+            "url": url
         }
     )
-    resp = target_sdk.create_board_item(new_board_item)
-    logger.info("Item created", extra={"id": resp.id})
+    resp = run_cli_command(target_creds, ["api", "board", "create_board_item", "-"], input_str=json.dumps(payload))
+    logger.info("Item created", extra={"id": getattr(resp, "id", None)})
 
     return resp
 
@@ -191,17 +234,17 @@ def board_content_lists(board_object):
     dash_list = []
     look_list = []
 
-    for i in board_object.board_sections:
-        for j in i.board_items:
-            if j.dashboard_id:
+    for i in getattr(board_object, "board_sections", []):
+        for j in getattr(i, "board_items", []):
+            if getattr(j, "dashboard_id", None):
                 dash_list.append(j.dashboard_id)
-            if j.look_id:
+            if getattr(j, "look_id", None):
                 look_list.append(j.look_id)
 
     return (dash_list, look_list)
 
 
-def audit_board_content(board_object, source_sdk, target_sdk):
+def audit_board_content(board_object, source_creds, target_creds):
     missing_dashes = []
     missing_looks = []
 
@@ -209,25 +252,25 @@ def audit_board_content(board_object, source_sdk, target_sdk):
 
     for dash in dash_list:
         try:
-            match_dashboard_id(dash, source_sdk, target_sdk)
+            match_dashboard_id(dash, source_creds, target_creds)
         except AssertionError:
-            dash_title = source_sdk.dashboard(str(dash)).title
-            missing_dashes.append({"dash_id": dash, "dash_title": dash_title})
+            dash_resp = run_cli_command(source_creds, ["dashboard", "get", "--id", str(dash)])
+            missing_dashes.append({"dash_id": dash, "dash_title": getattr(dash_resp, "title", "Unknown")})
 
     for look in look_list:
         try:
-            match_look_id(look, source_sdk, target_sdk)
+            match_look_id(look, source_creds, target_creds)
         except AssertionError:
-            look_title = source_sdk.look(look).title
-            missing_looks.append({"look_id": look, "look_title": look_title})
+            look_resp = run_cli_command(source_creds, ["look", "get", "--id", str(look)])
+            missing_looks.append({"look_id": look, "look_title": getattr(look_resp, "title", "Unknown")})
 
     return (missing_dashes, missing_looks)
 
 
-def send_boards(board_name, source_sdk, target_sdk, title_override=None, allow_partial=False):
-    source_board = return_board(board_name, source_sdk)
+def send_boards(board_name, source_creds, target_creds, title_override=None, allow_partial=False):
+    source_board = return_board(board_name, source_creds)
 
-    missing_dashes, missing_looks = audit_board_content(source_board, source_sdk, target_sdk)
+    missing_dashes, missing_looks = audit_board_content(source_board, source_creds, target_creds)
     if not allow_partial and (missing_dashes or missing_looks):
         logger.error(
             "Missing Content. Make sure it's deployed or rerun with allow-partial flag.",
@@ -242,17 +285,17 @@ def send_boards(board_name, source_sdk, target_sdk, title_override=None, allow_p
     else:
         logger.info("All content accounted for!")
 
-    target_board_id = create_or_update_board(source_board, target_sdk, title_override)
+    target_board_id = create_or_update_board(source_board, target_creds, title_override)
 
-    for section in source_board.board_sections:
-        target_section_id = create_board_section(section, target_board_id, target_sdk)
+    for section in getattr(source_board, "board_sections", []):
+        target_section_id = create_board_section(section, target_board_id, target_creds)
 
-        for item in section.board_items:
+        for item in getattr(section, "board_items", []):
             try:
-                create_board_item(item, target_section_id, source_sdk, target_sdk)
+                create_board_item(item, target_section_id, source_creds, target_creds)
             except AssertionError:
                 if allow_partial:
-                    logger.warning("Could not find content!", extra={"item": item.title})
+                    logger.warning("Could not find content!", extra={"item": getattr(item, "title", "Unknown")})
                     pass
                 else:
                     raise
@@ -263,9 +306,11 @@ def main(args):
     if args.debug:
         logger.setLevel(logging.DEBUG)
 
-    source_sdk = get_client(args.ini, args.source)
-
-    for t in args.target:
-        target_sdk = get_client(args.ini, t)
-
-        send_boards(args.board, source_sdk, target_sdk, args.title_change, args.allow_partial)
+    try:
+        source_creds = build_creds(args.ini, args.source)
+        for t in args.target:
+            target_creds = build_creds(args.ini, t)
+            send_boards(args.board, source_creds, target_creds, args.title_change, args.allow_partial)
+    except LookerCLIError as e:
+        logger.error("Deployment failed", extra={"error": str(e)})
+        raise RuntimeError("Deployment failed due to CLI error") from e

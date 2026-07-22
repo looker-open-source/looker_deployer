@@ -13,16 +13,16 @@
 # limitations under the License.
 
 import pytest
+import json
+from types import SimpleNamespace
 from looker_deployer.commands import deploy_boards
-from looker_sdk import methods40 as methods, models40 as models
 
 
-class mockSettings:
-    base_url = "taco"
-
-
-class mockAuth:
-    settings = mockSettings()
+class MockCompletedProcess:
+    def __init__(self, stdout="", returncode=0, stderr=""):
+        self.stdout = stdout
+        self.returncode = returncode
+        self.stderr = stderr
 
 
 class MockLook:
@@ -48,9 +48,6 @@ class MockBoardSection:
     board_items = [MockBoardItem()]
 
 
-sdk = methods.Looker40SDK(mockAuth(), "bar", "baz", "bosh", "bizz")
-
-
 class MockBoard:
     id = 3
     title = "foo"
@@ -58,226 +55,370 @@ class MockBoard:
     board_sections = [MockBoardSection()]
 
 
-def test_match_dashboard_id(mocker):
-    dash = MockDash()
-    mocker.patch.object(sdk, "dashboard")
-    sdk.dashboard.return_value = dash
-    mocker.patch.object(sdk, "search_dashboards")
-    sdk.search_dashboards.return_value = [dash]
+@pytest.fixture
+def mock_run_subprocess_command(mocker):
+    return mocker.patch("looker_deployer.commands.deploy_boards.run_subprocess_command")
 
-    dash_id = deploy_boards.match_dashboard_id(1, sdk, sdk)
+
+def test_match_dashboard_id(mock_run_subprocess_command):
+    dash = {"slug": "BurritoCat", "title": "foobarbaz", "id": 2}
+
+    def mock_run(cmd, **kwargs):
+        if len(cmd) > 3:
+            if cmd[3] == "search_dashboards":
+                return MockCompletedProcess(json.dumps([dash]))
+            if cmd[3] == "dashboard":
+                return MockCompletedProcess(json.dumps(dash))
+        return MockCompletedProcess()
+
+    mock_run_subprocess_command.side_effect = mock_run
+
+    source_creds = {"base_url": "source"}
+    target_creds = {"base_url": "target"}
+    dash_id = deploy_boards.match_dashboard_id(1, source_creds, target_creds)
     assert dash_id == 2
 
 
-def test_match_dashboard_id_multi(mocker):
-    dash = MockDash()
-    mocker.patch.object(sdk, "dashboard")
-    sdk.dashboard.return_value = dash
-    mocker.patch.object(sdk, "search_dashboards")
-    sdk.search_dashboards.return_value = [dash, dash]
+def test_match_dashboard_id_multi(mock_run_subprocess_command):
+    dash = {"slug": "BurritoCat", "title": "foobarbaz", "id": 2}
 
+    def mock_run(cmd, **kwargs):
+        if len(cmd) > 3:
+            if cmd[3] == "search_dashboards":
+                return MockCompletedProcess(json.dumps([dash, dash]))
+            if cmd[3] == "dashboard":
+                return MockCompletedProcess(json.dumps(dash))
+        return MockCompletedProcess()
+
+    mock_run_subprocess_command.side_effect = mock_run
+
+    source_creds = {"base_url": "source"}
+    target_creds = {"base_url": "target"}
     with pytest.raises(deploy_boards.MultipleAssetsFoundError):
-        deploy_boards.match_dashboard_id(1, sdk, sdk)
+        deploy_boards.match_dashboard_id(1, source_creds, target_creds)
 
 
-def test_match_look_id(mocker):
-    look = MockLook()
-    mocker.patch.object(sdk, "look")
-    sdk.look.return_value = look
-    mocker.patch.object(sdk, "search_looks")
-    sdk.search_looks.return_value = [look]
+def test_match_look_id(mock_run_subprocess_command):
+    look = {"slug": "TacoCat", "title": "foobarbaz", "id": 1}
 
-    look_id = deploy_boards.match_look_id(1, sdk, sdk)
+    def mock_run(cmd, **kwargs):
+        if len(cmd) > 3:
+            if cmd[3] == "search_looks":
+                return MockCompletedProcess(json.dumps([look]))
+            if cmd[3] == "look":
+                return MockCompletedProcess(json.dumps(look))
+        return MockCompletedProcess()
+
+    mock_run_subprocess_command.side_effect = mock_run
+
+    source_creds = {"base_url": "source"}
+    target_creds = {"base_url": "target"}
+    look_id = deploy_boards.match_look_id(1, source_creds, target_creds)
     assert look_id == 1
 
 
-def test_match_look_id_multi(mocker):
-    look = MockLook()
-    mocker.patch.object(sdk, "look")
-    sdk.look.return_value = look
-    mocker.patch.object(sdk, "search_looks")
-    sdk.search_looks.return_value = [look, look]
+def test_match_look_id_multi(mock_run_subprocess_command):
+    look = {"slug": "TacoCat", "title": "foobarbaz", "id": 1}
 
+    def mock_run(cmd, **kwargs):
+        if len(cmd) > 3:
+            if cmd[3] == "search_looks":
+                return MockCompletedProcess(json.dumps([look, look]))
+            if cmd[3] == "look":
+                return MockCompletedProcess(json.dumps(look))
+        return MockCompletedProcess()
+
+    mock_run_subprocess_command.side_effect = mock_run
+
+    source_creds = {"base_url": "source"}
+    target_creds = {"base_url": "target"}
     with pytest.raises(deploy_boards.MultipleAssetsFoundError):
-        deploy_boards.match_look_id(1, sdk, sdk)
+        deploy_boards.match_look_id(1, source_creds, target_creds)
 
 
-def test_return_board(mocker):
-    mocker.patch.object(sdk, "search_boards")
-    sdk.search_boards.return_value = [42]
-    board_id = deploy_boards.return_board("foo", sdk)
-    assert board_id == 42
+def test_return_board(mock_run_subprocess_command):
+    mock_run_subprocess_command.return_value = MockCompletedProcess(json.dumps([{"id": 42, "title": "foo"}]))
+    source_creds = {"base_url": "source"}
+    board = deploy_boards.return_board("foo", source_creds)
+    assert board.id == 42
 
 
-def test_return_board_multi(mocker):
-    mocker.patch.object(sdk, "search_boards")
-    sdk.search_boards.return_value = [42, 81]
+def test_return_board_multi(mock_run_subprocess_command):
+    mock_run_subprocess_command.return_value = MockCompletedProcess(json.dumps([{"id": 42, "title": "foo"}, {"id": 81, "title": "foo"}]))
 
+    source_creds = {"base_url": "source"}
     with pytest.raises(deploy_boards.MultipleAssetsFoundError):
-        deploy_boards.return_board("foo", sdk)
+        deploy_boards.return_board("foo", source_creds)
 
 
-def test_create_or_update_board_create(mocker):
-    test_board = models.Board(title="taco", description="burrito")
-    test_board_resp = MockBoard()
-    mocker.patch.object(sdk, "search_boards")
-    mocker.patch.object(sdk, "create_board")
-    sdk.search_boards.return_value = []
-    sdk.create_board.return_value = test_board_resp
-    board_id = deploy_boards.create_or_update_board(test_board, sdk)
+def test_create_or_update_board_create(mock_run_subprocess_command):
+    test_board = SimpleNamespace(title="taco", description="burrito")
+
+    def mock_run(cmd, **kwargs):
+        if "all_boards" in cmd:
+            return MockCompletedProcess(json.dumps([]))
+        if "create_board" in cmd:
+            return MockCompletedProcess(json.dumps({"id": 3}))
+        return MockCompletedProcess()
+
+    mock_run_subprocess_command.side_effect = mock_run
+
+    target_creds = {"base_url": "target"}
+    board_id = deploy_boards.create_or_update_board(test_board, target_creds)
     assert board_id == 3
 
 
-def test_create_board_create_board_call(mocker):
-    test_board = models.Board(title="taco", description="burrito", id=42)
-    mocker.patch.object(sdk, "search_boards")
-    mocker.patch.object(sdk, "create_board")
-    sdk.search_boards.return_value = []
-    deploy_boards.create_or_update_board(test_board, sdk)
-    sdk.create_board.assert_called_with(models.WriteBoard(title="taco", description="burrito"))
+def test_create_board_create_board_call(mock_run_subprocess_command):
+    test_board = SimpleNamespace(title="taco", description="burrito", id=42)
+
+    def mock_run(cmd, **kwargs):
+        if "all_boards" in cmd:
+            return MockCompletedProcess(json.dumps([]))
+        if "create_board" in cmd:
+            return MockCompletedProcess(json.dumps({"id": 3}))
+        return MockCompletedProcess()
+
+    mock_run_subprocess_command.side_effect = mock_run
+    target_creds = {"base_url": "target"}
+    deploy_boards.create_or_update_board(test_board, target_creds)
+
+    mock_run_subprocess_command.assert_any_call(
+        ["looker-cli", "api", "board", "create_board", "-"],
+        creds=target_creds,
+        text=True,
+        input=json.dumps({"title": "taco", "description": "burrito"})
+    )
 
 
-def test_create_or_update_board_search_error(mocker):
-    mocker.patch.object(sdk, "search_boards")
-    sdk.search_boards.return_value = ["foo", "bar"]
+def test_create_or_update_board_search_error(mock_run_subprocess_command):
+    mock_run_subprocess_command.return_value = MockCompletedProcess(json.dumps([{"id": 1, "title": "foo"}, {"id": 2, "title": "foo"}]))
+
+    test_board = SimpleNamespace(title="foo")
+    target_creds = {"base_url": "target"}
     with pytest.raises(AssertionError):
-        deploy_boards.create_or_update_board("foo", sdk)
+        deploy_boards.create_or_update_board(test_board, target_creds)
 
 
-def test_create_or_update_board_update(mocker):
-    test_board = models.Board(title="taco", description="burrito")
-    test_board_resp = MockBoard()
-    mocker.patch.object(sdk, "search_boards")
-    mocker.patch.object(sdk, "update_board")
-    mocker.patch.object(sdk, "delete_board_section")
-    sdk.search_boards.return_value = [MockBoard()]
-    sdk.update_board.return_value = test_board_resp
-    board_id = deploy_boards.create_or_update_board(test_board, sdk)
+def test_create_or_update_board_update(mock_run_subprocess_command):
+    test_board = SimpleNamespace(title="taco", description="burrito")
+
+    def mock_run(cmd, **kwargs):
+        if "all_boards" in cmd:
+            return MockCompletedProcess(json.dumps([{"id": 3, "board_sections": [], "title": "taco"}]))
+        if "update_board" in cmd:
+            return MockCompletedProcess(json.dumps({"id": 3}))
+        return MockCompletedProcess()
+
+    mock_run_subprocess_command.side_effect = mock_run
+
+    target_creds = {"base_url": "target"}
+    board_id = deploy_boards.create_or_update_board(test_board, target_creds)
     assert board_id == 3
 
 
-def test_create_or_update_board_update_board_call(mocker):
-    test_board = models.Board(title="taco", description="burrito", id=42)
-    mocker.patch.object(sdk, "search_boards")
-    mocker.patch.object(sdk, "update_board")
-    mocker.patch.object(sdk, "delete_board_section")
-    sdk.search_boards.return_value = [MockBoard()]
-    deploy_boards.create_or_update_board(test_board, sdk)
-    sdk.update_board.assert_called_with(3, models.WriteBoard(title="taco", description="burrito"))
+def test_create_or_update_board_update_board_call(mock_run_subprocess_command):
+    test_board = SimpleNamespace(title="taco", description="burrito", id=42)
+
+    def mock_run(cmd, **kwargs):
+        if "all_boards" in cmd:
+            return MockCompletedProcess(json.dumps([{"id": 3, "board_sections": [], "title": "taco"}]))
+        if "update_board" in cmd:
+            return MockCompletedProcess(json.dumps({"id": 3}))
+        return MockCompletedProcess()
+
+    mock_run_subprocess_command.side_effect = mock_run
+
+    target_creds = {"base_url": "target"}
+    deploy_boards.create_or_update_board(test_board, target_creds)
+    mock_run_subprocess_command.assert_any_call(
+        ["looker-cli", "api", "board", "update_board", "3", "-"],
+        creds=target_creds,
+        text=True,
+        input=json.dumps({"title": "taco", "description": "burrito"})
+    )
 
 
-def test_create_or_update_board_update_delete_call(mocker):
-    test_board = models.Board(title="taco", description="burrito", id=42)
-    mocker.patch.object(sdk, "search_boards")
-    mocker.patch.object(sdk, "update_board")
-    mocker.patch.object(sdk, "delete_board_section")
-    sdk.search_boards.return_value = [MockBoard()]
-    deploy_boards.create_or_update_board(test_board, sdk)
-    sdk.delete_board_section.assert_called()
+def test_create_or_update_board_update_delete_call(mock_run_subprocess_command):
+    test_board = SimpleNamespace(title="taco", description="burrito", id=42)
+
+    def mock_run(cmd, **kwargs):
+        if "all_boards" in cmd:
+            return MockCompletedProcess(json.dumps([{"id": 3, "board_sections": [{"id": 10}], "title": "taco"}]))
+        if "update_board" in cmd:
+            return MockCompletedProcess(json.dumps({"id": 3}))
+        if "delete_board_section" in cmd:
+            return MockCompletedProcess(json.dumps({}))
+        return MockCompletedProcess()
+
+    mock_run_subprocess_command.side_effect = mock_run
+
+    target_creds = {"base_url": "target"}
+    deploy_boards.create_or_update_board(test_board, target_creds)
+    mock_run_subprocess_command.assert_any_call(
+        ["looker-cli", "api", "board", "delete_board_section", "10"],
+        creds=target_creds,
+        text=True,
+        input=None
+    )
 
 
-def test_create_board_section(mocker):
-    test_board_section = models.BoardSection(title="taco", description="burrito")
-    test_board_section_resp = MockBoardSection()
-    mocker.patch.object(sdk, "create_board_section")
-    sdk.create_board_section.return_value = test_board_section_resp
-    board_section_id = deploy_boards.create_board_section(test_board_section, 1, sdk)
+def test_create_board_section(mock_run_subprocess_command):
+    test_board_section = SimpleNamespace(title="taco", description="burrito")
+    mock_run_subprocess_command.return_value = MockCompletedProcess(json.dumps({"id": 4}))
+
+    target_creds = {"base_url": "target"}
+    board_section_id = deploy_boards.create_board_section(test_board_section, 1, target_creds)
     assert board_section_id == 4
 
 
-def test_create_board_section_create_board_section_call(mocker):
-    test_board_section = models.BoardSection(
+def test_create_board_section_create_board_section_call(mock_run_subprocess_command):
+    test_board_section = SimpleNamespace(title="taco", description="burrito", id="42")
+    mock_run_subprocess_command.return_value = MockCompletedProcess(json.dumps({"id": 4}))
+
+    target_creds = {"base_url": "target"}
+    deploy_boards.create_board_section(test_board_section, "1", target_creds)
+
+    mock_run_subprocess_command.assert_any_call(
+        ["looker-cli", "api", "board", "create_board_section", "-"],
+        creds=target_creds,
+        text=True,
+        input=json.dumps({"board_id": "1", "title": "taco", "description": "burrito"})
+    )
+
+
+def test_create_board_item_dashboard(mock_run_subprocess_command, mocker):
+    test_board_item = SimpleNamespace(title="taco", description="burrito", dashboard_id="42")
+    mocker.patch("looker_deployer.commands.deploy_boards.match_dashboard_id", return_value="1")
+    mock_run_subprocess_command.return_value = MockCompletedProcess(json.dumps({"id": 5}))
+
+    source_creds = {"base_url": "source"}
+    target_creds = {"base_url": "target"}
+    board_item = deploy_boards.create_board_item(test_board_item, 1, source_creds, target_creds)
+    assert board_item.id == 5
+
+
+def test_create_board_item_look(mock_run_subprocess_command, mocker):
+    test_board_item = SimpleNamespace(title="taco", description="burrito", look_id="42")
+    mocker.patch("looker_deployer.commands.deploy_boards.match_look_id", return_value="1")
+    mock_run_subprocess_command.return_value = MockCompletedProcess(json.dumps({"id": 5}))
+
+    source_creds = {"base_url": "source"}
+    target_creds = {"base_url": "target"}
+    board_item = deploy_boards.create_board_item(test_board_item, 1, source_creds, target_creds)
+    assert board_item.id == 5
+
+
+def test_create_board_item_dashboard_match_call(mock_run_subprocess_command, mocker):
+    test_board_item = SimpleNamespace(title="taco", description="burrito", dashboard_id="42")
+    mocker.patch("looker_deployer.commands.deploy_boards.match_dashboard_id", return_value="1")
+    mock_run_subprocess_command.return_value = MockCompletedProcess(json.dumps({"id": 5}))
+
+    source_creds = {"base_url": "source"}
+    target_creds = {"base_url": "target"}
+    deploy_boards.create_board_item(test_board_item, 1, source_creds, target_creds)
+    deploy_boards.match_dashboard_id.assert_called_with("42", source_creds, target_creds)
+
+
+def test_create_board_item_look_match_call(mock_run_subprocess_command, mocker):
+    test_board_item = SimpleNamespace(title="taco", description="burrito", look_id="42")
+    mocker.patch("looker_deployer.commands.deploy_boards.match_look_id", return_value="1")
+    mock_run_subprocess_command.return_value = MockCompletedProcess(json.dumps({"id": 5}))
+
+    source_creds = {"base_url": "source"}
+    target_creds = {"base_url": "target"}
+    deploy_boards.create_board_item(test_board_item, 1, source_creds, target_creds)
+    deploy_boards.match_look_id.assert_called_with("42", source_creds, target_creds)
+
+
+def test_create_board_item_dashboard_item_call(mock_run_subprocess_command, mocker):
+    test_board_item = SimpleNamespace(title="taco", description="burrito", dashboard_id="42")
+    mocker.patch("looker_deployer.commands.deploy_boards.match_dashboard_id", return_value="1")
+    mock_run_subprocess_command.return_value = MockCompletedProcess(json.dumps({"id": 5}))
+
+    source_creds = {"base_url": "source"}
+    target_creds = {"base_url": "target"}
+    deploy_boards.create_board_item(test_board_item, 10, source_creds, target_creds)
+    mock_run_subprocess_command.assert_any_call(
+        ["looker-cli", "api", "board", "create_board_item", "-"],
+        creds=target_creds,
+        text=True,
+        input=json.dumps({"board_section_id": "10", "dashboard_id": "1", "title": "taco", "description": "burrito"})
+    )
+
+
+def test_create_board_item_look_item_call(mock_run_subprocess_command, mocker):
+    test_board_item = SimpleNamespace(title="taco", description="burrito", look_id="42")
+    mocker.patch("looker_deployer.commands.deploy_boards.match_look_id", return_value="1")
+    mock_run_subprocess_command.return_value = MockCompletedProcess(json.dumps({"id": 5}))
+
+    source_creds = {"base_url": "source"}
+    target_creds = {"base_url": "target"}
+    deploy_boards.create_board_item(test_board_item, 10, source_creds, target_creds)
+    mock_run_subprocess_command.assert_any_call(
+        ["looker-cli", "api", "board", "create_board_item", "-"],
+        creds=target_creds,
+        text=True,
+        input=json.dumps({"board_section_id": "10", "look_id": "1", "title": "taco", "description": "burrito"})
+    )
+
+
+def test_create_board_item_all_metadata(mock_run_subprocess_command, mocker):
+    test_board_item = SimpleNamespace(
+        dashboard_id="42",
         title="taco",
         description="burrito",
-        id="42"
+        url="https://foo.bar",
+        custom_title="customtaco",
+        custom_description="customburrito",
+        custom_url="https://custom.foo.bar",
+        order=5,
+        use_custom_image=True,
+        lookml_dashboard_id="my_dash"
     )
-    mocker.patch.object(sdk, "create_board_section")
-    deploy_boards.create_board_section(test_board_section, "1", sdk)
+    mocker.patch("looker_deployer.commands.deploy_boards.match_dashboard_id", return_value="1")
+    mock_run_subprocess_command.return_value = MockCompletedProcess(json.dumps({"id": 5}))
 
-    sdk.create_board_section.assert_called_with(
-        models.WriteBoardSection(
-            title="taco",
-            description="burrito",
-            board_id="1"
-        )
-    )
-
-
-def test_create_board_item_dashboard(mocker):
-    test_board_item = models.BoardItem(title="taco", description="burrito", dashboard_id="42")
-    test_board_item_resp = MockBoardItem()
-    mocker.patch("looker_deployer.commands.deploy_boards.match_dashboard_id")
-    mocker.patch.object(sdk, "create_board_item")
-    deploy_boards.match_dashboard_id.return_value = "1"
-    sdk.create_board_item.return_value = test_board_item_resp
-    board_item = deploy_boards.create_board_item(test_board_item, 1, sdk, sdk)
-    assert board_item == test_board_item_resp
-
-
-def test_create_board_item_look(mocker):
-    test_board_item = models.BoardItem(title="taco", description="burrito", look_id="42")
-    test_board_item_resp = MockBoardItem()
-    mocker.patch("looker_deployer.commands.deploy_boards.match_look_id")
-    mocker.patch.object(sdk, "create_board_item")
-    deploy_boards.match_look_id.return_value = "1"
-    sdk.create_board_item.return_value = test_board_item_resp
-    board_item = deploy_boards.create_board_item(test_board_item, 1, sdk, sdk)
-    assert board_item == test_board_item_resp
-
-
-def test_create_board_item_dashboard_match_call(mocker):
-    test_board_item = models.BoardItem(title="taco", description="burrito", dashboard_id="42")
-    mocker.patch("looker_deployer.commands.deploy_boards.match_dashboard_id")
-    mocker.patch.object(sdk, "create_board_item")
-    deploy_boards.create_board_item(test_board_item, 1, sdk, sdk)
-    deploy_boards.match_dashboard_id.assert_called_with("42", sdk, sdk)
-
-
-def test_create_board_item_look_match_call(mocker):
-    test_board_item = models.BoardItem(title="taco", description="burrito", look_id="42")
-    mocker.patch("looker_deployer.commands.deploy_boards.match_look_id")
-    mocker.patch.object(sdk, "create_board_item")
-    deploy_boards.create_board_item(test_board_item, 1, sdk, sdk)
-    deploy_boards.match_look_id.assert_called_with("42", sdk, sdk)
-
-
-def test_create_board_item_dashboard_item_call(mocker):
-    test_board_item = models.BoardItem(title="taco", description="burrito", dashboard_id="42")
-    mocker.patch("looker_deployer.commands.deploy_boards.match_dashboard_id")
-    mocker.patch.object(sdk, "create_board_item")
-    deploy_boards.match_dashboard_id.return_value = "1"
-    deploy_boards.create_board_item(test_board_item, 10, sdk, sdk)
-    sdk.create_board_item.assert_called_with(
-        models.WriteBoardItem(
-            dashboard_id="1",
-            board_section_id=10
-        )
+    source_creds = {"base_url": "source"}
+    target_creds = {"base_url": "target"}
+    deploy_boards.create_board_item(test_board_item, 10, source_creds, target_creds)
+    expected_payload = {
+        "board_section_id": "10",
+        "dashboard_id": "1",
+        "title": "taco",
+        "description": "burrito",
+        "url": "https://foo.bar",
+        "custom_title": "customtaco",
+        "custom_description": "customburrito",
+        "custom_url": "https://custom.foo.bar",
+        "order": 5,
+        "use_custom_image": True,
+        "lookml_dashboard_id": "my_dash"
+    }
+    mock_run_subprocess_command.assert_any_call(
+        ["looker-cli", "api", "board", "create_board_item", "-"],
+        creds=target_creds,
+        text=True,
+        input=json.dumps(expected_payload)
     )
 
 
-def test_create_board_item_look_item_call(mocker):
-    test_board_item = models.BoardItem(title="taco", description="burrito", look_id="42")
-    mocker.patch("looker_deployer.commands.deploy_boards.match_look_id")
-    mocker.patch.object(sdk, "create_board_item")
-    deploy_boards.match_look_id.return_value = "1"
-    deploy_boards.create_board_item(test_board_item, 10, sdk, sdk)
-    sdk.create_board_item.assert_called_with(
-        models.WriteBoardItem(
-            look_id="1",
-            board_section_id=10
-        )
-    )
-
-
-def test_audit_board_with_misses(mocker):
+def test_audit_board_with_misses(mock_run_subprocess_command, mocker):
     test_board = MockBoard()
     mocker.patch("looker_deployer.commands.deploy_boards.match_dashboard_id", side_effect=AssertionError)
     mocker.patch("looker_deployer.commands.deploy_boards.match_look_id", side_effect=AssertionError)
-    mocker.patch.object(sdk, "dashboard")
-    mocker.patch.object(sdk, "look")
-    sdk.dashboard.return_value = MockDash()
-    sdk.look.return_value = MockLook()
-    missing = deploy_boards.audit_board_content(test_board, sdk, sdk)
+
+    def mock_run(cmd, **kwargs):
+        if "dashboard" in cmd and "get" in cmd:
+            return MockCompletedProcess(json.dumps({"title": "foobarbaz"}))
+        if "look" in cmd and "get" in cmd:
+            return MockCompletedProcess(json.dumps({"title": "foobarbaz"}))
+        return MockCompletedProcess()
+
+    mock_run_subprocess_command.side_effect = mock_run
+
+    source_creds = {"base_url": "source"}
+    target_creds = {"base_url": "target"}
+    missing = deploy_boards.audit_board_content(test_board, source_creds, target_creds)
     assert missing == ([{"dash_id": 2, "dash_title": "foobarbaz"}], [{"look_id": 1, "look_title": "foobarbaz"}])
 
 
@@ -285,5 +426,317 @@ def test_audit_board_no_misses(mocker):
     test_board = MockBoard()
     mocker.patch("looker_deployer.commands.deploy_boards.match_dashboard_id")
     mocker.patch("looker_deployer.commands.deploy_boards.match_look_id")
-    missing = deploy_boards.audit_board_content(test_board, sdk, sdk)
+    source_creds = {"base_url": "source"}
+    target_creds = {"base_url": "target"}
+    missing = deploy_boards.audit_board_content(test_board, source_creds, target_creds)
     assert missing == ([], [])
+
+
+def test_create_board_item_stress_properties(mock_run_subprocess_command, mocker):
+    test_board_item = SimpleNamespace(
+        dashboard_id="42",
+        board_section_id=99,
+        id=123,
+        title="taco",
+        description="burrito",
+        url="https://foo.bar",
+        custom_title="customtaco",
+        custom_description="customburrito",
+        custom_url="https://custom.foo.bar",
+        order=5,
+        use_custom_image=False,
+        lookml_dashboard_id="lookml_dash_1",
+        is_random_boolean=True,
+        another_random_field="ignored"
+    )
+    mocker.patch("looker_deployer.commands.deploy_boards.match_dashboard_id", return_value="1")
+    mock_run_subprocess_command.return_value = MockCompletedProcess(json.dumps({"id": 5}))
+
+    source_creds = {"base_url": "source"}
+    target_creds = {"base_url": "target"}
+    deploy_boards.create_board_item(test_board_item, 10, source_creds, target_creds)
+
+    expected_payload = {
+        "board_section_id": "10",
+        "dashboard_id": "1",
+        "title": "taco",
+        "description": "burrito",
+        "url": "https://foo.bar",
+        "custom_title": "customtaco",
+        "custom_description": "customburrito",
+        "custom_url": "https://custom.foo.bar",
+        "order": 5,
+        "use_custom_image": False,
+        "lookml_dashboard_id": "lookml_dash_1"
+    }
+
+    mock_run_subprocess_command.assert_any_call(
+        ["looker-cli", "api", "board", "create_board_item", "-"],
+        creds=target_creds,
+        text=True,
+        input=json.dumps(expected_payload)
+    )
+
+    last_call = mock_run_subprocess_command.call_args
+    passed_input = json.loads(last_call[1]["input"])
+    assert "is_random_boolean" not in passed_input
+    assert "another_random_field" not in passed_input
+
+
+def test_stress_vars_leak(mock_run_subprocess_command, mocker):
+    test_board_item = SimpleNamespace(
+        dashboard_id="42",
+        board_section_id=99,
+        id=123,
+        title="taco",
+        can={"create": True, "read": True},
+        url="https://readonly.url",
+        _private_attr="secret",
+        class_name="MockItem",
+        board_id=77,
+        content_metadata_id=999
+    )
+    mocker.patch("looker_deployer.commands.deploy_boards.match_dashboard_id", return_value="1")
+    mock_run_subprocess_command.return_value = MockCompletedProcess(json.dumps({"id": 5}))
+
+    source_creds = {"base_url": "source"}
+    target_creds = {"base_url": "target"}
+    deploy_boards.create_board_item(test_board_item, 10, source_creds, target_creds)
+
+    expected_payload = {
+        "board_section_id": "10",
+        "dashboard_id": "1",
+        "title": "taco",
+        "url": "https://readonly.url"
+    }
+    mock_run_subprocess_command.assert_called_once_with(
+        ["looker-cli", "api", "board", "create_board_item", "-"],
+        creds=target_creds,
+        text=True,
+        input=json.dumps(expected_payload)
+    )
+
+
+def test_create_board_item_empty_and_null_properties(mock_run_subprocess_command, mocker):
+    test_board_item = SimpleNamespace(
+        dashboard_id="42",
+        title="",
+        description=None,
+        custom_title="",
+        custom_description="hello",
+        url=""
+    )
+    mocker.patch("looker_deployer.commands.deploy_boards.match_dashboard_id", return_value="1")
+    mock_run_subprocess_command.return_value = MockCompletedProcess(json.dumps({"id": 5}))
+
+    source_creds = {"base_url": "source"}
+    target_creds = {"base_url": "target"}
+    deploy_boards.create_board_item(test_board_item, 10, source_creds, target_creds)
+
+    expected_payload = {
+        "board_section_id": "10",
+        "dashboard_id": "1",
+        "title": "",
+        "url": "",
+        "custom_title": "",
+        "custom_description": "hello"
+    }
+    mock_run_subprocess_command.assert_called_once_with(
+        ["looker-cli", "api", "board", "create_board_item", "-"],
+        creds=target_creds,
+        text=True,
+        input=json.dumps(expected_payload)
+    )
+
+
+def test_create_board_item_very_long_strings(mock_run_subprocess_command, mocker):
+    long_title = "A" * 10000
+    long_description = "B" * 10000
+    test_board_item = SimpleNamespace(
+        dashboard_id="42",
+        title=long_title,
+        description=long_description
+    )
+    mocker.patch("looker_deployer.commands.deploy_boards.match_dashboard_id", return_value="1")
+    mock_run_subprocess_command.return_value = MockCompletedProcess(json.dumps({"id": 5}))
+
+    source_creds = {"base_url": "source"}
+    target_creds = {"base_url": "target"}
+    deploy_boards.create_board_item(test_board_item, 10, source_creds, target_creds)
+
+    expected_payload = {
+        "board_section_id": "10",
+        "dashboard_id": "1",
+        "title": long_title,
+        "description": long_description
+    }
+    mock_run_subprocess_command.assert_called_once_with(
+        ["looker-cli", "api", "board", "create_board_item", "-"],
+        creds=target_creds,
+        text=True,
+        input=json.dumps(expected_payload)
+    )
+
+
+def test_create_board_item_nested_types(mock_run_subprocess_command, mocker):
+    test_board_item = SimpleNamespace(
+        dashboard_id="42",
+        title="taco",
+        custom_description={"key": "value", "list": [1, 2, 3]},
+        custom_title=SimpleNamespace(name="nested_namespace", val=99)
+    )
+    mocker.patch("looker_deployer.commands.deploy_boards.match_dashboard_id", return_value="1")
+    mock_run_subprocess_command.return_value = MockCompletedProcess(json.dumps({"id": 5}))
+
+    source_creds = {"base_url": "source"}
+    target_creds = {"base_url": "target"}
+    deploy_boards.create_board_item(test_board_item, 10, source_creds, target_creds)
+
+    expected_payload = {
+        "board_section_id": "10",
+        "dashboard_id": "1",
+        "title": "taco",
+        "custom_title": {"name": "nested_namespace", "val": 99},
+        "custom_description": {"key": "value", "list": [1, 2, 3]}
+    }
+    mock_run_subprocess_command.assert_called_once_with(
+        ["looker-cli", "api", "board", "create_board_item", "-"],
+        creds=target_creds,
+        text=True,
+        input=json.dumps(expected_payload)
+    )
+
+
+def test_create_board_item_extremely_long_strings(mock_run_subprocess_command, mocker):
+    long_str = "a" * 10000
+    test_board_item = SimpleNamespace(
+        dashboard_id="42",
+        title=long_str,
+        description=long_str
+    )
+    mocker.patch("looker_deployer.commands.deploy_boards.match_dashboard_id", return_value="1")
+    mock_run_subprocess_command.return_value = MockCompletedProcess(json.dumps({"id": 5}))
+
+    source_creds = {"base_url": "source"}
+    target_creds = {"base_url": "target"}
+    deploy_boards.create_board_item(test_board_item, 10, source_creds, target_creds)
+
+    expected_payload = {
+        "board_section_id": "10",
+        "dashboard_id": "1",
+        "title": long_str,
+        "description": long_str
+    }
+    mock_run_subprocess_command.assert_called_once_with(
+        ["looker-cli", "api", "board", "create_board_item", "-"],
+        creds=target_creds,
+        text=True,
+        input=json.dumps(expected_payload)
+    )
+
+
+def test_create_board_item_empty_strings(mock_run_subprocess_command, mocker):
+    test_board_item = SimpleNamespace(
+        dashboard_id="42",
+        title="",
+        description="",
+        url=""
+    )
+    mocker.patch("looker_deployer.commands.deploy_boards.match_dashboard_id", return_value="1")
+    mock_run_subprocess_command.return_value = MockCompletedProcess(json.dumps({"id": 5}))
+
+    source_creds = {"base_url": "source"}
+    target_creds = {"base_url": "target"}
+    deploy_boards.create_board_item(test_board_item, 10, source_creds, target_creds)
+
+    expected_payload = {
+        "board_section_id": "10",
+        "dashboard_id": "1",
+        "title": "",
+        "description": "",
+        "url": ""
+    }
+    mock_run_subprocess_command.assert_called_once_with(
+        ["looker-cli", "api", "board", "create_board_item", "-"],
+        creds=target_creds,
+        text=True,
+        input=json.dumps(expected_payload)
+    )
+
+
+def test_create_board_item_extreme_order_values(mock_run_subprocess_command, mocker):
+    orders = [0, -5, 2147483647]
+    for order in orders:
+        test_board_item = SimpleNamespace(
+            dashboard_id="42",
+            order=order
+        )
+        mocker.patch("looker_deployer.commands.deploy_boards.match_dashboard_id", return_value="1")
+        mock_run_subprocess_command.return_value = MockCompletedProcess(json.dumps({"id": 5}))
+
+        source_creds = {"base_url": "source"}
+        target_creds = {"base_url": "target"}
+        deploy_boards.create_board_item(test_board_item, 10, source_creds, target_creds)
+
+        expected_payload = {
+            "board_section_id": "10",
+            "dashboard_id": "1",
+            "order": order
+        }
+        mock_run_subprocess_command.assert_called_with(
+            ["looker-cli", "api", "board", "create_board_item", "-"],
+            creds=target_creds,
+            text=True,
+            input=json.dumps(expected_payload)
+        )
+
+
+def test_create_board_item_complex_types(mock_run_subprocess_command, mocker):
+    nested_namespace = SimpleNamespace(nested_field="nested_value")
+    test_board_item = SimpleNamespace(
+        dashboard_id="42",
+        title={"dict_key": "dict_value"},
+        description=["list_item_1", "list_item_2"],
+        custom_title=nested_namespace
+    )
+    mocker.patch("looker_deployer.commands.deploy_boards.match_dashboard_id", return_value="1")
+    mock_run_subprocess_command.return_value = MockCompletedProcess(json.dumps({"id": 5}))
+
+    source_creds = {"base_url": "source"}
+    target_creds = {"base_url": "target"}
+    deploy_boards.create_board_item(test_board_item, 10, source_creds, target_creds)
+
+    expected_payload = {
+        "board_section_id": "10",
+        "dashboard_id": "1",
+        "title": {"dict_key": "dict_value"},
+        "description": ["list_item_1", "list_item_2"],
+        "custom_title": {"nested_field": "nested_value"}
+    }
+    mock_run_subprocess_command.assert_called_once_with(
+        ["looker-cli", "api", "board", "create_board_item", "-"],
+        creds=target_creds,
+        text=True,
+        input=json.dumps(expected_payload)
+    )
+
+
+def test_create_board_section_adversarial(mock_run_subprocess_command):
+    # Test section with title as None
+    test_board_section = SimpleNamespace(title=None, description="")
+    mock_run_subprocess_command.return_value = MockCompletedProcess(json.dumps({"id": 4}))
+
+    target_creds = {"base_url": "target"}
+    deploy_boards.create_board_section(test_board_section, 1, target_creds)
+    mock_run_subprocess_command.assert_called_with(
+        ["looker-cli", "api", "board", "create_board_section", "-"],
+        creds=target_creds, text=True, input=json.dumps({"board_id": "1", "title": None})
+    )
+
+    # Test section with empty string description -> should not pass description since it's falsy
+    test_board_section_2 = SimpleNamespace(title="taco", description="")
+    deploy_boards.create_board_section(test_board_section_2, 1, target_creds)
+    mock_run_subprocess_command.assert_called_with(
+        ["looker-cli", "api", "board", "create_board_section", "-"],
+        creds=target_creds, text=True, input=json.dumps({"board_id": "1", "title": "taco"})
+    )

@@ -1,109 +1,133 @@
+# Copyright 2021 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 import logging
 import re
-from looker_sdk import models40 as models
+import json
+import subprocess  # noqa: F401
+from types import SimpleNamespace
 from looker_deployer.utils import deploy_logging
-from looker_deployer.utils.get_client import get_client
+from looker_deployer.utils.cli import run_cli_command as run_subprocess_command
 from looker_deployer.utils.match_by_key import match_by_key
+from looker_deployer.utils.parse_ini import build_creds
+from looker_deployer.utils.exceptions import LookerCLIError
 
 logger = deploy_logging.get_logger(__name__)
 
 
-def get_filtered_roles(source_sdk, pattern=None):
-    roles = source_sdk.all_roles()
-    roles = [i for i in roles if not i.name == "Admin"]
-    logger.debug(
-        "Roles pulled",
-        extra={
-            "roles_names": [i.name for i in roles]
-        }
-    )
+def run_cli_command(creds, args, input_str=None):
+    cmd = ["looker-cli"] + args
+    logger.debug("Running CLI command", extra={"cmd": cmd})
+    # run_subprocess_command will raise LookerCLIError on failure
+    result = run_subprocess_command(cmd, creds=creds, text=True, input=input_str)
+
+    stdout = result.stdout.strip()
+    if stdout:
+        try:
+            return json.loads(stdout, object_hook=lambda d: SimpleNamespace(**d))
+        except json.JSONDecodeError as e:
+            raise Exception(f"Failed to parse CLI output as JSON. Raw output: {stdout}") from e
+
+    if any(x in args for x in ["search", "list", "all_permission_sets", "all_model_sets", "all_roles"]):
+        return []
+    return None
+
+
+def get_filtered_roles(creds, pattern=None):
+    roles = run_cli_command(creds, ["api", "role", "all_roles"])
+    if not roles:
+        roles = []
+    if not isinstance(roles, list):
+        roles = [roles]
+
+    roles = [i for i in roles if getattr(i, "name", None) != "Admin"]
+    logger.debug("Roles pulled", extra={"roles_names": [getattr(i, "name", "Unknown") for i in roles]})
 
     if pattern:
         compiled_pattern = re.compile(pattern)
-        roles = [i for i in roles if compiled_pattern.search(i.name)]
-        logger.debug(
-            "Roles filtered",
-            extra={
-                "filtered_roles": [i.name for i in roles],
-                "pattern": pattern
-            }
-        )
+        roles = [i for i in roles if getattr(i, "name", None) is not None and compiled_pattern.search(str(i.name))]
+        logger.debug("Roles filtered", extra={"filtered_roles": [getattr(i, "name", "Unknown") for i in roles], "pattern": pattern})
 
     return roles
 
 
-def write_roles(roles, target_sdk, pattern=None, allow_delete=None):
+def write_roles(roles, target_creds, pattern=None, allow_delete=None):
+    target_roles = get_filtered_roles(target_creds, pattern)
 
-    # INFO: Get all roles from target instances that match pattern for name
-    target_roles = get_filtered_roles(target_sdk, pattern)
+    target_permission_sets = run_cli_command(target_creds, ["api", "role", "all_permission_sets"])
+    if not target_permission_sets:
+        target_permission_sets = []
+    if not isinstance(target_permission_sets, list):
+        target_permission_sets = [target_permission_sets]
 
-    # INFO: Get all permission sets and models from target instances
-    target_permission_sets = target_sdk.all_permission_sets()
-    target_model_sets = target_sdk.all_model_sets()
+    target_model_sets = run_cli_command(target_creds, ["api", "role", "all_model_sets"])
+    if not target_model_sets:
+        target_model_sets = []
+    if not isinstance(target_model_sets, list):
+        target_model_sets = [target_model_sets]
 
-    # INFO: Start Loop of Create/Update on Target
     for role in roles:
-        # INFO: Create Role
-        new_role = models.WriteRole()
-        new_role.__dict__.update(role.__dict__)
+        matched_permission_set = match_by_key(target_permission_sets, getattr(role, "permission_set", None), "name") if getattr(role, "permission_set", None) else None
+        matched_model_set = match_by_key(target_model_sets, getattr(role, "model_set", None), "name") if getattr(role, "model_set", None) else None
 
-        # INFO: For the role being created or updated, need to swap the
-        # permission set and model set ids
-        matched_permission_set = match_by_key(target_permission_sets,
-                                              role.permission_set, "name")
-        matched_model_set = match_by_key(target_model_sets,
-                                         role.model_set, "name")
-        new_role.permission_set_id = matched_permission_set.id
-        new_role.model_set_id = matched_model_set.id
+        permission_set_id = getattr(matched_permission_set, "id", None) if matched_permission_set else None
+        model_set_id = getattr(matched_model_set, "id", None) if matched_model_set else None
 
-        # INFO: Test if role is already in target
         matched_role = match_by_key(target_roles, role, "name")
+        role_exists = matched_role is not None
 
-        if matched_role:
-            role_exists = True
-        else:
-            role_exists = False
+        role_body = {
+            "name": getattr(role, "name", None),
+            "permission_set_id": permission_set_id,
+            "model_set_id": model_set_id
+        }
 
-        # INFO: Create or Update the role
         if not role_exists:
             logger.debug("No Role found. Creating...")
-            logger.debug("Deploying Role", extra={"role": role.name})
-            matched_role = target_sdk.create_role(new_role)
-            logger.info("Deployment complete", extra={"role": new_role.name})
+            logger.debug("Deploying Role", extra={"role": getattr(role, "name", "Unknown")})
+            run_cli_command(target_creds, ["api", "role", "create_role", "-"], input_str=json.dumps(role_body))
+            logger.info("Deployment complete", extra={"role": getattr(role, "name", "Unknown")})
         else:
             logger.debug("Existing Role found. Updating...")
-            logger.debug("Deploying Role", extra={"role": new_role.name})
-            matched_role = target_sdk.update_role(matched_role.id, new_role)
-            logger.info("Deployment complete", extra={"role": new_role.name})
+            logger.debug("Deploying Role", extra={"role": getattr(role, "name", "Unknown")})
+            run_cli_command(target_creds, ["api", "role", "update_role", str(getattr(matched_role, "id")), "-"], input_str=json.dumps(role_body))
+            logger.info("Deployment complete", extra={"role": getattr(role, "name", "Unknown")})
 
-    # INFO: Delete missing roles that are not in the source
     if allow_delete:
         for target_role in target_roles:
-
-            # INFO: Test if model set is already in target
             matched_role = match_by_key(roles, target_role, "name")
-
             if not matched_role:
                 logger.debug("No Source Role found. Deleting...")
-                logger.debug("Deleting Role", extra={"role": target_role.name})
-                target_sdk.delete_role(target_role.id)
-                logger.info("Delete complete",
-                            extra={"role": target_role.name})
+                logger.debug("Deleting Role", extra={"role": getattr(target_role, "name", "Unknown")})
+                run_cli_command(target_creds, ["api", "role", "delete_role", str(getattr(target_role, "id"))])
+                logger.info("Delete complete", extra={"role": getattr(target_role, "name", "Unknown")})
 
 
-def send_roles(source_sdk, target_sdk, pattern=None, allow_delete=None):
-    # INFO: Get all roles from source instance
-    roles = get_filtered_roles(source_sdk, pattern)
-    write_roles(roles, target_sdk, pattern, allow_delete)
+def send_roles(source_creds, target_creds, pattern=None, allow_delete=None):
+    roles = get_filtered_roles(source_creds, pattern)
+    write_roles(roles, target_creds, pattern, allow_delete)
 
 
 def main(args):
-
     if args.debug:
         logger.setLevel(logging.DEBUG)
 
-    source_sdk = get_client(args.ini, args.source)
-
-    for t in args.target:
-        target_sdk = get_client(args.ini, t)
-        send_roles(source_sdk, target_sdk, args.pattern, args.delete)
+    try:
+        source_creds = build_creds(args.ini, args.source)
+        for t in args.target:
+            target_creds = build_creds(args.ini, t)
+            send_roles(source_creds, target_creds, args.pattern, args.delete)
+    except LookerCLIError as e:
+        logger.error("Deployment failed", extra={"error": str(e)})
+        raise RuntimeError("Deployment failed due to CLI error") from e
