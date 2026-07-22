@@ -15,16 +15,18 @@ As of 2023, Looker Deployer is supported, but not warrantied by Google.  Issues 
 
 In order for these commands to correctly work a few assumptions/requirements are needed for your environment:
 
-> - **Python** Looker Deployer requires Python 3.6-3.9
+> - **Python** Looker Deployer requires Python >= 3.10.0
 > - **Looker-CLI** The content deployment command makes use of [looker-cli](https://github.com/looker-open-source/looker-cli) to automate content deployment, so you will need to have that
 >   installed and configured properly.
 
 
 ### Authentication and Configuration
 
-Looker Deployer makes use of the [Looker SDK](https://github.com/looker-open-source/sdk-codegen/tree/master/python) to
-communicate with your Looker instances. A `looker.ini` file is required to provide authentication. By default the tool
-looks for this file in your working directory but if it is named differently or in a different location you can make use
+Looker Deployer makes use of [looker-cli](https://github.com/looker-open-source/looker-cli) under the hood to
+communicate with your Looker instances. Credentials can be provided via a `looker.ini` file (default) or via
+`LOOKERSDK_*` environment variables (as a fallback, or exclusively if passing `--ini ""`). The tool parses these
+credentials and passes them as command-line flags to `looker-cli`. By default the tool
+looks for `looker.ini` in your working directory but if it is named differently or in a different location you can make use
 of the `--ini` argument to specify its location. Here's an example ini file:
 
 ```
@@ -54,14 +56,12 @@ container.
 To do this, create a directory with an `looker.ini` file and a `Dockerfile` with the following content: 
 
 ```
-FROM python:3.9-slim
+FROM python:3.10-slim
 
-RUN apt update
-RUN apt -y install wget
-RUN wget https://github.com/looker-open-source/looker-cli/releases/latest/download/looker-cli_linux_amd64.tar.gz
-RUN tar -xzf looker-cli_linux_amd64.tar.gz && mv looker-cli /usr/local/bin/
+RUN apt update && apt -y install wget git
+RUN wget https://github.com/looker-open-source/looker-cli/releases/download/v0.4.8/looker-cli_0.4.8_linux_amd64.tar.gz
+RUN tar -xzf looker-cli_0.4.8_linux_amd64.tar.gz -C /usr/local/bin looker-cli && rm looker-cli_0.4.8_linux_amd64.tar.gz
 
-RUN apt -y install git 
 RUN git clone https://github.com/looker-open-source/looker_deployer.git
 
 WORKDIR /looker_deployer
@@ -104,8 +104,8 @@ than using the docker image.  This will prevent other modules from creating conf
 Once pyenv is installed, install the desired version of Python and create the virtual environment named ldeploy:
 
 ```
-pyenv install 3.8.3
-pyenv virtualenv 3.8.3 ldeploy
+pyenv install 3.11.9
+pyenv virtualenv 3.11.9 ldeploy
 ```
 
 Activate the virtual environment and install looker-deployer:

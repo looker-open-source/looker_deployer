@@ -23,14 +23,20 @@ pip3 install --user pipenv
 
 To download and install the latest Linux binary:
 ```bash
-# Download the binary (example using looker-cli v0.1.0; check repo for latest)
-curl -L https://github.com/looker-open-source/looker-cli/releases/latest/download/looker-cli-linux-amd64 -o looker-cli
+# Download the latest release tarball (example using looker-cli v0.4.8; check repo for latest)
+curl -LO https://github.com/looker-open-source/looker-cli/releases/download/v0.4.8/looker-cli_0.4.8_linux_amd64.tar.gz
+
+# Extract the binary
+tar -xzf looker-cli_0.4.8_linux_amd64.tar.gz looker-cli
 
 # Make the binary executable
 chmod +x looker-cli
 
 # Move it into your PATH
 sudo mv looker-cli /usr/local/bin/
+
+# Clean up
+rm looker-cli_0.4.8_linux_amd64.tar.gz
 ```
 Verify the installation by running:
 ```bash
@@ -76,7 +82,7 @@ To run the comprehensive test suite (which mocks the new CLI commands):
 pipenv run python3 -m pytest -v
 ```
 
-All 250+ unit, adversarial, and stress tests should pass successfully.
+All 380+ unit, adversarial, and stress tests should pass successfully.
 
 ---
 
@@ -150,5 +156,5 @@ pipenv run ldeploy user_attributes --source Dev --target Prod
 ## 5. Troubleshooting
 
 - **Command Not Found (`looker-cli`):** Ensure the `looker-cli` binary is executable (`chmod +x`) and located in a directory listed in your `$PATH` (like `/usr/local/bin`).
-- **Authentication Failures:** The tool reads credentials from `looker.ini` and automatically maps them to environment variables (`LOOKERSDK_BASE_URL`, etc.) before calling out to the CLI. Double-check that your API credentials have the correct admin permissions.
+- **Authentication Failures:** The tool reads credentials from `looker.ini` (or falls back to `LOOKERSDK_*` environment variables) and passes them as command-line flags to `looker-cli`. Double-check that your API credentials have the correct admin permissions.
 - **Python Import Errors:** Always prefix commands with `pipenv run` to ensure you are executing within the correct virtual environment context.
