@@ -15,7 +15,6 @@
 import pytest
 from unittest.mock import MagicMock
 from looker_deployer.commands import deploy_connections
-from looker_deployer.utils.exceptions import LookerCLIError
 
 
 @pytest.fixture
@@ -59,44 +58,24 @@ def test_get_filtered_connections_filter(mock_run_cli_command):
     )
 
 
-@pytest.fixture
-def mock_temp_file(mocker):
-    mock_file = mocker.MagicMock()
-    mock_file.name = "mocked_temp_file.json"
-    mock_named_temp = mocker.patch("looker_deployer.commands.deploy_connections.tempfile.NamedTemporaryFile")
-    mock_named_temp.return_value.__enter__.return_value = mock_file
-    return mock_named_temp, mock_file
-
-
-@pytest.fixture
-def mock_json_dump(mocker):
-    return mocker.patch("looker_deployer.commands.deploy_connections.json.dump")
-
-
-@pytest.fixture
-def mock_os_remove(mocker):
-    return mocker.patch("looker_deployer.commands.deploy_connections.os.remove")
-
-
-def test_write_connections(mock_run_cli_command, mock_temp_file, mock_os_remove, mock_json_dump):
-    mock_named_temp, mock_file = mock_temp_file
+def test_write_connections(mock_run_cli_command):
+    import json
     conn_list = [{"name": "Taco"}]
     creds = {"base_url": "https://mylooker.com"}
 
     deploy_connections.write_connections(conn_list, creds)
 
-    mock_named_temp.assert_called_once_with(mode="w", delete=False)
-    mock_json_dump.assert_called_once_with(conn_list[0], mock_file)
     mock_run_cli_command.assert_called_once_with(
-        ["looker-cli", "connection", "import", "mocked_temp_file.json"],
+        ["looker-cli", "connection", "import", "-"],
         creds=creds,
-        check=True
+        check=True,
+        input=json.dumps(conn_list[0]),
+        text=True
     )
-    mock_os_remove.assert_called_once_with("mocked_temp_file.json")
 
 
-def test_write_connections_with_password(mock_run_cli_command, mock_temp_file, mock_os_remove, mock_json_dump):
-    mock_named_temp, mock_file = mock_temp_file
+def test_write_connections_with_password(mock_run_cli_command):
+    import json
     conn_list = [{"name": "Taco"}]
     db_config = {"Taco": "Cat"}
     creds = {"base_url": "https://mylooker.com"}
@@ -104,14 +83,13 @@ def test_write_connections_with_password(mock_run_cli_command, mock_temp_file, m
     deploy_connections.write_connections(conn_list, creds, db_config)
 
     assert conn_list[0]["password"] == "Cat"
-    mock_named_temp.assert_called_once_with(mode="w", delete=False)
-    mock_json_dump.assert_called_once_with(conn_list[0], mock_file)
     mock_run_cli_command.assert_called_once_with(
-        ["looker-cli", "connection", "import", "mocked_temp_file.json"],
+        ["looker-cli", "connection", "import", "-"],
         creds=creds,
-        check=True
+        check=True,
+        input=json.dumps(conn_list[0]),
+        text=True
     )
-    mock_os_remove.assert_called_once_with("mocked_temp_file.json")
 
 
 def test_send_connections(mocker):
@@ -176,16 +154,3 @@ def test_main_with_password(mocker):
     ])
 
     mock_send.assert_called_once_with({"base_url": "1"}, {"base_url": "2"}, None, {"Taco": "Cat"})
-
-
-def test_write_connections_cleanup_on_subprocess_error(mock_run_cli_command, mock_temp_file, mock_os_remove, mock_json_dump):
-    mock_named_temp, mock_file = mock_temp_file
-    conn_list = [{"name": "Taco"}]
-    creds = {"base_url": "https://mylooker.com"}
-
-    mock_run_cli_command.side_effect = LookerCLIError("cmd", 1, "out", "err")
-
-    with pytest.raises(LookerCLIError):
-        deploy_connections.write_connections(conn_list, creds)
-
-    mock_os_remove.assert_called_once_with("mocked_temp_file.json")

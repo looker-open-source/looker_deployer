@@ -14,8 +14,9 @@
 
 import subprocess
 import os
+import re
 from looker_deployer.utils import deploy_logging
-from looker_deployer.utils.exceptions import LookerCLIError
+from looker_deployer.utils.exceptions import LookerCLIError, sanitize_command
 import urllib.parse
 
 logger = deploy_logging.get_logger(__name__)
@@ -76,7 +77,9 @@ def inject_auth_flags(cmd, creds):
     if auth_flags:
         cli_idx = -1
         for i, arg in enumerate(cmd):
-            if arg == "looker-cli" or arg.endswith("/looker-cli") or arg.endswith("\\looker-cli"):
+            # Strip trailing .exe, .bat, or .cmd extensions case-insensitively
+            normalized_arg = re.sub(r"\.(exe|bat|cmd)$", "", arg, flags=re.IGNORECASE)
+            if normalized_arg == "looker-cli" or normalized_arg.endswith("/looker-cli") or normalized_arg.endswith("\\looker-cli"):
                 cli_idx = i
                 break
         if cli_idx != -1:
@@ -95,6 +98,7 @@ def run_cli_command(cmd, creds=None, **kwargs):
     Automatically handles Windows execution wrapping and raises descriptive
     exceptions if looker-cli is not found.
     Automatically injects authentication flags from creds dict.
+    Enforces a default timeout of 60 seconds if not specified.
     Raises LookerCLIError if the command fails.
     """
     if isinstance(cmd, list):
@@ -113,12 +117,19 @@ def run_cli_command(cmd, creds=None, **kwargs):
     if "capture_output" not in kwargs and "stdout" not in kwargs and "stderr" not in kwargs:
         kwargs["capture_output"] = True
 
+    # Enforce default timeout of 60 seconds if not specified
+    kwargs.setdefault("timeout", 60)
+
     try:
         result = subprocess.run(cmd, **kwargs)
     except FileNotFoundError as e:
-        msg = f"looker-cli command not found (No such file or directory): {cmd}. Please ensure looker-cli is installed and in your PATH."
+        msg = f"looker-cli command not found (No such file or directory): {sanitize_command(cmd)}. Please ensure looker-cli is installed and in your PATH."
         logger.error(msg)
         raise FileNotFoundError(msg) from e
+    except subprocess.TimeoutExpired as e:
+        msg = f"looker-cli command timed out after {e.timeout} seconds: {sanitize_command(cmd)}."
+        logger.error(msg)
+        raise subprocess.TimeoutExpired(e.cmd, e.timeout, output=e.output, stderr=e.stderr) from e
 
     if check and result.returncode != 0:
         stdout_val = result.stdout

@@ -14,10 +14,8 @@
 
 import logging
 import re
-import os
 import subprocess  # noqa: F401
 import json
-import tempfile
 import configparser
 from looker_deployer.utils import deploy_logging
 from looker_deployer.utils import parse_ini
@@ -66,25 +64,15 @@ def write_connections(connections, target_creds, db_config=None):
             logger.debug("Attempting password update", extra={"connection": conn["name"]})
             conn["password"] = db_config[conn["name"]]
 
-        temp_file_name = None
-        try:
-            with tempfile.NamedTemporaryFile(mode="w", delete=False) as f:
-                temp_file_name = f.name
-                json.dump(conn, f)
+        cmd = ["looker-cli", "connection", "import", "-"]
 
-            cmd = ["looker-cli", "connection", "import", temp_file_name]
-
-            run_cli_command(
-                cmd,
-                creds=target_creds,
-                check=True
-            )
-        finally:
-            if temp_file_name is not None:
-                try:
-                    os.remove(temp_file_name)
-                except OSError:
-                    pass
+        run_cli_command(
+            cmd,
+            creds=target_creds,
+            check=True,
+            input=json.dumps(conn),
+            text=True
+        )
 
 
 def send_connections(source_creds, target_creds, pattern=None, db_config=None):

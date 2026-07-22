@@ -41,7 +41,7 @@ def test_run_cli_command_non_windows(mocker):
     cmd = ["looker-cli", "group", "list"]
     run_cli_command(cmd)
 
-    mock_run.assert_called_once_with(cmd, capture_output=True)
+    mock_run.assert_called_once_with(cmd, capture_output=True, timeout=60)
 
 
 def test_run_cli_command_file_not_found(mocker):
@@ -62,7 +62,7 @@ def test_run_cli_command_success(mocker):
     res = run_cli_command(cmd, capture_output=True, text=True)
 
     assert res.stdout == "success_result"
-    mock_run.assert_called_once_with(cmd, capture_output=True, text=True)
+    mock_run.assert_called_once_with(cmd, capture_output=True, text=True, timeout=60)
 
 
 def test_run_cli_command_failure(mocker):
@@ -158,3 +158,73 @@ def test_inject_auth_flags_no_creds():
     creds = {}
     cmd = ["looker-cli", "group", "list"]
     assert inject_auth_flags(cmd, creds) == cmd
+
+
+def test_sanitize_command():
+    from looker_deployer.utils.exceptions import sanitize_command
+
+    cmd_list = ["looker-cli", "--client-id", "myid", "--client-secret", "mysecret", "--token", "mytoken", "group", "list"]
+    cmd_str = "looker-cli --client-id myid --client-secret mysecret --token mytoken group list"
+
+    expected = "looker-cli --client-id ****** --client-secret ****** --token ****** group list"
+
+    assert sanitize_command(cmd_list) == expected
+    assert sanitize_command(cmd_str) == expected
+
+    # Test equals sign
+    cmd_equals = "looker-cli --client-id=myid --client-secret=mysecret --token=mytoken group list"
+    expected_equals = "looker-cli --client-id=****** --client-secret=****** --token=****** group list"
+    assert sanitize_command(cmd_equals) == expected_equals
+
+
+def test_inject_auth_flags_windows_exe():
+    creds = {
+        "base_url": "https://mylooker.com",
+        "client_id": "my_client_id",
+        "client_secret": "my_client_secret"
+    }
+
+    # Absolute path with .exe
+    cmd = ["C:\\bin\\looker-cli.exe", "group", "list"]
+    expected = [
+        "C:\\bin\\looker-cli.exe",
+        "--host", "mylooker.com",
+        "--client-id", "my_client_id",
+        "--client-secret", "my_client_secret",
+        "group", "list"
+    ]
+    assert inject_auth_flags(cmd, creds) == expected
+
+
+def test_run_cli_command_timeout(mocker):
+    import subprocess
+    mocker.patch("subprocess.run", side_effect=subprocess.TimeoutExpired(cmd=["looker-cli"], timeout=60))
+
+    cmd = ["looker-cli", "group", "list"]
+    with pytest.raises(subprocess.TimeoutExpired) as excinfo:
+        run_cli_command(cmd, timeout=60)
+
+    assert excinfo.value.timeout == 60
+
+
+def test_run_cli_command_failure_credential_sanitization(mocker):
+    mock_res = MagicMock()
+    mock_res.returncode = 1
+    mock_res.stdout = b"some output"
+    mock_res.stderr = b"some error"
+    mocker.patch("subprocess.run", return_value=mock_res)
+
+    creds = {
+        "base_url": "https://mylooker.com",
+        "client_id": "my_client_id",
+        "client_secret": "my_client_secret"
+    }
+
+    cmd = ["looker-cli", "group", "list"]
+    with pytest.raises(LookerCLIError) as excinfo:
+        run_cli_command(cmd, creds=creds, check=True)
+
+    # Command in exception should be sanitized
+    assert "my_client_secret" not in excinfo.value.command
+    assert "my_client_id" not in excinfo.value.command
+    assert "******" in excinfo.value.command

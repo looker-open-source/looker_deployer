@@ -35,8 +35,8 @@ def test_stress_serialization_error(temp_dir_check):
 
 def test_stress_io_error_during_write(temp_dir_check):
     connections = [{"name": "Taco"}]
-    # Patch json.dump to raise an IOError to simulate disk full or write failure
-    with patch("looker_deployer.commands.deploy_connections.json.dump", side_effect=IOError("Mock Disk Full")):
+    # Patch json.dumps to raise an IOError to simulate serializing/write failure
+    with patch("looker_deployer.commands.deploy_connections.json.dumps", side_effect=IOError("Mock Disk Full")):
         with pytest.raises(IOError, match="Mock Disk Full"):
             deploy_connections.write_connections(connections, {"ENV": "2"})
 
