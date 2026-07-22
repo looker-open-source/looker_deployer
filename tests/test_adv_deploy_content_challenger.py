@@ -14,7 +14,6 @@
 
 import pytest
 from unittest.mock import MagicMock, patch, mock_open
-import json
 from pathlib import Path
 from looker_deployer.commands import deploy_content
 from looker_deployer.commands import deploy_content_export

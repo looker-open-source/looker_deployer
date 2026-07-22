@@ -190,8 +190,8 @@ def test_write_user_attributes_missing_target_group(mocker):
     deploy_user_attributes.write_user_attributes(source_creds, target_creds)
 
     for cmd, creds, kwargs in calls:
-         if "set_user_attribute_group_values" in cmd:
-             assert kwargs.get("input") == "[]"
+        if "set_user_attribute_group_values" in cmd:
+            assert kwargs.get("input") == "[]"
 
 
 # 7b. Test write_user_attributes raises AttributeError when label or type is missing
@@ -397,8 +397,8 @@ def test_write_user_attributes_source_group_id_not_in_lookup(mocker):
     deploy_user_attributes.write_user_attributes(source_creds, target_creds)
 
     for cmd, creds, kwargs in calls:
-         if "set_user_attribute_group_values" in cmd:
-             assert kwargs.get("input") == "[]"
+        if "set_user_attribute_group_values" in cmd:
+            assert kwargs.get("input") == "[]"
 
 
 # 20. Test write_user_attributes group_id type mismatch between target_group and target_group_values

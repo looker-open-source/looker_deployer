@@ -210,7 +210,6 @@ def test_write_role_to_group_get_role_groups_fails(mock_run_cli_command, mocker)
     deploy_groups.get_filtered_groups.return_value = target_groups
 
     def sub_run_side_effect(cmd, **kwargs):
-        creds = kwargs.get("creds", {})
         if "role_groups" in cmd:
             role_id = cmd[-1]
             if role_id == "1":

@@ -19,7 +19,6 @@ from types import SimpleNamespace
 from unittest.mock import call
 
 from looker_deployer.commands import deploy_model_sets
-from looker_deployer.utils.exceptions import LookerCLIError
 
 
 @pytest.fixture

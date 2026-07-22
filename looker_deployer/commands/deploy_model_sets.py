@@ -124,7 +124,7 @@ def write_model_sets(model_sets, target_creds, pattern=None, allow_delete=None):
         if not model_set_exists:
             logger.debug("No Model Set found. Creating...")
             logger.debug("Deploying Model Set",
-                          extra={"model_set": model_set.name})
+                         extra={"model_set": model_set.name})
             cmd = ["looker-cli", "api", "role", "create_model_set", "-"]
             try:
                 run_cli_command(
@@ -141,7 +141,7 @@ def write_model_sets(model_sets, target_creds, pattern=None, allow_delete=None):
         else:
             logger.debug("Existing model set found. Updating...")
             logger.debug("Deploying Model Set",
-                          extra={"model_set": model_set.name})
+                         extra={"model_set": model_set.name})
             target_id = getattr(matched_model_set, "id", None)
             if target_id is None:
                 logger.error(f"Target model set '{matched_model_set.name}' is missing an 'id'. Skipping update.")

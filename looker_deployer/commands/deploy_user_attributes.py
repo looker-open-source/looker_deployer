@@ -139,7 +139,7 @@ def write_user_attributes(source_creds, target_creds,
         if not user_attribute_exists:
             logger.debug("No User Attribute found. Creating...")
             logger.debug("Deploying User Attribute",
-                          extra={"user_attribute": payload["name"]})
+                         extra={"user_attribute": payload["name"]})
             stdout = run_cli(
                 ["api", "userattribute", "create_user_attribute", "-"],
                 target_creds,
@@ -151,7 +151,7 @@ def write_user_attributes(source_creds, target_creds,
         else:
             logger.debug("Existing user attribute found. Updating...")
             logger.debug("Deploying User Attribute",
-                          extra={"user_attribute": payload["name"]})
+                         extra={"user_attribute": payload["name"]})
             stdout = run_cli(
                 ["api", "userattribute", "update_user_attribute", str(matched_user_attribute.id), "-"],
                 target_creds,

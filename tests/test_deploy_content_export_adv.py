@@ -15,7 +15,6 @@
 import pytest
 import subprocess
 from unittest.mock import patch, mock_open
-from pathlib import Path
 from looker_deployer.commands import deploy_content_export
 from looker_deployer.utils.exceptions import LookerCLIError
 from types import SimpleNamespace

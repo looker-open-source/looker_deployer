@@ -53,12 +53,12 @@ def test_build_creds_success_capitalized(mocker):
 
 
 def test_build_creds_fallback_to_env(mocker):
-    mocker.patch("os.path.isfile", return_value=False) # ini not found
+    mocker.patch("os.path.isfile", return_value=False)  # ini not found
     mocker.patch("os.environ", {
         "LOOKERSDK_BASE_URL": "env_url",
         "LOOKERSDK_CLIENT_ID": "env_id"
     })
-    creds = build_creds(None, "foo") # No ini passed
+    creds = build_creds(None, "foo")  # No ini passed
     assert creds["base_url"] == "env_url"
     assert creds["client_id"] == "env_id"
     assert "client_secret" not in creds

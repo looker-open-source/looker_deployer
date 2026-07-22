@@ -16,7 +16,6 @@ import logging
 import re
 import subprocess  # noqa: F401
 import json
-import configparser
 from looker_deployer.utils import deploy_logging
 from looker_deployer.utils import parse_ini
 from looker_deployer.utils.cli import run_cli_command

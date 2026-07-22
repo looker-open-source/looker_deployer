@@ -13,7 +13,6 @@
 # limitations under the License.
 
 import pytest
-import json
 from types import SimpleNamespace
 from unittest.mock import call
 

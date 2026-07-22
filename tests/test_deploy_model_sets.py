@@ -205,7 +205,7 @@ def test_get_filtered_model_sets_subprocess_failure(mock_run_cli_command):
 
     creds = {"base_url": "test"}
     with pytest.raises(LookerCLIError):
-         deploy_model_sets.get_filtered_model_sets(creds)
+        deploy_model_sets.get_filtered_model_sets(creds)
 
 
 def test_write_model_sets_create_failure(mock_run_cli_command, mocker):

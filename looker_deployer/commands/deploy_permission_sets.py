@@ -138,7 +138,7 @@ def write_permission_sets(permission_sets, target_creds, pattern=None, allow_del
         if not permission_set_exists:
             logger.debug("No Permission Set found. Creating...")
             logger.debug("Deploying Permission Set",
-                          extra={"permission_set": permission_set.name})
+                         extra={"permission_set": permission_set.name})
             cmd = ["looker-cli", "api", "role", "create_permission_set", "-"]
             try:
                 run_cli_command(
@@ -158,7 +158,7 @@ def write_permission_sets(permission_sets, target_creds, pattern=None, allow_del
         else:
             logger.debug("Existing permission set found. Updating...")
             logger.debug("Deploying Permission Set",
-                          extra={"permission_set": permission_set.name})
+                         extra={"permission_set": permission_set.name})
             target_id = getattr(matched_permission_set, "id", None)
             if target_id is None:
                 logger.error(f"Target permission set '{matched_permission_set.name}' is missing an 'id'. Skipping update.")

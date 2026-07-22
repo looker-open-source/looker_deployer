@@ -15,7 +15,6 @@
 import json
 import pytest
 from types import SimpleNamespace
-from unittest.mock import call
 from looker_deployer.commands import deploy_permission_sets
 
 
