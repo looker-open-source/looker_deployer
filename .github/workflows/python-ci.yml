@@ -89,7 +89,7 @@ jobs:
             exit 0
           else
             curl --request POST \
-            --url ${{ github.api_url }}/repos/${{ github.repository }}/check-runs \
+            --url ${GITHUB_API_URL}/repos/${{ github.repository }}/check-runs \
             --header "authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
             --header "content-type: application/json" \
             --header "Accept: application/vnd.github.v3+json" \
