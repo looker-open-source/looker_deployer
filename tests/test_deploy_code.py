@@ -15,6 +15,7 @@
 import pytest
 from looker_deployer.commands import deploy_code
 import requests
+from looker_deployer.utils.exceptions import LookerCLIError
 
 CONFIG_NO_EXCLUDE = {
     "instances": [
@@ -55,15 +56,15 @@ RESP_JSON = {
 }
 
 
-def test_parse_hub_endpoints():
+def test_parse_hub_targets():
 
-    endpoints = deploy_code.parse_hub_endpoints(CONFIG_NO_EXCLUDE)
-    assert endpoints == ["bar"]
+    targets = deploy_code.parse_hub_targets(CONFIG_NO_EXCLUDE)
+    assert targets == ["foo"]
 
 
-def test_parse_hub_endpoints_with_exclude():
-    endpoints = deploy_code.parse_hub_endpoints(CONFIG_WITH_EXCLUDE)
-    assert endpoints == ["bar"]
+def test_parse_hub_targets_with_exclude():
+    targets = deploy_code.parse_hub_targets(CONFIG_WITH_EXCLUDE)
+    assert targets == ["foo"]
 
 
 def test_parse_spoke_config():
@@ -89,16 +90,58 @@ def test_parse_hub_excludes_with_exclude():
 
 
 def test_deploy_code(mocker):
-    mocker.patch("requests.get")
-    mocker.patch("requests.Response.json")
-    requests.get.return_value = GOOD_RESPONSE
-    requests.Response.json.return_value = RESP_JSON
-    deploy_code.deploy_code("foo", "bar", "bash")
-    requests.get.assert_called_with("bar/webhooks/projects/foo/deploy", headers="bash")
+    mock_run = mocker.patch("looker_deployer.commands.deploy_code.run_cli_command")
+    mocker.patch("looker_deployer.commands.deploy_code.get_access_token", return_value="mocked_token")
+    creds = {"base_url": "test"}
+    deploy_code.deploy_code("foo", creds)
+
+    assert mock_run.call_count == 2
+    calls = mock_run.call_args_list
+
+    token_creds = {"base_url": "test", "verify_ssl": None, "token": "mocked_token"}
+
+    assert calls[0][0][0] == ["looker-cli", "api", "session", "update_session", "-"]
+    assert calls[0][1].get("creds") == token_creds
+    assert calls[0][1].get("input") == '{"workspace_id": "dev"}'
+
+    assert calls[1][0][0] == ["looker-cli", "project", "deploy", "foo"]
+    assert calls[1][1].get("creds") == token_creds
 
 
 def test_deploy_code_assertion_error(mocker):
-    mocker.patch("requests.get")
-    requests.get.return_value = BAD_RESPONSE
-    with pytest.raises(AssertionError):
-        deploy_code.deploy_code("foo", "bar", "baz")
+    mock_run = mocker.patch("looker_deployer.commands.deploy_code.run_cli_command")
+    mocker.patch("looker_deployer.commands.deploy_code.get_access_token", return_value="mocked_token")
+
+    def side_effect(cmd, *args, **kwargs):
+        if "update_session" in cmd:
+            return mocker.MagicMock()
+        elif "deploy" in cmd:
+            raise LookerCLIError("cmd", 1, "out", "error")
+        return mocker.MagicMock()
+
+    mock_run.side_effect = side_effect
+    with pytest.raises(RuntimeError, match="Deployment failed due to CLI error"):
+        deploy_code.deploy_code("foo", {"base_url": "test"})
+
+
+def test_deploy_code_file_not_found(mocker):
+    mock_run = mocker.patch("looker_deployer.commands.deploy_code.run_cli_command")
+    mocker.patch("looker_deployer.commands.deploy_code.get_access_token", return_value="mocked_token")
+
+    def side_effect(cmd, *args, **kwargs):
+        if "update_session" in cmd:
+            return mocker.MagicMock()
+        elif "deploy" in cmd:
+            raise FileNotFoundError("No such file or directory: 'looker-cli'")
+        return mocker.MagicMock()
+
+    mock_run.side_effect = side_effect
+    with pytest.raises(FileNotFoundError, match="No such file or directory"):
+        deploy_code.deploy_code("foo", {"base_url": "test"})
+
+
+def test_deploy_code_invalid_credentials(mocker):
+    mocker.patch("looker_deployer.commands.deploy_code.get_access_token", side_effect=Exception("Error: Unauthorized"))
+    with pytest.raises(RuntimeError) as exc_info:
+        deploy_code.deploy_code("foo", {"base_url": "test"})
+    assert "Unauthorized" in str(exc_info.value.__cause__)

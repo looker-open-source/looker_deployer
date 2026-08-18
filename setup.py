@@ -17,7 +17,15 @@ from looker_deployer import version as pkg
 
 NAME = "looker_deployer"
 VERSION = pkg.__version__
-REQUIRES = ["looker-sdk>=21.18.0", "oyaml", "python-json-logger"]
+REQUIRES = [
+    "oyaml",
+    "python-json-logger",
+    "ipython>=8.10.0",
+    "setuptools>=70.0.0",
+    "requests>=2.32.2",
+    "zipp>=3.19.1",
+    "urllib3>=2.2.2"
+]
 
 setup(
     author="Looker Open Source",
@@ -31,6 +39,6 @@ setup(
     name=NAME,
     packages=["looker_deployer", "looker_deployer/commands", "looker_deployer/utils"],
     entry_points={"console_scripts": ["ldeploy=looker_deployer.cli:main"]},
-    python_requires=">=3.6.0, <3.11",
+    python_requires=">=3.10.0",
     version=VERSION
 )
