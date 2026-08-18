@@ -19,6 +19,7 @@ import logging
 import tempfile
 import shutil
 import threading
+import json
 from concurrent.futures import ThreadPoolExecutor
 from itertools import repeat
 from looker_deployer.utils import deploy_logging
@@ -28,6 +29,14 @@ from looker_sdk import models40 as models
 
 
 logger = deploy_logging.get_logger(__name__)
+
+def alert_cleanup(sdk):
+    logger.debug("cleaning up orphaned alerts")
+    disabled_alerts = sdk.search_alerts(disabled="true")
+    for alert in disabled_alerts:
+        if alert['disabled_reason'] == "Dashboard element has been removed.":
+            sdk.delete_alert(alert['id'])
+            logger.info("Alert removed", extra={"alert title": alert['custom_title'], "owner": alert['owner_display_name']})
 
 
 def get_space_ids_from_name(space_name, parent_id, sdk):
@@ -129,8 +138,76 @@ def import_content(content_type, content_json, space_id, env, ini, debug=False):
         win_exec = ["cmd.exe", "/c"]
         gzr_command = win_exec + gzr_command
 
+    is_new_dash = "false"
+    existing_dash_alerts = []
+    existing_elements_w_alerts = []
+
+    if content_type == "dashboard":  ## only run for dashboards, looks can't have alerts
+        sdk = get_client(ini, env)  ## should we update the function def and pass sdk?
+        with open(content_json) as file:
+            json_dash = json.load(file)
+        existing_dash = sdk.search_dashboards(slug=json_dash['slug'])  ## search with slug first, fall back to name + folder
+        if len(existing_dash) < 1:
+            existing_dash = sdk.search_dashboards(title=json_dash['title'],folder_id=space_id)
+            if len(existing_dash) < 1:
+                is_new_dash = "true"
+        if is_new_dash == "false": ## if it's an existing dashboard, save the alerts and elements
+            for element in existing_dash[0]['dashboard_elements']:
+                start = len(existing_dash_alerts)
+                alerts = list(filter(lambda alert: str(alert['dashboard_element_id']) == str(element['id']), enabled_alerts))
+                if len(alerts) > 0:
+                    existing_dash_alerts.extend(alerts)
+                if len(existing_dash_alerts) > start:
+                    if element not in existing_elements_w_alerts:
+                        existing_elements_w_alerts.append(element)
+
+
+    #logger.debug("space info", extra={"space_name": space_name, "parent_id": parent_id})
+    update_fields = {}
+    update_fields['owner_id'] = sdk.me()['id'] #get id of current user
+    update_fields['is_disabled'] = "true"
+    update_fields['disabled_reason'] = "dashboard update"
+    if len(existing_dash_alerts) > 0:
+        for alert in existing_dash_alerts:
+            if alert['id'] != update_fields['owner_id']:
+                sdk.update_alert_field(alert['id'], update_fields) #update old alert to current user to prevent errors when deleting
+
     subprocess.run(gzr_command)
 
+    
+    if is_new_dash == "false" and content_type == "dashboard" and len(existing_dash_alerts) > 0:  ## get the new dashboard
+        updated_dash = sdk.search_dashboards(slug=json_dash['slug'])
+        if len(updated_dash) < 1:
+            updated_dash = sdk.search_dashboards(title=json_dash['title'],folder_id=space_id)
+        old_to_new_ids = {}
+        for element in existing_elements_w_alerts:  ## match old element ids to new element ids
+            updated_dash_element = list(filter(lambda item: item['title'] == element['title'] and item['query_id'] == element['query_id'], updated_dash[0]['dashboard_elements']))
+            if len(updated_dash_element) == 1:  ## what should we do if more than one match?
+                old_to_new_ids[element['id']] = updated_dash_element[0]['id']
+        for alert in existing_dash_alerts:  ## create new alerts
+            logger.debug('processing alert for element', extra={"element_id": alert['dashboard_element_id']})
+            new_alert = {}
+            update_owner = {} #alerts are assigned to creator, need to update after
+            update_owner['owner_id'] = alert['owner_id']
+            for key in alert.keys():
+                new_alert[key] = alert[key]
+            new_alert['applied_dashboard_filters'] = []
+            new_filter = {}
+            for old_filter in alert['applied_dashboard_filters']:
+                new_filter = old_filter.__dict__
+                if new_filter['filter_value'] == 'None':
+                    new_filter['filter_value'] = ""
+                new_alert['applied_dashboard_filters'].append(new_filter)
+            if alert['dashboard_element_id'] in old_to_new_ids.keys():
+                logger.debug("creating alert", extra={"old_element_id": alert['dashboard_element_id'], "new_element_id": old_to_new_ids[alert['dashboard_element_id']]})
+                new_alert['dashboard_element_id'] = old_to_new_ids[alert['dashboard_element_id']]
+                try:
+                    created_alert = sdk.create_alert(new_alert)
+                    sdk.update_alert_field(created_alert['id'], update_owner) #update new alert to correct owner
+                    sdk.delete_alert(alert['id'])
+                except Exception as e:
+                    print(e)
+        
 
 def build_spaces(spaces, sdk):
     # seeding initial value of parent id to Shared
@@ -310,6 +387,8 @@ def main(args):
         args.target_base = 'Shared'
 
     sdk = get_client(args.ini, args.env)
+    global enabled_alerts
+    enabled_alerts = sdk.search_alerts(disabled="false", all_owners=True)
     send_content(
         sdk,
         args.env,
@@ -322,3 +401,6 @@ def main(args):
         args.debug,
         args.target_base
     )
+
+    alert_cleanup(sdk)
+
