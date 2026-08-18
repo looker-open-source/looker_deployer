@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.13](https://github.com/looker-open-source/looker_deployer/compare/looker-deployer-v0.3.12...looker-deployer-v0.3.13) (2026-08-18)
+
+
+### Bug Fixes
+
+* fix Pipenv.lock ([#176](https://github.com/looker-open-source/looker_deployer/issues/176)) ([b4e9f67](https://github.com/looker-open-source/looker_deployer/commit/b4e9f67f19d2759b7eaaea39db12b8848e097da1))
+
 ## [0.3.12](https://github.com/looker-open-source/looker_deployer/compare/looker-deployer-v0.3.11...looker-deployer-v0.3.12) (2024-12-04)
 
 
