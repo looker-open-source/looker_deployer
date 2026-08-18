@@ -18,8 +18,41 @@ import re
 from looker_deployer.utils import deploy_logging
 from looker_deployer.utils.exceptions import LookerCLIError, sanitize_command
 import urllib.parse
+import urllib.request
+import json
+import ssl
 
 logger = deploy_logging.get_logger(__name__)
+
+_TOKEN_CACHE = {}
+
+
+def _get_api_token(base_url, client_id, client_secret, verify_ssl=True):
+    if not (base_url and client_id and client_secret):
+        return None
+    cache_key = (base_url, client_id)
+    if cache_key in _TOKEN_CACHE:
+        return _TOKEN_CACHE[cache_key]
+
+    try:
+        url = base_url.rstrip("/") + "/api/4.0/login"
+        data = urllib.parse.urlencode({"client_id": client_id, "client_secret": client_secret}).encode("utf-8")
+        req = urllib.request.Request(url, data=data, method="POST")
+        ctx = ssl.create_default_context()
+        if not verify_ssl or str(verify_ssl).lower() == "false":
+            ctx.check_hostname = False
+            ctx.verify_mode = ssl.CERT_NONE
+
+        with urllib.request.urlopen(req, context=ctx, timeout=15) as resp:
+            res_json = json.loads(resp.read().decode("utf-8"))
+            tok = res_json.get("access_token")
+            if tok:
+                _TOKEN_CACHE[cache_key] = tok
+                return tok
+    except Exception as e:
+        logger.debug(f"Direct API login token acquisition fallback: {e}")
+        return None
+    return None
 
 
 def inject_auth_flags(cmd, creds):
@@ -61,6 +94,9 @@ def inject_auth_flags(cmd, creds):
         auth_flags.extend(["--port", str(port)])
 
     token = creds.get("token")
+    if not token and client_id and client_secret and base_url:
+        token = _get_api_token(base_url, client_id, client_secret, verify_ssl)
+
     if token:
         auth_flags.extend(["--token", token])
     else:
