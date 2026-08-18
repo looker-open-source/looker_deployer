@@ -160,6 +160,66 @@ def test_inject_auth_flags_no_creds():
     assert inject_auth_flags(cmd, creds) == cmd
 
 
+def test_inject_auth_flags_with_explicit_token():
+    creds = {
+        "base_url": "https://mylooker.com",
+        "token": "my_explicit_token"
+    }
+    cmd = ["looker-cli", "group", "list"]
+    expected = [
+        "looker-cli",
+        "--host", "mylooker.com",
+        "--token", "my_explicit_token",
+        "group", "list"
+    ]
+    assert inject_auth_flags(cmd, creds) == expected
+
+
+def test_inject_auth_flags_token_acquisition_success(mocker):
+    mocker.patch("looker_deployer.utils.cli._get_api_token", return_value="acquired_token_123")
+    creds = {
+        "base_url": "https://mylooker.com",
+        "client_id": "my_id",
+        "client_secret": "my_secret"
+    }
+    cmd = ["looker-cli", "group", "list"]
+    expected = [
+        "looker-cli",
+        "--host", "mylooker.com",
+        "--token", "acquired_token_123",
+        "group", "list"
+    ]
+    assert inject_auth_flags(cmd, creds) == expected
+
+
+def test_get_api_token_success_and_caching(mocker):
+    from looker_deployer.utils.cli import _get_api_token, _TOKEN_CACHE
+    _TOKEN_CACHE.clear()
+
+    import io
+    import json
+    mock_resp = io.BytesIO(json.dumps({"access_token": "bearer_token_abc"}).encode("utf-8"))
+    mock_urlopen = mocker.patch("urllib.request.urlopen", return_value=mock_resp)
+
+    tok1 = _get_api_token("https://testlooker.com", "cid", "csec")
+    assert tok1 == "bearer_token_abc"
+    assert mock_urlopen.call_count == 1
+
+    # Second call should use cache
+    tok2 = _get_api_token("https://testlooker.com", "cid", "csec")
+    assert tok2 == "bearer_token_abc"
+    assert mock_urlopen.call_count == 1  # Not called again
+
+
+def test_get_api_token_failure_graceful(mocker):
+    from looker_deployer.utils.cli import _get_api_token, _TOKEN_CACHE
+    _TOKEN_CACHE.clear()
+
+    mocker.patch("urllib.request.urlopen", side_effect=Exception("Connection refused"))
+    tok = _get_api_token("https://testlooker.com", "cid", "csec")
+    assert tok is None
+
+
 def test_sanitize_command():
     from looker_deployer.utils.exceptions import sanitize_command
 
