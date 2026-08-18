@@ -10,6 +10,10 @@ on:
 
   workflow_dispatch:
 
+permissions:
+  checks: write
+  pull-requests: write
+
 env:
   LOOKERSDK_BASE_URL: https://localhost:20000
   LOOKERSDK_VERIFY_SSL: false
