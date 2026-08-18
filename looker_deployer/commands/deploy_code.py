@@ -82,7 +82,7 @@ def deploy_code(project, endpoint, header):
         else:
             logger.error("Unknown Error: %s", str(r.json()))
             raise e
-    results = r.json()["operations"][0]["results"][0]
+    results = r.json()["operations"][0]
     logger.info("Deployment complete. Status: %s", results)
     return r.json()
 
