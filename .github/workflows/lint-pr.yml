@@ -1,11 +1,15 @@
 name: "Lint PR"
 
 on:
-  pull_request_target:
+  pull_request:
     types:
       - opened
       - edited
       - synchronize
+      - reopened
+
+permissions:
+  pull-requests: read
 
 jobs:
   main:
